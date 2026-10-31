@@ -86,3 +86,7 @@ Use matching fixtures, question definitions and model versions for controlled co
 ## Task-role routing
 
 See `TASK-ROUTING.md` for implementation categories, user model preferences, observe/apply modes and verification gates. Run `node scripts/smoke.mjs --live --tasks` to evaluate the expanded classifier. After editing the catalog, run `node scripts/build-catalog.mjs` to rebuild the hook-compatible data module.
+
+## Interactive controls
+
+Restart Claude Code after loading new plugin code, then run `/router` for the menu. See `ROUTER-CONTROLS.md` for direct commands, immediate session changes, saved defaults and per-turn logging.

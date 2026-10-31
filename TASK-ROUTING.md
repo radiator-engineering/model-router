@@ -1,4 +1,4 @@
-# Task routing, version 0.5
+# Task routing, version 0.6
 
 The local plugin now asks Jev for a task role and an implementation category alongside the original tier, effort and risk questions. All questions use one API request per classified prompt or subagent assignment. This does not classify every tool call or infer a new phase from tool results. Forked subagents keep their inherited model.
 
@@ -30,7 +30,7 @@ Set options under `pluginConfigs.jev-model-router.options` in user settings. Pre
 - `observe` (default): additional questions and recommendation logs; the original policy controls model/effort changes. Adding questions may affect the classifier's answers, so observation is not a guarantee of identical legacy predictions.
 - `apply`: apply eligible user preferences. Low-confidence preferred routes and unverified preferred models retain the current model and effort. Unsupported roles use legacy routing. Consequential actions retain the legacy risk escalation.
 
-The original `routeMainModel`, `routeMainEffort` and `routeSubagentModel` switches still control which changes can take effect. Main-model routing remains off by default. Main orchestration can set medium effort when permitted; `agent.spawn` has no effort control, so it does not apply the orchestration preference there. It logs that limitation instead.
+The original `routeMainModel`, `routeMainEffort` and `routeSubagentModel` options supply initial permissions. `/router` can change them immediately for this session; see `ROUTER-CONTROLS.md`. `classifyTurns` defaults to true for independent per-turn classification/logging even when both main permissions are off. Main-model routing remains off by default. Main orchestration can set medium effort when permitted; `agent.spawn` has no effort control, so it does not apply the orchestration preference there. It logs that limitation instead.
 
 Model options: `orchestrationModel`, `visualAnalysisModel`, `designLedModel`, `specifiedModel`, `mechanicalModel`, `fileScoutModel`. Each names an exact catalog ID. This setup does not change the installed plugin, shell function, or user settings automatically.
 

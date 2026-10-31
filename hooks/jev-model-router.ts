@@ -1,3 +1,4 @@
+import {registerRouterControls, createRouterControls} from './router-controls.ts'
 import catalogData from '../catalog/model-data.ts'
 import {parseCatalog} from './model-catalog.ts'
 import {recommendTask, DEFAULT_PREFERENCES} from './task-routing.ts'
@@ -115,7 +116,8 @@ export const register: Register = (on, options) => {
   const routeSubagentModel = flag('routeSubagentModel', true)
   const routeMainEffort = flag('routeMainEffort', true)
   const routeMainModel = flag('routeMainModel', false)
-  const routeMainLoop = routeMainEffort || routeMainModel
+  const controls = createRouterControls({mode: ['off','observe','apply'].includes(taskMode) ? taskMode as 'off'|'observe'|'apply' : 'observe', mainModel:routeMainModel, mainEffort:routeMainEffort, subagents:routeSubagentModel, classifyTurns:flag('classifyTurns', true)})
+  registerRouterControls(on, controls)
   const logDecisions = flag('logDecisions', true)
 
   const policy: PolicyConfig = {
@@ -142,6 +144,12 @@ export const register: Register = (on, options) => {
   let applied: { model?: string; effort?: Effort } | null = null
 
   on('prompt.submit', async ($, e, next) => {
+    const runtime=controls.current()
+    const taskMode=runtime.mode
+    const taskEnabled=taskMode==='observe'||taskMode==='apply'
+    const routeMainModel=runtime.mainModel, routeMainEffort=runtime.mainEffort, routeSubagentModel=runtime.subagents
+    const routeMainLoop=routeMainModel||routeMainEffort
+
     // Before the routing guards: a module whose switches are all off has still
     // loaded, and that is exactly when its silence is most misleading.
     if (!announced) {
@@ -161,7 +169,7 @@ export const register: Register = (on, options) => {
         )
       }
     }
-    if (!routeMainLoop) return next(e)
+    if (!routeMainLoop && !runtime.classifyTurns) return next(e)
 
     if (!unusableReported) {
       unusableReported = true
@@ -171,7 +179,7 @@ export const register: Register = (on, options) => {
     // A slash command alone gives the decision model only the command's name.
     // Its turn keeps the session's model and effort; the null put keeps a
     // previous prompt's decision from reaching it.
-    if (bareCommand(e.text)) {
+    if (/^\/router(?:\s|$)/.test(e.text.trim()) || bareCommand(e.text)) {
       if (logDecisions) $.ui.log('[jev-model-router] a command with nothing after it; leaving the turn alone')
       pending.put(null)
       return next(e)
@@ -226,7 +234,13 @@ export const register: Register = (on, options) => {
   })
 
   on('turn.step', async function* ($, e, next) {
-    if (!routeMainLoop || e.agentId) return yield* next(e)
+    const runtime=controls.current()
+    const taskMode=runtime.mode
+    const taskEnabled=taskMode==='observe'||taskMode==='apply'
+    const routeMainModel=runtime.mainModel, routeMainEffort=runtime.mainEffort, routeSubagentModel=runtime.subagents
+    const routeMainLoop=routeMainModel||routeMainEffort
+
+    if (e.agentId || (!routeMainLoop && !runtime.classifyTurns)) return yield* next(e)
 
     // Every request after the first reuses what the turn settled on, so
     // neither the model nor the effort changes under its own tool loop.
@@ -277,6 +291,12 @@ export const register: Register = (on, options) => {
   })
 
   on('agent.spawn', async ($, e, next) => {
+    const runtime=controls.current()
+    const taskMode=runtime.mode
+    const taskEnabled=taskMode==='observe'||taskMode==='apply'
+    const routeMainModel=runtime.mainModel, routeMainEffort=runtime.mainEffort, routeSubagentModel=runtime.subagents
+    const routeMainLoop=routeMainModel||routeMainEffort
+
     // Before the routing guards: a module whose switches are all off has still
     // loaded, and that is exactly when its silence is most misleading.
     if (!announced) {

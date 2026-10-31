@@ -1,6 +1,6 @@
 {
   "name": "jev-model-router",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Picks the model and the reasoning effort for each task with TypeSafe's Jev, a System One decision model reached either through TypeSafe's own API or the Vercel AI Gateway. Routes subagent models at agent.spawn and the main loop's effort and model at turn.step, in both directions, falling back to the engine's built-in classifier when no key is set.",
   "author": {
     "name": "claude-code-templates",
@@ -177,6 +177,12 @@
       "title": "fileScoutModel",
       "description": "Preferred catalog model ID for this role or implementation category",
       "default": "claude-haiku-5-5"
+    },
+    "classifyTurns": {
+      "type": "boolean",
+      "title": "Per-turn classification and logging",
+      "description": "Classify main prompts and log recommendations even when main model and effort routing are disabled",
+      "default": true
     }
   }
 }

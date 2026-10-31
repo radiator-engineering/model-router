@@ -36,6 +36,8 @@ const report = {
   node:process.version, policyHash, fixtureHash:hash(fixturesText),
   questionsHash:hash(JSON.stringify(JSON.parse(policy.requestBody('typesafe',{},'hash',tasks)).questions)),
   suiteHash:hash(await readFile(path.join(root, 'tests/policy.test.ts'))),
+  controlsCodeHash:hash(await readFile(path.join(root,'hooks/router-controls.ts'))),
+  controlsSuiteHash:hash(await readFile(path.join(root,'tests/router-controls.test.ts'))),
   taskCodeHash:hash(await readFile(path.join(root,'hooks/task-routing.ts'))),
   taskSuiteHash:hash(await readFile(path.join(root,'tests/task-routing.test.ts'))),
   taskHookHash:hash(await readFile(path.join(root,'hooks/jev-model-router.ts'))),
@@ -48,6 +50,7 @@ const report = {
 await import('../tests/policy.test.ts');
 await import('../tests/catalog.test.ts');
 await import('../tests/task-routing.test.ts');
+await import('../tests/router-controls.test.ts');
 for (const {name, fn} of cases) {
   const start = performance.now();
   try { await fn(); report.tests.push({name, status:'pass', latencyMs:performance.now()-start}); }
