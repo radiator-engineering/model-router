@@ -12,7 +12,7 @@ Implementation follows the native `userConfig`, `config.describe`, and `config.s
 
 ## Modes and logs
 
-**Basic** uses the original fast/balanced/deep tier policy. **Custom** uses our task preferences (Opus for orchestration/design, Astra for visual analysis, Sonnet for specified work, Haiku for mechanical work/file scouting), with Basic fallback where no preference exists. **Observe** keeps Basic routing active and logs what Custom would recommend, without applying Custom recommendations. Observe can still change models through Basic routing when the corresponding switches are enabled. Every mode respects the model and effort switches.
+**Basic** uses the original fast/balanced/deep tier policy. **Custom** uses configured task preferences (defaulting to Opus for orchestration/design, Astra for visual analysis, Sonnet for specified work, and Haiku for mechanical work/file scouting), with Basic fallback where no preference exists. **Observe** keeps Basic routing active and logs what Custom would recommend, without applying Custom recommendations. Observe can still change models through Basic routing when the corresponding switches are enabled. Every mode respects the model and effort switches.
 
 Customize `hooks/task-routing.ts` for role/category rules, default model preferences, confidence checks, and classifier examples. Customize `catalog/models.json` for available models and verified capabilities, then run `node scripts/build-catalog.mjs` to regenerate the runtime catalog. Existing plugin model preference options override defaults in code. Old `off`/`apply` values remain accepted as aliases for Basic/Custom.
 
@@ -26,11 +26,17 @@ Edit `simpleAnswerModel` in plugin options to override Haiku. Edit `hooks/task-r
 
 ## Manual model selection through VibeProxy
 
-The `claude` shell launcher refreshes native `/model` entries from VibeProxy at startup using `python3 ~/Documents/repos/jev-model-router/scripts/sync-model-picker.py --quiet`. Existing native Claude entries and user-added custom entries are preserved. Generated entries are marked “Via VibeProxy”. Image-only endpoints and `codex-auto-review` are excluded; catalog advertisement does not prove that every historical model is currently usable. The compatibility profile controls Claude Code client behavior; requests still use the real model ID.
+To refresh native `/model` entries from VibeProxy, run the following command from the repository root before launching Claude Code. A launcher can run it on startup if configured to do so; see the [development guide](../development.md).
 
-For manual control, turn **Main model routing** off in `/router`, then select a model in `/model`. Turn **Main effort routing** off too if you want manual effort control. Enter saves the model as the default; `s` selects it for this session only. The launcher no longer forces Opus/medium over your saved default; explicit `claude --model … --effort …` arguments still work.
+```sh
+python3 scripts/sync-model-picker.py --quiet
+```
 
-Refresh immediately by running the sync script, then restart Claude Code. If the proxy is unavailable, refresh reports an error and retains the existing menu. The initial settings backup is `~/.claude/settings.before-vibeproxy-picker.json`.
+The script preserves native Claude entries and user-added custom entries. Generated entries are marked “Via VibeProxy”. Image-only endpoints and `codex-auto-review` are excluded; catalog advertisement does not prove that every historical model is currently usable. The compatibility profile controls Claude Code client behavior; requests still use the real model ID.
+
+For manual control, turn **Main model routing** off in `/router`, then select a model in `/model`. Turn **Main effort routing** off too if you want manual effort control. Enter saves the model as the default; `s` selects it for this session only. Explicit `claude --model … --effort …` arguments can set launch values. Check any custom launcher for arguments that override saved defaults.
+
+Refresh immediately by running the sync script, then restart Claude Code. If the proxy is unavailable, refresh reports an error and retains the existing menu. The script creates an initial `settings.before-vibeproxy-picker.json` backup in the configured Claude Code settings directory, which defaults to `~/.claude`.
 
 ## Decision output
 

@@ -1,6 +1,6 @@
 # Model catalog
 
-Edit `models.json` to maintain model profiles independently of Jev's classification prompt. `hooks/model-catalog.ts` defines the schema and validates it. This first catalog change does not alter the active router or load a second plugin.
+Edit `models.json` to maintain model profiles independently of Jev's classification prompt. `hooks/model-catalog.ts` defines the schema and validates it. The current Custom routing policy uses catalog checks before applying task preferences; see [task routing](../docs/usage/task-routing.md).
 
 The seed contains six model IDs advertised by the local VibeProxy endpoint on October 30, 2026: three Claude models and three OpenAI models. This is a selected starting set, not an exhaustive inventory. Discovery is a dated observation, not a live availability guarantee.
 
@@ -30,6 +30,6 @@ The selector should first require an enabled model, current availability, and ve
 
 ## Validate
 
-Run `node scripts/smoke.mjs` from the repo root. It runs the original 42 policy tests plus seven catalog tests. Reports include catalog data, code and test fingerprints for comparisons. No API calls are needed for catalog validation.
+Run `node scripts/smoke.mjs` from the repo root. It runs offline policy, catalog, controls, and hook checks. Reports include catalog data, code and test fingerprints for comparisons. No API calls are needed for catalog validation.
 
-The next step is to collect small tool-use evaluations, record quality and allowance estimates, then add the richer classifier and selector. Advertised IDs alone are insufficient to enable cross-provider routing.
+The [v2 specs](../docs/README.md#v2-specification) define the proposed admission and selection contract, with a separate validation plan. Advertised IDs alone are insufficient to enable cross-provider routing.

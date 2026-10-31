@@ -1,8 +1,8 @@
 # Task routing
 
-The local plugin now asks Jev for a task role and an implementation category alongside the original tier, effort and risk questions. All questions use one API request per classified prompt or subagent assignment. This does not classify every tool call or infer a new phase from tool results. Forked subagents keep their inherited model.
+The plugin asks Jev for a task role and an implementation category alongside the original tier, effort and risk questions. All questions use one API request per classified prompt or subagent assignment. This does not classify every tool call or infer a new phase from tool results. Forked subagents keep their inherited model.
 
-## User preferences
+## Default task preferences
 
 | Assignment | Preferred model |
 |---|---|
@@ -31,15 +31,15 @@ Set options under `pluginConfigs.jev-model-router.options` in user settings. Pre
 - `observe` (default): additional questions and debug recommendation logs; the original policy controls model/effort changes. Adding questions may affect the classifier's answers, so observation is not a guarantee of identical legacy predictions.
 - `custom`: apply eligible user preferences. Low-confidence preferred routes and unverified preferred models retain the current model and effort. Unsupported roles use legacy routing. Consequential actions retain the legacy risk escalation.
 
-The original `routeMainModel`, `routeMainEffort` and `routeSubagentModel` options supply initial permissions. `/router` can change them immediately for this session; see `ROUTER-CONTROLS.md`. `classifyTurns` defaults to true for independent per-turn classification/logging even when both main permissions are off. Main-model routing remains off by default. Main orchestration can set medium effort when permitted; `agent.spawn` has no effort control, so it does not apply the orchestration preference there. It logs that limitation instead.
+The original `routeMainModel`, `routeMainEffort` and `routeSubagentModel` options supply initial permissions. `/router` can change them immediately for this session; see [router controls](router-controls.md). `classifyTurns` defaults to true for independent per-turn classification/logging even when both main permissions are off. Main-model routing remains off by default. Main orchestration can set medium effort when permitted; `agent.spawn` has no effort control, so it does not apply the orchestration preference there. It logs that limitation instead.
 
-Model options: `orchestrationModel`, `visualAnalysisModel`, `designLedModel`, `specifiedModel`, `mechanicalModel`, `fileScoutModel`, `simpleAnswerModel`. Each names an exact catalog ID. This setup does not change the installed plugin, shell function, or user settings automatically.
+Model options: `orchestrationModel`, `visualAnalysisModel`, `designLedModel`, `specifiedModel`, `mechanicalModel`, `fileScoutModel`, `simpleAnswerModel`. Each names an exact catalog ID. Editing this checkout does not update a separately installed plugin or configure a shell launcher automatically.
 
 ## Catalog gates
 
 Before a preferred model can be applied, its catalog entry must be enabled, availability must be `verified`, Claude Code compatibility must be `verified`, and tool calling must be true. Orchestration also requires `medium` in its supported reasoning efforts. These checks apply in the hook as well as the standalone recommendation tests.
 
-Four preferred entries now have basic inference/tool compatibility verification: Opus 5.5, Sonnet 5.5, Haiku 5.5 and GPT-6 Astra. The active shell launcher loads this repo through VibeProxy with task routing in apply mode for subagents; the main session remains Opus/medium. A real delegated file-scout check selected Haiku and returned the expected fixture paths. These checks do not establish visual-input quality or broader task quality. Unknown quality and cost ratings are still unknown; the selector does not claim optimal quality or cost.
+The catalog records basic inference/tool compatibility checks for Opus 5.5, Sonnet 5.5, Haiku 5.5 and GPT-6 Astra. See the [catalog guide](../../catalog/README.md) for the tested environment and limits. These checks do not establish visual-input quality or broader task quality. Unknown quality and cost ratings remain unknown; the selector does not claim optimal quality or cost.
 
 Edit `catalog/models.json`, then run:
 
@@ -57,9 +57,9 @@ The generated `catalog/model-data.ts` is required because Claude's hook loader a
 ```sh
 node scripts/smoke.mjs
 node scripts/smoke.mjs --live --tasks
-command claude plugin validate "$HOME/Documents/repos/jev-model-router"
+command claude plugin validate "$MODEL_ROUTER_DIR"
 ```
 
 Live task mode uses 13 fixed prompts and saves reports separately from legacy live runs. Reports contain per-dimension confidence, expected/actual task classification, and proposed user-preference routing. A low-confidence wrong label remains a failed evaluation even when the confidence gate correctly blocks a model change.
 
-Run the local copy using the command in `LOCAL-DEVELOPMENT.md`. The active installed copy remains unchanged until you deliberately switch it.
+Run these commands from the repository root and set `MODEL_ROUTER_DIR` as described in the [development guide](../development.md). Loading this checkout is separate from updating any installed copy.

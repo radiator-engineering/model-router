@@ -4,6 +4,8 @@ A Claude Code mod that uses [TypeSafe’s Jev](https://typesafe.ai/) to choose m
 
 This project started from the Jev model router in [Daniel (San) Ávila’s claude-code-templates](https://github.com/davila7/claude-code-templates/tree/8f1f608e9396ba7e70d73372cabc85c028c2f79d/cli-tool/components/mods/productivity/jev-model-router). It retains the original MIT license. See [Credits](#credits).
 
+The [documentation index](docs/README.md) links current usage, contributor setup, and research. The [v2 specs](docs/v2/product.md) describe the proposed redesign; this README describes the current plugin.
+
 ## How it works
 
 ```text
@@ -48,8 +50,9 @@ These are editable preferences, not benchmark rankings or a measured cost optimi
 Use a Claude Code version with function-hook Mods support. This copy has been validated with **Claude Code 2.1.314**. Python 3 is needed only for model-menu synchronization. Node 23.6+ runs the tests and catalog generator. No package installation is required for this repository.
 
 ```sh
-git clone git@github.com:radiator-engineering/model-router.git "$HOME/Documents/repos/model-router"
-export MODEL_ROUTER_DIR="$HOME/Documents/repos/model-router"
+git clone https://github.com/radiator-engineering/model-router.git
+cd model-router
+export MODEL_ROUTER_DIR="$PWD"
 CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 command claude --plugin-dir "$MODEL_ROUTER_DIR"
 ```
 
@@ -84,7 +87,7 @@ Run `/router` to open the native config screen:
 
 For manual model selection, turn **Main model routing off**, then choose from `/model`. Turn **Main effort routing off** too if you want to control reasoning effort yourself. Enter in `/model` saves a default; `s` selects a model for the current session.
 
-Classification and recommendation logs describe suggestions. The main result log and router status distinguish changes applied to the request from requests left unchanged. See [Router controls](ROUTER-CONTROLS.md) for direct commands and persistence details.
+Classification and recommendation logs describe suggestions. The main result log and router status distinguish changes applied to the request from requests left unchanged. See [Router controls](docs/usage/router-controls.md) for direct commands and persistence details.
 
 ## Customize
 
@@ -115,7 +118,7 @@ command claude plugin validate "$MODEL_ROUTER_DIR"
 
 The smoke runner writes timestamped reports to the ignored `test-results/` directory and compares each run with the previous run of the same mode. Live classification can vary; inspect individual decisions and confidence scores when a fixture fails. These tests do not establish quality on every task or verify every advertised provider model.
 
-See [Local development](LOCAL-DEVELOPMENT.md), [Task routing](TASK-ROUTING.md), and the [catalog guide](catalog/README.md) for more detail.
+See the [development guide](docs/development.md), [task routing](docs/usage/task-routing.md), and the [catalog guide](catalog/README.md) for more detail. Keep workstation notes and unredacted research under ignored `/local/`; public documentation uses portable setup examples.
 
 ## Privacy and cost
 
