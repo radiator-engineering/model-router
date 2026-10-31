@@ -1,5 +1,5 @@
 import {expect,test} from 'claude-code/testing'
-import {registerRouterControls,createRouterControls,parseRouterCommand,routerStatus} from '../hooks/router-controls.ts'
+import {registerRouterControls,createRouterControls,parseRouterCommand,routerStatus,ROUTER_TOGGLES} from '../hooks/router-controls.ts'
 import type {RouterSettings} from '../hooks/router-controls.ts'
 import {register} from '../hooks/jev-model-router.ts'
 const initial:RouterSettings={mode:'apply',mainModel:false,mainEffort:false,subagents:true,classifyTurns:true}
@@ -31,21 +31,33 @@ test('save persists and reset restores original plugin settings',async()=>{
  expect((h.store.get('model-router.defaults.v1') as RouterSettings).subagents).toBe(false)
  await h.run('reset');expect(h.controls.current()).toEqual(initial);expect(h.store.size).toBe(0)
 })
-test('bare /router opens a menu and toggles switches without changing effort routing',async()=>{
- const h=setup();h.choices.push('Routing switches','Main model: off','Defaults and logging','Per-turn classification: on','Done')
+test('bare /router uses the native inline multiselect and applies only submitted toggles',async()=>{
+ const h=setup();h.choices.push('Main model routing: off → on, Per-turn logging: on → off')
  const result=await h.run('')
- expect(h.asks.length).toBe(5);expect(h.controls.current().mainModel).toBe(true)
- expect(h.controls.current().classifyTurns).toBe(false);expect(h.controls.current().mainEffort).toBe(false)
- expect(result.text).toContain('Classifier: Jev')
- for(const ask of h.asks)expect(ask.opts.length<=4).toBe(true)
+ expect(h.asks.length).toBe(1);expect(h.asks[0].opts.multiSelect).toBe(true)
+ expect(h.controls.current().mainModel).toBe(true);expect(h.controls.current().classifyTurns).toBe(false)
+ expect(h.controls.current().mainEffort).toBe(false);expect(h.store.size).toBe(1)
+ expect(result.text).toContain('Saved defaults and exited')
 })
-test('menu supports mode changes, saving defaults and Back',async()=>{
- const h=setup();h.choices.push('Mode','observe','Routing switches','Back','Defaults and logging','Save defaults','Done')
- await h.run('');expect(h.controls.current().mode).toBe('observe');expect(h.store.size).toBe(1)
+test('mode has its own native inline picker and saves only a recognized choice',async()=>{
+ const h=setup();h.choices.push('observe');await h.run('mode')
+ expect(h.controls.current().mode).toBe('observe');expect(h.store.size).toBe(1)
 })
-test('menu dismissal retains prior state and offers direct command fallback',async()=>{
- const h=setup();const result=await h.run('');expect(h.controls.current()).toEqual(initial)
- expect(result.text).toContain('Menu dismissed')
+test('Escape/dismissal discards staged changes and never saves',async()=>{
+ const h=setup();const result=await h.run('')
+ expect(h.controls.current()).toEqual(initial);expect(h.store.size).toBe(0)
+ expect(result.text).toContain('staged changes were not applied')
+})
+test('failed saves and unrecognized free text do not apply settings',async()=>{
+ const h=setup();h.choices.push('Main effort routing: off → on');h.$.store.set=async()=>{throw Error('disk full')}
+ await h.run('');expect(h.controls.current()).toEqual(initial)
+ h.choices.push('something unexpected');await h.run('');expect(h.controls.current()).toEqual(initial)
+})
+test('settings descriptions preserve the native dialog renderer',async()=>{
+ const h=setup();const event:any={component:'AskUserQuestion',props:{questions:[{header:'Router',options:ROUTER_TOGGLES.map(row=>({label:row.label}))}]}}
+ const rewritten=await h.handlers['ui.render'](h.$,event,async(e:any)=>e)
+ for(const [i,row] of ROUTER_TOGGLES.entries())expect(rewritten.props.questions[0].options[i].description).toBe(row.description)
+ expect(h.handlers['ui.message']).toBeUndefined()
 })
 test('malformed commands and plugin-origin mutations cannot change state',async()=>{
  const h=setup();await h.run('main-effort yes');await h.run('mode apply extra');await h.run('main-effort on','plugin')
