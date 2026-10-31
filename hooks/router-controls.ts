@@ -67,11 +67,17 @@ export function registerRouterControls(on:Parameters<Register>[0],controls:Retur
         if(!['off','observe','apply'].includes(chosen))return {text:'Cancelled; settings unchanged.'}
         draft.mode=chosen as RouterSettings['mode']
       } else {
-        const labels=ROUTER_TOGGLES.map(row=>`${row.label}: ${draft[row.key]?'on':'off'} → ${draft[row.key]?'off':'on'}`)
-        const chosen=await $.ui.ask(`Model router · mode ${draft.mode} · classifier Jev\nSelect the settings to toggle. Checked rows are pending changes.\nSpace toggles · Enter on Submit saves and exits · Esc cancels and exits.`,{header:'Router',options:labels,multiSelect:true})
-        const selected=chosen ? chosen.split(',').map(x=>x.trim()) : []
-        if(selected.some(label=>!labels.includes(label)))return {text:'Cancelled; unrecognized selection. Settings unchanged.'}
-        for(const [i,row] of ROUTER_TOGGLES.entries())if(selected.includes(labels[i]))draft[row.key]=!draft[row.key]
+        while(true) {
+          const labels=ROUTER_TOGGLES.map(row=>`${row.label}: ${draft[row.key]?'On':'Off'}`)
+          const chosen=await $.ui.ask(`Model router · mode ${draft.mode} · classifier Jev\nChoose a setting to switch On/Off. Enter selects · Esc cancels and exits.`,{header:'Router',options:labels})
+          const index=labels.indexOf(chosen)
+          if(index<0)return {text:'Cancelled; settings unchanged.'}
+          const row=ROUTER_TOGGLES[index]
+          draft[row.key]=!draft[row.key]
+          const confirmation=await $.ui.ask(`${routerStatus(draft)}\nSave these settings or keep editing.`,{header:'Router save',options:['Save & Exit','Keep editing','Cancel & Exit']})
+          if(confirmation==='Save & Exit')break
+          if(confirmation!=='Keep editing')return {text:'Cancelled; staged changes discarded.'}
+        }
       }
       await $.store.set(STORE_KEY,draft)
       controls.state=draft
@@ -84,9 +90,10 @@ export function registerRouterControls(on:Parameters<Register>[0],controls:Retur
   on('ui.render',async($,e,next)=>{
     if(e.component!=='AskUserQuestion')return next(e)
     const questions=e.props.questions as any[]
-    if(!questions.some(q=>q.header==='Router'||q.header==='Router mode'))return next(e)
+    if(!questions.some(q=>q.header==='Router'||q.header==='Router mode'||q.header==='Router save'))return next(e)
     return next({...e,props:{...e.props,questions:questions.map(q=>{
       if(q.header==='Router')return {...q,options:q.options.map((option:any,i:number)=>({...option,description:ROUTER_TOGGLES[i]?.description ?? option.description}))}
+      if(q.header==='Router save')return {...q,options:q.options.map((option:any)=>({...option,description:option.label==='Save & Exit'?'Apply these values and save them as defaults.':option.label==='Keep editing'?'Return to the settings list with these staged values.':'Discard staged changes and exit.'}))}
       if(q.header==='Router mode')return {...q,options:q.options.map((option:any)=>({...option,description:MODE_DESCRIPTIONS[option.label as keyof typeof MODE_DESCRIPTIONS] ?? option.description}))}
       return q
     })}})

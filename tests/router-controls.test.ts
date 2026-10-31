@@ -31,11 +31,13 @@ test('save persists and reset restores original plugin settings',async()=>{
  expect((h.store.get('model-router.defaults.v1') as RouterSettings).subagents).toBe(false)
  await h.run('reset');expect(h.controls.current()).toEqual(initial);expect(h.store.size).toBe(0)
 })
-test('bare /router uses the native inline multiselect and applies only submitted toggles',async()=>{
- const h=setup();h.choices.push('Main model routing: off → on, Per-turn logging: on → off')
+test('bare /router uses On/Off enums without checkbox semantics and saves explicit confirmation',async()=>{
+ const h=setup();h.choices.push('Main model routing: Off','Keep editing','Per-turn logging: On','Save & Exit')
  const result=await h.run('')
- expect(h.asks.length).toBe(1);expect(h.asks[0].opts.multiSelect).toBe(true)
- expect(h.asks[0].q.endsWith('?')).toBe(false)
+ expect(h.asks.length).toBe(4);expect(h.asks[0].opts.multiSelect).toBeUndefined()
+ expect(h.asks[0].opts.options).toEqual(['Main model routing: Off','Main effort routing: Off','Subagent routing: On','Per-turn logging: On'])
+ expect(h.asks[2].opts.options[0]).toBe('Main model routing: On')
+ expect(h.asks[0].q.includes('→')).toBe(false)
  expect(h.controls.current().mainModel).toBe(true);expect(h.controls.current().classifyTurns).toBe(false)
  expect(h.controls.current().mainEffort).toBe(false);expect(h.store.size).toBe(1)
  expect(result.text).toContain('Saved defaults and exited')
@@ -50,7 +52,7 @@ test('Escape/dismissal discards staged changes and never saves',async()=>{
  expect(result.text).toContain('staged changes were not applied')
 })
 test('failed saves and unrecognized free text do not apply settings',async()=>{
- const h=setup();h.choices.push('Main effort routing: off → on');h.$.store.set=async()=>{throw Error('disk full')}
+ const h=setup();h.choices.push('Main effort routing: Off','Save & Exit');h.$.store.set=async()=>{throw Error('disk full')}
  await h.run('');expect(h.controls.current()).toEqual(initial)
  h.choices.push('something unexpected');await h.run('');expect(h.controls.current()).toEqual(initial)
 })
@@ -89,4 +91,9 @@ test('router commands are never sent to Jev as task prompts',async()=>{
  const $:any={ui:{log:()=>{}},http:{fetch:async()=>{calls++;throw Error('unexpected')}}}
  await handlers['prompt.submit']($,{text:'/router main-effort on'},async(e:any)=>e)
  expect(calls).toBe(0)
+})
+
+test('cancelling enum confirmation discards changes without persistence',async()=>{
+ const h=setup();h.choices.push('Subagent routing: On','Cancel & Exit')
+ await h.run('');expect(h.controls.current()).toEqual(initial);expect(h.store.size).toBe(0)
 })
