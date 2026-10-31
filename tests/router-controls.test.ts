@@ -106,3 +106,15 @@ test('old mode names preserve the selected policy after upgrade',async()=>{
  expect(parseRouterCommand('mode basic')).toEqual({kind:'change',patch:{mode:'basic'}})
  expect(parseRouterCommand('mode apply')).toEqual({kind:'change',patch:{mode:'custom'}})
 })
+
+test('native menu values override stale legacy saved defaults at startup',async()=>{
+ const h=setup({...initial,mainModel:false,mainEffort:false})
+ h.$.config={list:async()=>[
+  {key:'jev-model-router.routeMainModel',provider:{plugin:'jev-model-router@inline'},value:true},
+  {key:'jev-model-router.routeMainEffort',provider:{plugin:'jev-model-router@inline'},value:true},
+ ]}
+ await h.handlers['session.start'](h.$,{},async()=>({}))
+ expect(h.controls.current().mainModel).toBe(true)
+ expect(h.controls.current().mainEffort).toBe(true)
+ expect((await h.run('status')).text).toContain('Main model routing: on')
+})

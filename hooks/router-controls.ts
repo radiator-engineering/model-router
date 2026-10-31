@@ -52,6 +52,17 @@ export function registerRouterControls(on:Parameters<Register>[0],controls:Retur
       const saved=await $.store.get(STORE_KEY)
       if(validSettings(saved)) controls.state={mode:normalizeRouterMode(saved.mode),mainModel:saved.mainModel,mainEffort:saved.mainEffort,subagents:saved.subagents,classifyTurns:saved.classifyTurns}
     } catch { $.ui.log('[router] Could not read saved defaults; using plugin options.') }
+    // Native config is authoritative. Older defaults must never override what
+    // the user sees in /router (inline plugin settings have their own identity).
+    try {
+      const rows=await $.config.list()
+      for(const row of rows) {
+        const field=routerField(row.key,row.provider?.plugin)
+        if(!field)continue
+        if(field==='mode' && ['basic','custom','observe','off','apply'].includes(row.value as string)) controls.state.mode=normalizeRouterMode(row.value)
+        else if(field!=='mode' && typeof row.value==='boolean') controls.state={...controls.state,[field]:row.value}
+      }
+    } catch { $.ui.log('[router] Could not read native config; using startup defaults.') }
     await $.command.register({name:'router',description:'Model routing menu and session controls',argumentHint:'[status | mode | main-model | main-effort | subagents | classify-turns | save | reset]'})
     return next(e)
   })
