@@ -6,8 +6,8 @@ export default {
       "id": "claude-haiku-5-5",
       "provider": "anthropic",
       "enabled": true,
-      "availability": "advertised",
-      "claudeCodeCompatibility": "unverified",
+      "availability": "verified",
+      "claudeCodeCompatibility": "verified",
       "capabilities": {
         "qualityByUseCase": {
           "implementation": null,
@@ -18,8 +18,10 @@ export default {
         },
         "maxComplexity": null,
         "contextWindowTokens": null,
-        "toolCalling": null,
-        "reasoningEfforts": []
+        "toolCalling": true,
+        "reasoningEfforts": [
+          "medium"
+        ]
       },
       "cost": {
         "allowanceWeight": null,
@@ -27,17 +29,17 @@ export default {
         "outputUsdPerMillion": null
       },
       "evidence": {
-        "source": "unmeasured",
+        "source": "evaluation",
         "checkedAt": "2026-10-30",
-        "notes": "ID observed in local VibeProxy /v1/models. Inference, harness compatibility, quality and cost have not been evaluated."
+        "notes": "Claude Code 2.1.314 through local VibeProxy: medium effort request completed a Bash printf tool call and returned its marker; local router loaded. This is a basic text/tool compatibility check, not a visual-input, quality, capacity or cost benchmark."
       }
     },
     {
       "id": "claude-sonnet-5-5",
       "provider": "anthropic",
       "enabled": true,
-      "availability": "advertised",
-      "claudeCodeCompatibility": "unverified",
+      "availability": "verified",
+      "claudeCodeCompatibility": "verified",
       "capabilities": {
         "qualityByUseCase": {
           "implementation": null,
@@ -48,8 +50,10 @@ export default {
         },
         "maxComplexity": null,
         "contextWindowTokens": null,
-        "toolCalling": null,
-        "reasoningEfforts": []
+        "toolCalling": true,
+        "reasoningEfforts": [
+          "medium"
+        ]
       },
       "cost": {
         "allowanceWeight": null,
@@ -57,17 +61,17 @@ export default {
         "outputUsdPerMillion": null
       },
       "evidence": {
-        "source": "unmeasured",
+        "source": "evaluation",
         "checkedAt": "2026-10-30",
-        "notes": "ID observed in local VibeProxy /v1/models. Inference, harness compatibility, quality and cost have not been evaluated."
+        "notes": "Claude Code 2.1.314 through local VibeProxy: medium effort request completed a Bash printf tool call and returned its marker; local router loaded. This is a basic text/tool compatibility check, not a visual-input, quality, capacity or cost benchmark."
       }
     },
     {
       "id": "claude-opus-5-5",
       "provider": "anthropic",
       "enabled": true,
-      "availability": "advertised",
-      "claudeCodeCompatibility": "unverified",
+      "availability": "verified",
+      "claudeCodeCompatibility": "verified",
       "capabilities": {
         "qualityByUseCase": {
           "implementation": null,
@@ -78,8 +82,10 @@ export default {
         },
         "maxComplexity": null,
         "contextWindowTokens": null,
-        "toolCalling": null,
-        "reasoningEfforts": []
+        "toolCalling": true,
+        "reasoningEfforts": [
+          "medium"
+        ]
       },
       "cost": {
         "allowanceWeight": null,
@@ -87,9 +93,9 @@ export default {
         "outputUsdPerMillion": null
       },
       "evidence": {
-        "source": "unmeasured",
+        "source": "evaluation",
         "checkedAt": "2026-10-30",
-        "notes": "ID observed in local VibeProxy /v1/models. Inference, harness compatibility, quality and cost have not been evaluated."
+        "notes": "Claude Code 2.1.314 through local VibeProxy: medium effort request completed a Bash printf tool call and returned its marker; local router loaded. This is a basic text/tool compatibility check, not a visual-input, quality, capacity or cost benchmark."
       }
     },
     {
@@ -156,8 +162,8 @@ export default {
       "id": "gpt-6-astra",
       "provider": "openai",
       "enabled": true,
-      "availability": "advertised",
-      "claudeCodeCompatibility": "unverified",
+      "availability": "verified",
+      "claudeCodeCompatibility": "verified",
       "capabilities": {
         "qualityByUseCase": {
           "implementation": null,
@@ -168,8 +174,10 @@ export default {
         },
         "maxComplexity": null,
         "contextWindowTokens": null,
-        "toolCalling": null,
-        "reasoningEfforts": []
+        "toolCalling": true,
+        "reasoningEfforts": [
+          "medium"
+        ]
       },
       "cost": {
         "allowanceWeight": null,
@@ -177,9 +185,9 @@ export default {
         "outputUsdPerMillion": null
       },
       "evidence": {
-        "source": "unmeasured",
+        "source": "evaluation",
         "checkedAt": "2026-10-30",
-        "notes": "ID observed in local VibeProxy /v1/models. Inference, harness compatibility, quality and cost have not been evaluated."
+        "notes": "Claude Code 2.1.314 through local VibeProxy: medium effort request completed a Bash printf tool call and returned its marker; local router loaded. This is a basic text/tool compatibility check, not a visual-input, quality, capacity or cost benchmark."
       }
     }
   ]

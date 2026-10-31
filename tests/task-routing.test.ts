@@ -5,7 +5,7 @@ import {taskQuestions,readTaskClassification,recommendTask,DEFAULT_PREFERENCES} 
 import type {TaskClassification} from '../hooks/task-routing.ts'
 import {requestBody,readDecision} from '../hooks/policy.ts'
 import {register} from '../hooks/jev-model-router.ts'
-const catalog=()=>parseCatalog(JSON.parse(readFileSync(new URL('../catalog/models.json',import.meta.url),'utf8')))
+const catalog=()=>{const c=parseCatalog(JSON.parse(readFileSync(new URL('../catalog/models.json',import.meta.url),'utf8')));for(const m of c.models){m.availability='advertised';m.claudeCodeCompatibility='unverified'}return c}
 const task=(role:TaskClassification['role'],implementationCategory:TaskClassification['implementationCategory']='not-applicable'):TaskClassification=>({role,implementationCategory,roleConfidence:.95,categoryConfidence:.95})
 const verified=()=>{const c=catalog();for(const m of c.models){m.availability='verified';m.claudeCodeCompatibility='verified';m.capabilities.toolCalling=true;m.capabilities.reasoningEfforts=['medium']}return c}
 const answers=(role='implementation',category='specified')=>({tier:{choice:'fast',confidence:.99},effort:{score:0,confidence:.99},risky:{noul:.01},taskRole:{choice:role,confidence:.95},implementationCategory:{choice:category,confidence:.95}})
@@ -80,7 +80,7 @@ test('observe hooks collect new fields but keep legacy routing',async()=>{
 })
 test('apply hooks keep current model when preferred catalog entry is unverified',async()=>{
  const h=harness('apply');const handlers:any={}
- register(((n:string,f:any)=>handlers[n]=f) as any,{taskRoutingMode:'apply',typesafeApiKey:'fake',routeMainModel:true} as any)
+ register(((n:string,f:any)=>handlers[n]=f) as any,{taskRoutingMode:'apply',typesafeApiKey:'fake',routeMainModel:true,specifiedModel:'gpt-6.1-terra'} as any)
  await handlers['prompt.submit'](h.$,{text:'Implement supplied spec'},async(e:any)=>e)
  let result:any
  for await(const _ of handlers['turn.step'](h.$,{model:'sonnet',effort:'medium',index:0,turnId:'a'},async function*(e:any){result=e;yield e})){}

@@ -38,7 +38,7 @@ Model options: `orchestrationModel`, `visualAnalysisModel`, `designLedModel`, `s
 
 Before a preferred model can be applied, its catalog entry must be enabled, availability must be `verified`, Claude Code compatibility must be `verified`, and tool calling must be true. Orchestration also requires `medium` in its supported reasoning efforts. These checks apply in the hook as well as the standalone recommendation tests.
 
-Current catalog entries remain unverified, so this version can show preferences but cannot yet apply them. Verify real requests/tool use before updating those fields. Unknown quality and cost ratings are still unknown; the selector does not claim optimal quality or cost.
+Four preferred entries now have basic inference/tool compatibility verification: Opus 5.5, Sonnet 5.5, Haiku 5.5 and GPT-6 Astra. The active shell launcher loads this repo through VibeProxy with task routing in apply mode for subagents; the main session remains Opus/medium. A real delegated file-scout check selected Haiku and returned the expected fixture paths. These checks do not establish visual-input quality or broader task quality. Unknown quality and cost ratings are still unknown; the selector does not claim optimal quality or cost.
 
 Edit `catalog/models.json`, then run:
 

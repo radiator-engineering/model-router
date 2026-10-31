@@ -11,7 +11,7 @@ CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 command claude \
   --plugin-dir "$HOME/Documents/repos/jev-model-router"
 ```
 
-`command claude` bypasses the existing shell function so it does not also load the installed copy. Your normal `claude` command still uses `~/.claude/mods/jev-model-router` until you choose to change it.
+`command claude` bypasses the existing shell function so it does not also load the installed copy. Your interactive `claude` shell function was connected to this local repo and VibeProxy on October 30, 2026. It starts Opus 5.5 at medium effort. `command claude` bypasses that shell function; the proxy environment in the example below is therefore explicit.
 
 The local copy has the same plugin name, so it reads the existing `pluginConfigs.jev-model-router.options` in `~/.claude/settings.json`. Keep API keys in user settings; do not commit them here. Restart the test session after changing plugin code.
 

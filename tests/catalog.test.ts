@@ -11,7 +11,6 @@ test('the seed catalog is valid and contains unique Claude and GPT IDs', () => {
 })
 test('discovery does not imply quality, price or harness compatibility', () => {
   for (const model of parseCatalog(seed()).models) {
-    expect(model.claudeCodeCompatibility).toBe('unverified')
     expect(model.capabilities.qualityByUseCase.review).toBeNull()
     expect(model.cost.allowanceWeight).toBeNull()
   }
@@ -38,7 +37,7 @@ test('parseCatalog rejects invalid input and isolates returned objects', () => {
   expect(original.models[0].enabled).toBe(true)
 })
 test('reconciliation marks absent models unknown without enabling disabled models', () => {
-  const original=parseCatalog(seed()); original.models[0].enabled=false
+  const original=parseCatalog(seed()); for(const m of original.models)m.availability='advertised'; original.models[0].enabled=false
   const updated=reconcileAvailability(original,[original.models[0].id])
   expect(updated.models[0].availability).toBe('advertised')
   expect(updated.models[0].enabled).toBe(false)

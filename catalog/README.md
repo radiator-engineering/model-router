@@ -20,7 +20,7 @@ The seed contains six model IDs advertised by the local VibeProxy endpoint on Oc
 | `inputUsdPerMillion`, `outputUsdPerMillion` | Actual API prices when relevant. Subscription access does not imply a zero API price. |
 | `evidence` | Source, date, and notes explaining ratings and observations. |
 
-All seed capability ratings, limits and costs are unknown. No model rankings are inferred from model names. The checked date records discovery; it does not claim that inference was tested.
+Quality ratings, context limits and costs remain unknown. Opus 5.5, Sonnet 5.5, Haiku 5.5 and GPT-6 Astra passed a basic Claude Code/VibeProxy text-and-tool smoke test at medium effort on October 30, 2026. Their evidence notes record that narrow verification. Visual-input quality and broader task performance remain untested. No model rankings are inferred from model names.
 
 ## Future selector contract
 
