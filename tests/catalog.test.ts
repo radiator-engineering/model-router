@@ -1,3 +1,4 @@
+import generated from '../catalog/model-data.ts'
 import {expect, test} from 'claude-code/testing'
 import {parseCatalog, validateCatalog, reconcileAvailability} from '../hooks/model-catalog.ts'
 import {readFileSync} from 'node:fs'
@@ -49,3 +50,5 @@ test('reconciliation preserves verified status only for currently advertised IDs
   expect(reconcileAvailability(c,[c.models[0].id]).models[0].availability).toBe('verified')
   expect(reconcileAvailability(c,[]).models[0].availability).toBe('unknown')
 })
+
+test('generated hook catalog matches the editable JSON source',()=>{expect(generated).toEqual(seed())})

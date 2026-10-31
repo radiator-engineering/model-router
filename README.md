@@ -1,5 +1,7 @@
 # jev-model-router
 
+Local version 0.5 adds task-role and implementation-category preferences. See [TASK-ROUTING.md](TASK-ROUTING.md) for observe/apply controls and [LOCAL-DEVELOPMENT.md](LOCAL-DEVELOPMENT.md) for running this copy. The upstream documentation below describes the original tier router.
+
 Picks the model and the reasoning effort each task runs with, using [Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev), TypeSafe's System One decision model: unstructured state in, a typed choice with a probability distribution out, no free-form text.
 
 Two backends, chosen by whichever key is set:

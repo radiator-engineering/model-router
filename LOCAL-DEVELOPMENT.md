@@ -82,3 +82,7 @@ Use matching fixtures, question definitions and model versions for controlled co
 ## Model catalog
 
 `catalog/models.json` contains editable model profiles. See `catalog/README.md` for field meanings and the future eligibility rules. This catalog is not yet wired into live routing.
+
+## Task-role routing
+
+See `TASK-ROUTING.md` for implementation categories, user model preferences, observe/apply modes and verification gates. Run `node scripts/smoke.mjs --live --tasks` to evaluate the expanded classifier. After editing the catalog, run `node scripts/build-catalog.mjs` to rebuild the hook-compatible data module.

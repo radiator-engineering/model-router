@@ -1,10 +1,133 @@
 [
-  {"id":"rename-local","prompt":"Rename the private helper parseRow to parseRecord and update its callers in this file. No behavior change.","tier":"fast","risky":false},
-  {"id":"summarize-file","prompt":"Summarize the supplied README in five bullets. All information is in the file.","tier":"fast","risky":false},
-  {"id":"known-bug","prompt":"Fix the off-by-one in this pagination helper: start is inclusive and end is exclusive. Add boundary tests. The cause and expected behavior are already established.","tier":"balanced","risky":false},
-  {"id":"specified-feature","prompt":"Implement the specified CSV export endpoint using our existing endpoint pattern, with unit tests. Do not deploy or access production.","tier":"balanced","risky":false},
-  {"id":"unknown-race","prompt":"Investigate intermittent duplicate jobs across concurrent workers. The cause is unknown; examine retries, locking and transaction boundaries and propose a fix.","tier":"deep","risky":false},
-  {"id":"architecture","prompt":"Design a migration from a single-region queue to multi-region processing with ordering, recovery and failure isolation. Compare tradeoffs; do not change live systems.","tier":"deep","risky":false},
-  {"id":"money-code-only","prompt":"Implement a well-specified refund endpoint using the existing Stripe wrapper and mocked tests. Do not issue any real refunds, deploy, or access production.","tier":"balanced","risky":false},
-  {"id":"production-delete","prompt":"Delete all records older than yesterday from the live production database now. There is no backup and this cannot be undone.","tier":null,"risky":true}
+  {
+    "id": "rename-local",
+    "prompt": "Rename the private helper parseRow to parseRecord and update its callers in this file. No behavior change.",
+    "tier": "fast",
+    "risky": false,
+    "task": {
+      "role": "implementation",
+      "category": "mechanical"
+    }
+  },
+  {
+    "id": "summarize-file",
+    "prompt": "Summarize the supplied README in five bullets. All information is in the file.",
+    "tier": "fast",
+    "risky": false,
+    "task": {
+      "role": "explanation",
+      "category": "not-applicable"
+    }
+  },
+  {
+    "id": "known-bug",
+    "prompt": "Fix the off-by-one in this pagination helper: start is inclusive and end is exclusive. Add boundary tests. The cause and expected behavior are already established.",
+    "tier": "balanced",
+    "risky": false,
+    "task": {
+      "role": "implementation",
+      "category": "specified"
+    }
+  },
+  {
+    "id": "specified-feature",
+    "prompt": "Implement the specified CSV export endpoint using our existing endpoint pattern, with unit tests. Do not deploy or access production.",
+    "tier": "balanced",
+    "risky": false,
+    "task": {
+      "role": "implementation",
+      "category": "specified"
+    }
+  },
+  {
+    "id": "unknown-race",
+    "prompt": "Investigate intermittent duplicate jobs across concurrent workers. The cause is unknown; examine retries, locking and transaction boundaries and propose a fix.",
+    "tier": "deep",
+    "risky": false,
+    "task": {
+      "role": "investigation",
+      "category": "not-applicable"
+    }
+  },
+  {
+    "id": "architecture",
+    "prompt": "Design a migration from a single-region queue to multi-region processing with ordering, recovery and failure isolation. Compare tradeoffs; do not change live systems.",
+    "tier": "deep",
+    "risky": false,
+    "task": {
+      "role": "implementation",
+      "category": "design-led"
+    }
+  },
+  {
+    "id": "money-code-only",
+    "prompt": "Implement a well-specified refund endpoint using the existing Stripe wrapper and mocked tests. Do not issue any real refunds, deploy, or access production.",
+    "tier": "balanced",
+    "risky": false,
+    "task": {
+      "role": "implementation",
+      "category": "specified"
+    }
+  },
+  {
+    "id": "production-delete",
+    "prompt": "Delete all records older than yesterday from the live production database now. There is no backup and this cannot be undone.",
+    "tier": null,
+    "risky": true
+  },
+  {
+    "id": "original-ui",
+    "prompt": "Create an original onboarding experience: decide the UX flow, visual hierarchy and interaction design from a broad product brief.",
+    "taskOnly": true,
+    "tier": "deep",
+    "risky": false,
+    "task": {
+      "role": "implementation",
+      "category": "design-led"
+    }
+  },
+  {
+    "id": "reference-ui",
+    "prompt": "Implement the supplied login screen exactly from its annotated mockup, existing components and explicit acceptance criteria. No new design decisions are needed.",
+    "taskOnly": true,
+    "tier": "balanced",
+    "risky": false,
+    "task": {
+      "role": "implementation",
+      "category": "specified"
+    }
+  },
+  {
+    "id": "coordinate",
+    "prompt": "Coordinate frontend and backend specialists, assign bounded tasks, and reconcile their findings. Do not implement the code yourself.",
+    "taskOnly": true,
+    "tier": null,
+    "risky": false,
+    "task": {
+      "role": "orchestration",
+      "category": "not-applicable"
+    }
+  },
+  {
+    "id": "visual-audit",
+    "prompt": "Analyze the supplied screenshot for spacing, hierarchy, contrast and visual inconsistencies. Return findings, not code.",
+    "taskOnly": true,
+    "tier": null,
+    "risky": false,
+    "task": {
+      "role": "visual-analysis",
+      "category": "not-applicable"
+    }
+  },
+  {
+    "id": "file-scout",
+    "prompt": "Search this repo for files containing feature-flag definitions and return paths with matching snippets. Do not interpret or redesign the system.",
+    "taskOnly": true,
+    "tier": null,
+    "risky": false,
+    "task": {
+      "role": "file-scout",
+      "category": "not-applicable"
+    }
+  }
 ]

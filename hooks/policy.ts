@@ -1,3 +1,5 @@
+import {taskQuestions, readTaskClassification} from './task-routing.ts'
+import type {TaskClassification} from './task-routing.ts'
 /**
  * jev-model-router — pure decision logic.
  *
@@ -30,6 +32,7 @@ export interface Tiers {
 }
 
 export interface Decision {
+  task?: TaskClassification | null
   tier: Tier
   /** Confidence in the tier, or null when the backend reported none. */
   confidence: number | null
@@ -135,11 +138,13 @@ export function requestBody(
   provider: Provider,
   state: Record<string, unknown>,
   model: string,
+  includeTasks = false,
 ): string {
+  const selectedQuestions = includeTasks ? {...questions(provider), ...taskQuestions()} : questions(provider)
   const body =
     provider === 'typesafe'
-      ? { model, state, questions: questions(provider) }
-      : { state, questions: questions(provider) }
+      ? { model, state, questions: selectedQuestions }
+      : { state, questions: selectedQuestions }
   return JSON.stringify(body)
 }
 
@@ -199,6 +204,7 @@ export function readDecision(responseText: string): Decision | null {
         : null
 
   return {
+    ...(answers.taskRole || answers.implementationCategory ? {task:readTaskClassification(answers)} : {}),
     tier: tierAnswer.choice,
     confidence: confidenceOf(tierAnswer),
     effort: typeof effortAnswer?.score === 'number' ? effortAnswer.score : null,

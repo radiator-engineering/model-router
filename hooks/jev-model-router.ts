@@ -1,3 +1,6 @@
+import catalogData from '../catalog/model-data.ts'
+import {parseCatalog} from './model-catalog.ts'
+import {recommendTask, DEFAULT_PREFERENCES} from './task-routing.ts'
 /**
  * jev-model-router — Claude Mod
  *
@@ -95,6 +98,19 @@ export const register: Register = (on, options) => {
   // built-in classifier, which is silent; say so once, when a hook first runs.
   let unusableReported = forced === 'auto' || forced === 'builtin' || active !== null
 
+  const taskMode = text('taskRoutingMode', 'observe')
+  const taskEnabled = taskMode === 'observe' || taskMode === 'apply'
+  const catalog = parseCatalog(catalogData)
+  const taskThreshold = Math.min(1, Math.max(0, number('taskMinConfidence', 0.8)))
+  const preferences = {
+    orchestration: text('orchestrationModel', DEFAULT_PREFERENCES.orchestration),
+    visualAnalysis: text('visualAnalysisModel', DEFAULT_PREFERENCES.visualAnalysis),
+    designLed: text('designLedModel', DEFAULT_PREFERENCES.designLed),
+    specified: text('specifiedModel', DEFAULT_PREFERENCES.specified),
+    mechanical: text('mechanicalModel', DEFAULT_PREFERENCES.mechanical),
+    fileScout: text('fileScoutModel', DEFAULT_PREFERENCES.fileScout),
+  }
+  const recommendation = (decision: Decision | null) => recommendTask(decision?.task ?? null, catalog, preferences, taskThreshold, (decision?.risky ?? 0) > 0.7)
   const timeoutMs = number('timeoutMs', 800)
   const routeSubagentModel = flag('routeSubagentModel', true)
   const routeMainEffort = flag('routeMainEffort', true)
@@ -169,7 +185,7 @@ export const register: Register = (on, options) => {
           $.http.fetch(url, {
             method: 'POST',
             headers: requestHeaders(active, apiKey, modelId),
-            body: requestBody(active, { prompt: e.text }, modelId),
+            body: requestBody(active, { prompt: e.text }, modelId, taskEnabled),
           }),
           $.clock.sleep(timeoutMs),
         ])
@@ -220,6 +236,17 @@ export const register: Register = (on, options) => {
 
     const decision = pending.take()
     const routing = route(decision, { model: e.model, effort: e.effort }, policy)
+    const task = recommendation(decision)
+    if (taskEnabled && logDecisions) $.ui.log(`[jev-model-router] task ${taskMode}: ${decision?.task?.role ?? 'unknown'}/${decision?.task?.implementationCategory ?? 'unknown'} → ${task.preferredModel ?? 'legacy'}; ${task.reason}`)
+    if (taskMode === 'apply' && task.preferredModel && !task.model && (decision?.risky ?? 0) <= 0.7) {
+      routing.model = null; routing.effort = null; routing.reason = task.reason
+    }
+    if (taskMode === 'apply' && task.model) {
+      routing.model = task.model === e.model ? null : task.model
+      // Keep the user's established effort for other roles; orchestration is medium.
+      routing.effort = task.effort
+      routing.reason = task.reason
+    }
     const change: { model?: string; effort?: Effort } = {}
     // The main loop's `model` is sent to the API as written, so an alias
     // becomes its id here; a subagent's (agent.spawn) may stay an alias.
@@ -290,6 +317,7 @@ export const register: Register = (on, options) => {
               active,
               { prompt: e.prompt, description: e.description, agentType: e.subagentType },
               modelId,
+              taskEnabled,
             ),
           }),
           $.clock.sleep(timeoutMs),
@@ -326,7 +354,18 @@ export const register: Register = (on, options) => {
     // would inherit the parent's, so that is what a change is measured from.
     // The Agent tool takes no effort, so only the model is ours to set here.
     const current = e.model ?? e.parentModel
-    const { model, reason } = route(decision, { model: current }, policy)
+    const routing = route(decision, { model: current }, policy)
+    const task = recommendation(decision)
+    if (taskEnabled && logDecisions) $.ui.log(`[jev-model-router] task ${taskMode}: ${decision?.task?.role ?? 'unknown'}/${decision?.task?.implementationCategory ?? 'unknown'} → ${task.preferredModel ?? 'legacy'}; ${task.reason}`)
+    // agent.spawn has no effort control: do not claim medium orchestration here.
+    if (taskMode === 'apply' && task.preferredModel && (!task.model || task.effort) && (decision?.risky ?? 0) <= 0.7) {
+      routing.model = null; routing.reason = task.effort ? 'agent.spawn cannot enforce orchestration effort; retain current model' : task.reason
+    }
+    if (taskMode === 'apply' && task.model && !task.effort) {
+      routing.model = task.model === current ? null : task.model
+      routing.reason = task.reason
+    }
+    const {model, reason} = routing
     if (!model) {
       if (logDecisions) $.ui.log(`[jev-model-router] ${e.subagentType}: ${reason}`)
       return next(e)

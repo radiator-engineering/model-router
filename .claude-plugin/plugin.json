@@ -1,6 +1,6 @@
 {
   "name": "jev-model-router",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "Picks the model and the reasoning effort for each task with TypeSafe's Jev, a System One decision model reached either through TypeSafe's own API or the Vercel AI Gateway. Routes subagent models at agent.spawn and the main loop's effort and model at turn.step, in both directions, falling back to the engine's built-in classifier when no key is set.",
   "author": {
     "name": "claude-code-templates",
@@ -124,6 +124,59 @@
       "title": "Log decisions",
       "description": "Write each routing decision to the session log",
       "default": true
+    },
+    "taskRoutingMode": {
+      "type": "string",
+      "title": "Task routing mode",
+      "description": "Observe logs user-preference recommendations; apply uses verified catalog entries; off keeps the original classifier.",
+      "default": "observe",
+      "options": [
+        "off",
+        "observe",
+        "apply"
+      ]
+    },
+    "taskMinConfidence": {
+      "type": "number",
+      "title": "Task classification confidence",
+      "description": "Minimum confidence for applying a task-role preference",
+      "default": 0.8
+    },
+    "orchestrationModel": {
+      "type": "string",
+      "title": "orchestrationModel",
+      "description": "Preferred catalog model ID for this role or implementation category",
+      "default": "claude-opus-5-5"
+    },
+    "visualAnalysisModel": {
+      "type": "string",
+      "title": "visualAnalysisModel",
+      "description": "Preferred catalog model ID for this role or implementation category",
+      "default": "gpt-6-astra"
+    },
+    "designLedModel": {
+      "type": "string",
+      "title": "designLedModel",
+      "description": "Preferred catalog model ID for this role or implementation category",
+      "default": "claude-opus-5-5"
+    },
+    "specifiedModel": {
+      "type": "string",
+      "title": "specifiedModel",
+      "description": "Preferred catalog model ID for this role or implementation category",
+      "default": "claude-sonnet-5-5"
+    },
+    "mechanicalModel": {
+      "type": "string",
+      "title": "mechanicalModel",
+      "description": "Preferred catalog model ID for this role or implementation category",
+      "default": "claude-haiku-5-5"
+    },
+    "fileScoutModel": {
+      "type": "string",
+      "title": "fileScoutModel",
+      "description": "Preferred catalog model ID for this role or implementation category",
+      "default": "claude-haiku-5-5"
     }
   }
 }
