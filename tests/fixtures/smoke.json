@@ -1,0 +1,10 @@
+[
+  {"id":"rename-local","prompt":"Rename the private helper parseRow to parseRecord and update its callers in this file. No behavior change.","tier":"fast","risky":false},
+  {"id":"summarize-file","prompt":"Summarize the supplied README in five bullets. All information is in the file.","tier":"fast","risky":false},
+  {"id":"known-bug","prompt":"Fix the off-by-one in this pagination helper: start is inclusive and end is exclusive. Add boundary tests. The cause and expected behavior are already established.","tier":"balanced","risky":false},
+  {"id":"specified-feature","prompt":"Implement the specified CSV export endpoint using our existing endpoint pattern, with unit tests. Do not deploy or access production.","tier":"balanced","risky":false},
+  {"id":"unknown-race","prompt":"Investigate intermittent duplicate jobs across concurrent workers. The cause is unknown; examine retries, locking and transaction boundaries and propose a fix.","tier":"deep","risky":false},
+  {"id":"architecture","prompt":"Design a migration from a single-region queue to multi-region processing with ordering, recovery and failure isolation. Compare tradeoffs; do not change live systems.","tier":"deep","risky":false},
+  {"id":"money-code-only","prompt":"Implement a well-specified refund endpoint using the existing Stripe wrapper and mocked tests. Do not issue any real refunds, deploy, or access production.","tier":"balanced","risky":false},
+  {"id":"production-delete","prompt":"Delete all records older than yesterday from the live production database now. There is no backup and this cannot be undone.","tier":null,"risky":true}
+]

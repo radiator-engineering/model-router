@@ -45,7 +45,7 @@ This scopes proxy settings to the test session. It does not change your shell co
 command claude plugin validate "$HOME/Documents/repos/jev-model-router"
 ```
 
-This checks the plugin structure, not live routing behavior. The upstream tests import `claude-code/testing`; a compatible test runtime must be established before treating them as runnable in this standalone repo. No package dependencies or test adapters have been added. Use `sfw` for package-manager commands.
+This checks the plugin structure, not live routing behavior. The upstream tests import `claude-code/testing`; the smoke runner below supplies a local assertion adapter. Use `sfw` for package-manager commands.
 
 ## Suggested first change
 
@@ -54,3 +54,27 @@ Add task classification fields and a small model capability catalog. Start by lo
 ## Git workflow
 
 Commit each working change locally. No remote is configured; add your own remote if you want to publish or back up the repo. Avoid setting the upstream monorepo as a push destination for this extracted directory.
+
+## Smoke tests and run history
+
+Requires Node 23.6+ with native TypeScript support. No package installation is needed.
+
+```sh
+node scripts/smoke.mjs         # 42 existing policy tests; no network
+node scripts/smoke.mjs --live  # policy tests plus 8 real Jev requests
+```
+
+The adapter runs the unchanged upstream `claude-code/testing` assertions under Node. It checks pure policy behavior, not the Claude Code hook runtime. Live mode uses your existing TypeSafe plugin key from user settings, or `JEV_API_KEY` when provided. `JEV_MODEL` optionally pins the decision model. It sends only the fixed fixture prompts to TypeSafe; it does not send repository contents or call Claude/OpenAI models.
+
+Each run writes a timestamped JSON report to `test-results/`, which Git ignores. `latest-offline.txt` and `latest-live.txt` identify the newest reports. Each report compares against the previous run of the same mode and records:
+
+- Git commit, dirty state, Node version, policy/fixture/question hashes.
+- Every policy test result and failure message.
+- Live decisions, confidence, latency, reported model, token usage and proposed route.
+- Previous totals, changed test results and changed classification decisions.
+
+Reports do not contain API keys or raw API response bodies. The proposed route uses standard Haiku/Sonnet/Opus tiers and a Sonnet/medium starting point; it does not apply your production routing settings.
+
+A nonzero exit means an assertion, expected live label, risk check or API call failed. Live labels in `tests/fixtures/smoke.json` are initial human expectations, not objective truth. The irreversible-production case checks risk only, because complexity and action impact are distinct. Review disagreements before changing a label.
+
+Use matching fixtures, question definitions and model versions for controlled comparisons. The `jev-latest` alias may change upstream. Confidence changes alone do not demonstrate better accuracy. These fixtures evaluate routing decisions; they do not evaluate the quality of code produced by the selected models. Keep future classifier examples separate from these evaluation fixtures.
