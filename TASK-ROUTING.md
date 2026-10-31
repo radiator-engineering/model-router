@@ -1,4 +1,4 @@
-# Task routing, version 0.6
+# Task routing
 
 The local plugin now asks Jev for a task role and an implementation category alongside the original tier, effort and risk questions. All questions use one API request per classified prompt or subagent assignment. This does not classify every tool call or infer a new phase from tool results. Forked subagents keep their inherited model.
 
@@ -12,6 +12,7 @@ The local plugin now asks Jev for a task role and an implementation category alo
 | Specified implementation with clear contracts and references | Sonnet 5.5 |
 | Mechanical edits with an exact prescribed change and predetermined checks | Haiku 5.5 |
 | File scouting that returns paths/snippets without system interpretation | Haiku 5.5 |
+| Simple answers: spelling, small literal counts, straightforward stable facts | Haiku 5.5 |
 
 Investigation, review and explanation retain the original routing policy until preferences are defined. Astra is the visual-analysis preference; frontend code implementation by Astra is not assumed verified. Preferences are user choices, not benchmark rankings or a cost optimizer.
 
@@ -26,13 +27,13 @@ Set options under `pluginConfigs.jev-model-router.options` in user settings. Pre
 }
 ```
 
-- `off`: original questions and routing.
+- `basic`: original questions and routing.
 - `observe` (default): additional questions and recommendation logs; the original policy controls model/effort changes. Adding questions may affect the classifier's answers, so observation is not a guarantee of identical legacy predictions.
-- `apply`: apply eligible user preferences. Low-confidence preferred routes and unverified preferred models retain the current model and effort. Unsupported roles use legacy routing. Consequential actions retain the legacy risk escalation.
+- `custom`: apply eligible user preferences. Low-confidence preferred routes and unverified preferred models retain the current model and effort. Unsupported roles use legacy routing. Consequential actions retain the legacy risk escalation.
 
 The original `routeMainModel`, `routeMainEffort` and `routeSubagentModel` options supply initial permissions. `/router` can change them immediately for this session; see `ROUTER-CONTROLS.md`. `classifyTurns` defaults to true for independent per-turn classification/logging even when both main permissions are off. Main-model routing remains off by default. Main orchestration can set medium effort when permitted; `agent.spawn` has no effort control, so it does not apply the orchestration preference there. It logs that limitation instead.
 
-Model options: `orchestrationModel`, `visualAnalysisModel`, `designLedModel`, `specifiedModel`, `mechanicalModel`, `fileScoutModel`. Each names an exact catalog ID. This setup does not change the installed plugin, shell function, or user settings automatically.
+Model options: `orchestrationModel`, `visualAnalysisModel`, `designLedModel`, `specifiedModel`, `mechanicalModel`, `fileScoutModel`, `simpleAnswerModel`. Each names an exact catalog ID. This setup does not change the installed plugin, shell function, or user settings automatically.
 
 ## Catalog gates
 

@@ -11,7 +11,7 @@ CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 command claude \
   --plugin-dir "$HOME/Documents/repos/jev-model-router"
 ```
 
-`command claude` bypasses the existing shell function so it does not also load the installed copy. Your interactive `claude` shell function was connected to this local repo and VibeProxy on October 30, 2026. It starts Opus 5.5 at medium effort. `command claude` bypasses that shell function; the proxy environment in the example below is therefore explicit.
+`command claude` bypasses the existing shell function so it does not also load the installed copy. Your interactive `claude` shell function was connected to this local repo and VibeProxy on October 30, 2026. It refreshes the native model picker and respects the saved model and effort. `command claude` bypasses that shell function; the proxy environment in the example below is therefore explicit.
 
 The local copy has the same plugin name, so it reads the existing `pluginConfigs.jev-model-router.options` in `~/.claude/settings.json`. Keep API keys in user settings; do not commit them here. Restart the test session after changing plugin code.
 
@@ -37,7 +37,7 @@ This scopes proxy settings to the test session. It does not change your shell co
 - `hooks/jev-model-router.ts`: classification calls and Claude Code hooks.
 - `hooks/policy.ts`: decision schema, confidence rules, model mapping, and effort rules.
 - `tests/policy.test.ts`: policy tests using `claude-code/testing`.
-- `README.md`: upstream usage and design notes.
+- `README.md`: current setup, usage, customization, and upstream credits.
 
 ## Validation
 
@@ -53,7 +53,7 @@ Add task classification fields and a small model capability catalog. Start by lo
 
 ## Git workflow
 
-Commit each working change locally. No remote is configured; add your own remote if you want to publish or back up the repo. Avoid setting the upstream monorepo as a push destination for this extracted directory.
+Commit each working change locally. The remote is `git@github.com:radiator-engineering/model-router.git`. Avoid setting the upstream monorepo as a push destination for this extracted directory.
 
 ## Smoke tests and run history
 
