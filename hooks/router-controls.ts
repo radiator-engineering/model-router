@@ -12,7 +12,6 @@ export const ROUTER_TOGGLES = [
   {key:'subagents',label:'Subagent routing',description:'Choose models for delegated tasks using task type and your preferences.'},
   {key:'classifyTurns',label:'Per-turn logging',description:'Classify each prompt and show recommendations even when main routing is fixed.'},
 ] as const
-const MODE_DESCRIPTIONS={off:'Use the original tier policy without task-role preferences.',observe:'Log task-role preferences while the original policy controls routing.',apply:'Apply task-role preferences when confidence and catalog checks pass.'}
 const STORE_KEY = 'model-router.defaults.v1'
 export function validSettings(input: unknown): input is RouterSettings {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return false
@@ -42,6 +41,7 @@ export function createRouterControls(initial:RouterSettings) {
   return controls
 }
 export function registerRouterControls(on:Parameters<Register>[0],controls:ReturnType<typeof createRouterControls>) {
+  const menuState={plugin:"jev-model-router",key:"routerMenuOpen"} as const
   on('session.start',async($,e,next)=>{
     try {
       const saved=await $.store.get(STORE_KEY)
@@ -51,7 +51,10 @@ export function registerRouterControls(on:Parameters<Register>[0],controls:Retur
     return next(e)
   })
   on('command.run',async($,e,next)=>{
-    if(e.command!=='router') return next(e)
+    if(e.command!=='router') {
+      if(e.origin?.kind!=='plugin') {await $.state.set(menuState,false);$.ui.invalidate('config.describe')}
+      return next(e)
+    }
     const action=parseRouterCommand(e.args)
     if(action.kind==='help'||action.kind==='error') return {text:ROUTER_HELP}
     if(action.kind==='status') return {text:routerStatus(controls.state)}
@@ -61,42 +64,48 @@ export function registerRouterControls(on:Parameters<Register>[0],controls:Retur
       if(action.kind==='change') {controls.state={...controls.state,...action.patch};return {text:routerStatus(controls.state)+'\nSession updated. Use /router save to persist.'}}
       if(action.kind==='save') {await $.store.set(STORE_KEY,controls.state);return {text:routerStatus(controls.state)+'\nSaved defaults for future sessions.'}}
       if(action.kind==='reset') {await $.store.delete(STORE_KEY);controls.state={...controls.initial};return {text:routerStatus(controls.state)+'\nRestored plugin options and removed saved defaults.'}}
-      const draft={...controls.state}
-      if(action.kind==='mode-menu') {
-        const chosen=await $.ui.ask('Model router mode: choose a mode. Enter saves and exits; Esc cancels.',{header:'Router mode',options:['off','observe','apply']})
-        if(!['off','observe','apply'].includes(chosen))return {text:'Cancelled; settings unchanged.'}
-        draft.mode=chosen as RouterSettings['mode']
-      } else {
-        while(true) {
-          const labels=ROUTER_TOGGLES.map(row=>`${row.label}: ${draft[row.key]?'On':'Off'}`)
-          const chosen=await $.ui.ask(`Model router · mode ${draft.mode} · classifier Jev\nEnter toggles a setting and keeps this menu open.\nTo save, choose Type something and enter save. Esc discards changes and exits.`,{header:'Router',options:labels})
-          if(['save','save & exit'].includes(chosen.trim().toLowerCase()))break
-          if(['cancel','cancel & exit'].includes(chosen.trim().toLowerCase()))return {text:'Cancelled; staged changes discarded.'}
-          const index=labels.indexOf(chosen)
-          if(index<0)return {text:'Cancelled; settings unchanged.'}
-          const row=ROUTER_TOGGLES[index]
-          draft[row.key]=!draft[row.key]
-
-        }
-      }
-      await $.store.set(STORE_KEY,draft)
-      controls.state=draft
-      return {text:routerStatus(controls.state)+'\nSaved defaults and exited.'}
-    } catch {
-      return {text:routerStatus(controls.state)+'\nCancelled or save unavailable; staged changes were not applied. Use /router status to check current settings.'}
+      // command.run cannot nest while this command holds the idle turn.
+      await $.state.set(menuState,true)
+      $.clock.after(0,()=>{
+        $.ui.invalidate('config.describe')
+        void $.command.run({command:'config',args:''}).catch(error=>{
+          $.ui.log('[router] Could not open native config: '+String(error))
+        }).finally(()=>{
+          void $.state.set(menuState,false)
+          $.ui.invalidate('config.describe')
+        })
+      })
+      return {}
+    } catch(error) {
+      $.ui.log('[router] Native config dispatch: '+String(error),{to:'debug'})
+      return {text:routerStatus(controls.state)+'\nCould not open native config. Use /config and search Router, or use /router status.'}
     }
   })
-  // Keep the engine's original inline dialog and keyboard handling; only add descriptions.
-  on('ui.render',async($,e,next)=>{
-    if(e.component!=='AskUserQuestion')return next(e)
-    const questions=e.props.questions as any[]
-    if(!questions.some(q=>q.header==='Router'||q.header==='Router mode'))return next(e)
-    return next({...e,props:{...e.props,questions:questions.map(q=>{
-      if(q.header==='Router')return {...q,options:q.options.map((option:any,i:number)=>({...option,description:ROUTER_TOGGLES[i]?.description ?? option.description}))}
-
-      if(q.header==='Router mode')return {...q,options:q.options.map((option:any)=>({...option,description:MODE_DESCRIPTIONS[option.label as keyof typeof MODE_DESCRIPTIONS] ?? option.description}))}
-      return q
-    })}})
+  on('config.describe',async($,e,next)=>{
+    const field=routerField(e.key,e.provider?.plugin)
+    const {value:routerOnly}=await $.state.get(menuState)
+    if(routerOnly && !field)return next({...e,isHidden:true})
+    if(!field)return next(e)
+    const row=ROUTER_TOGGLES.find(row=>row.key===field)
+    return next({...e,label:row ? `Router · ${row.label}` : 'Router · Mode',description:row?.description ?? 'Off uses legacy tiers; Observe logs role preferences; Apply uses verified model preferences.',isHidden:false})
   })
+  on('config.set',async($,e,next)=>{
+    const field=routerField(e.key,e.provider?.plugin)
+    if(!field)return next(e)
+    const result=await next(e)
+    if(result.deny!==undefined)return result
+    const value=result.value
+    if(field==='mode' ? !['off','observe','apply'].includes(value as string) : typeof value!=='boolean')return result
+    controls.state={...controls.state,[field]:value}
+    // Keep compatibility with defaults saved by earlier /router versions.
+    try {await $.store.set(STORE_KEY,controls.state)} catch {$.ui.log('[router] Native setting saved; legacy defaults cache could not be updated.')}
+    return result
+  })
+}
 
+const CONFIG_FIELDS:Record<string,keyof RouterSettings>={taskRoutingMode:'mode',routeMainModel:'mainModel',routeMainEffort:'mainEffort',routeSubagentModel:'subagents',classifyTurns:'classifyTurns'}
+export function routerField(key:string,plugin?:string):keyof RouterSettings|null {
+  if(plugin?.split('@')[0]!=='jev-model-router')return null
+  const field=key.slice(key.lastIndexOf('.')+1)
+  return CONFIG_FIELDS[field] ?? null
 }

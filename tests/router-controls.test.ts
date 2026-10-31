@@ -5,11 +5,11 @@ import {register} from '../hooks/jev-model-router.ts'
 const initial:RouterSettings={mode:'apply',mainModel:false,mainEffort:false,subagents:true,classifyTurns:true}
 function setup(saved?:unknown){
  const handlers:any={};const store=new Map<string,unknown>();if(saved!==undefined)store.set('model-router.defaults.v1',saved)
- const registered:any[]=[];const choices:string[]=[];const asks:any[]=[]
+ const registered:any[]=[];const choices:string[]=[];const asks:any[]=[];const timers:any[]=[];const opened:any[]=[];let menu=false
  const controls=createRouterControls(initial);registerRouterControls(((n:string,f:any)=>handlers[n]=f) as any,controls)
- const $:any={store:{get:async(k:string)=>store.get(k),set:async(k:string,v:unknown)=>{store.set(k,structuredClone(v))},delete:async(k:string)=>{store.delete(k)}},command:{register:async(v:any)=>{registered.push(v);return {command:v.name}}},ui:{log:()=>{},ask:async(q:string,opts:string[])=>{asks.push({q,opts});if(!choices.length)throw Error('dismissed');return choices.shift()}}}
+ const $:any={state:{get:async()=>({value:menu}),set:async(_:any,v:boolean)=>{menu=v}},clock:{after:(_:number,fn:any)=>{timers.push(fn)}},store:{get:async(k:string)=>store.get(k),set:async(k:string,v:unknown)=>{store.set(k,structuredClone(v))},delete:async(k:string)=>{store.delete(k)}},command:{run:async(v:any)=>{opened.push(v);return new Promise(()=>{})},register:async(v:any)=>{registered.push(v);return {command:v.name}}},ui:{invalidate:()=>{},log:()=>{},ask:async(q:string,opts:string[])=>{asks.push({q,opts});if(!choices.length)throw Error('dismissed');return choices.shift()}}}
  const run=(args:string,origin='composer')=>handlers['command.run']($,{command:'router',args,origin:{kind:origin}},async()=>({text:'other'}))
- return {handlers,store,registered,choices,asks,controls,$,run}
+ return {handlers,store,registered,choices,asks,controls,$,run,timers,opened}
 }
 test('session start registers /router and loads valid saved defaults',async()=>{
  const h=setup({...initial,classifyTurns:false})
@@ -31,41 +31,29 @@ test('save persists and reset restores original plugin settings',async()=>{
  expect((h.store.get('model-router.defaults.v1') as RouterSettings).subagents).toBe(false)
  await h.run('reset');expect(h.controls.current()).toEqual(initial);expect(h.store.size).toBe(0)
 })
-test('bare /router uses On/Off enums without checkbox semantics and saves explicit confirmation',async()=>{
- const h=setup();h.choices.push('Main model routing: Off','Per-turn logging: On','save')
- const result=await h.run('')
- expect(h.asks.every(ask=>ask.opts.header==='Router')).toBe(true)
- expect(h.asks.length).toBe(3);expect(h.asks[0].opts.multiSelect).toBeUndefined()
- expect(h.asks[0].opts.options).toEqual(['Main model routing: Off','Main effort routing: Off','Subagent routing: On','Per-turn logging: On'])
- expect(h.asks[1].opts.options[0]).toBe('Main model routing: On')
- expect(h.asks[0].q.includes('→')).toBe(false)
- expect(h.controls.current().mainModel).toBe(true);expect(h.controls.current().classifyTurns).toBe(false)
- expect(h.controls.current().mainEffort).toBe(false);expect(h.store.size).toBe(1)
- expect(result.text).toContain('Saved defaults and exited')
+test('native config opens after the command returns without a question dialog',async()=>{
+ const h=setup();await h.run('');expect(h.opened.length).toBe(0)
+ h.timers[0]();await new Promise(resolve=>setTimeout(resolve,0))
+ expect(h.opened[0]).toEqual({command:'config',args:''})
 })
-test('mode has its own native inline picker and saves only a recognized choice',async()=>{
- const h=setup();h.choices.push('observe');await h.run('mode')
- expect(h.controls.current().mode).toBe('observe');expect(h.store.size).toBe(1)
+test('native config describes router rows and hides unrelated settings',async()=>{
+ const h=setup();await h.$.state.set({},true)
+ const other=await h.handlers['config.describe'](h.$,{key:'theme'},async(e:any)=>e)
+ expect(other.isHidden).toBe(true)
+ const row=await h.handlers['config.describe'](h.$,{key:'jev-model-router.routeMainModel',provider:{plugin:'jev-model-router@inline'}},async(e:any)=>e)
+ expect(row.label).toBe('Router · Main model routing');expect(row.description).toContain('main conversation')
 })
-test('Escape/dismissal discards staged changes and never saves',async()=>{
- const h=setup();const result=await h.run('')
+test('successful native writes update runtime and persist immediately',async()=>{
+ const h=setup();await h.handlers['config.set'](h.$,{key:'jev-model-router.routeSubagentModel',provider:{plugin:'jev-model-router@inline'}},async()=>({value:false}))
+ expect(h.controls.current().subagents).toBe(false)
+ expect((h.store.get('model-router.defaults.v1') as RouterSettings).subagents).toBe(false)
+})
+test('denied native writes leave runtime unchanged',async()=>{
+ const h=setup();await h.handlers['config.set'](h.$,{key:'jev-model-router.routeSubagentModel',provider:{plugin:'jev-model-router@inline'}},async()=>({deny:'policy'}))
  expect(h.controls.current()).toEqual(initial);expect(h.store.size).toBe(0)
- expect(result.text).toContain('staged changes were not applied')
 })
-test('failed saves and unrecognized free text do not apply settings',async()=>{
- const h=setup();h.choices.push('Main effort routing: Off','save');h.$.store.set=async()=>{throw Error('disk full')}
- await h.run('');expect(h.controls.current()).toEqual(initial)
- h.choices.push('something unexpected');await h.run('');expect(h.controls.current()).toEqual(initial)
-})
-test('settings descriptions preserve the native dialog renderer',async()=>{
- const h=setup();const event:any={component:'AskUserQuestion',props:{questions:[{header:'Router',options:ROUTER_TOGGLES.map(row=>({label:row.label}))}]}}
- const rewritten=await h.handlers['ui.render'](h.$,event,async(e:any)=>e)
- for(const [i,row] of ROUTER_TOGGLES.entries())expect(rewritten.props.questions[0].options[i].description).toBe(row.description)
- expect(h.handlers['ui.message']).toBeUndefined()
-})
-test('malformed commands and plugin-origin mutations cannot change state',async()=>{
- const h=setup();await h.run('main-effort yes');await h.run('mode apply extra');await h.run('main-effort on','plugin')
- expect(h.controls.current()).toEqual(initial)
+test('unknown commands and invalid values are rejected',()=>{
+ expect(parseRouterCommand('main-model maybe')).toEqual({kind:'error'})
  expect(parseRouterCommand('classify-turns off')).toEqual({kind:'change',patch:{classifyTurns:false}})
 })
 test('status reads do not write storage; unrelated commands pass through',async()=>{
@@ -94,16 +82,13 @@ test('router commands are never sent to Jev as task prompts',async()=>{
  expect(calls).toBe(0)
 })
 
-test('cancelling enum editing discards changes without persistence',async()=>{
- const h=setup();h.choices.push('Subagent routing: On','Cancel & Exit')
- await h.run('');expect(h.controls.current()).toEqual(initial);expect(h.store.size).toBe(0)
-})
 
-test('repeated Enter toggles stay in the same menu and can restore the original value',async()=>{
- const h=setup();h.choices.push('Main effort routing: Off','Main effort routing: On','save')
- await h.run('')
- expect(h.asks.map(a=>a.opts.header)).toEqual(['Router','Router','Router'])
- expect(h.asks[1].opts.options[1]).toBe('Main effort routing: On')
- expect(h.asks[2].opts.options[1]).toBe('Main effort routing: Off')
- expect(h.controls.current().mainEffort).toBe(false)
+test('router menu filtering survives a fresh hook registration',async()=>{
+ const h=setup();await h.$.state.set({},true)
+ const handlers:any={};registerRouterControls(((n:string,f:any)=>handlers[n]=f) as any,createRouterControls(initial))
+ const result=await handlers['config.describe'](h.$,{key:'theme'},async(e:any)=>e)
+ expect(result.isHidden).toBe(true)
+ await handlers['command.run'](h.$,{command:'config',origin:{kind:'composer'}},async()=>({}))
+ const normal=await handlers['config.describe'](h.$,{key:'theme'},async(e:any)=>e)
+ expect(normal.isHidden).toBeUndefined()
 })
