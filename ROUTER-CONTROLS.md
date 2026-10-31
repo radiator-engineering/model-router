@@ -31,3 +31,7 @@ The `claude` shell launcher refreshes native `/model` entries from VibeProxy at 
 For manual control, turn **Main model routing** off in `/router`, then select a model in `/model`. Turn **Main effort routing** off too if you want manual effort control. Enter saves the model as the default; `s` selects it for this session only. The launcher no longer forces Opus/medium over your saved default; explicit `claude --model … --effort …` arguments still work.
 
 Refresh immediately by running the sync script, then restart Claude Code. If the proxy is unavailable, refresh reports an error and retains the existing menu. The initial settings backup is `~/.claude/settings.before-vibeproxy-picker.json`.
+
+## Decision output
+
+Normal transcript output shows one effective model/effort line per main turn, for example `[router] claude-haiku-5-5 · effort medium · custom`. Unchanged requests include `unchanged`; Basic fallback is identified when it applies. Subagent result lines report their model without claiming an effort setting. Raw classifications, Custom comparisons (including Observe), startup details, and classification errors go to the Claude Code debug log. Enable `claude --debug` to inspect those details. Routing describes the outgoing request, not proof of the model that ultimately served it upstream.

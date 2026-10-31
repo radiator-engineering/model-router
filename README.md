@@ -24,7 +24,7 @@ Jev answers tier, effort, risk, task type, and implementation category questions
 |---|---|
 | **Basic** | The original fast/balanced/deep tier policy. |
 | **Custom** | Task preferences from this project, with Basic fallback for tasks without a preference. |
-| **Observe** | Basic routing remains active. The router also logs what Custom would recommend, without applying those Custom recommendations. |
+| **Observe** | Basic routing remains active. The router also records what Custom would recommend in the debug log, without applying those Custom recommendations. |
 
 All modes respect the main model, main effort, and subagent routing switches. **Observe is not a global dry run:** Basic can still change a model or effort when its switch is on. The mode defaults to Observe; main model routing defaults to off.
 

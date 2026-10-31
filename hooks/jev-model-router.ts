@@ -165,7 +165,7 @@ export const register: Register = (on, options) => {
               mainModel: routeMainModel,
             },
             forced === 'builtin',
-          )}; mode ${taskMode}; main model ${routeMainModel ? "on" : "off"}; main effort ${routeMainEffort ? "on" : "off"}; subagents ${routeSubagentModel ? "on" : "off"}; per-turn logging ${runtime.classifyTurns ? "on" : "off"}`,
+          )}; mode ${taskMode}; main model ${routeMainModel ? "on" : "off"}; main effort ${routeMainEffort ? "on" : "off"}; subagents ${routeSubagentModel ? "on" : "off"}; per-turn logging ${runtime.classifyTurns ? "on" : "off"}`, {to:'debug'},
         )
       }
     }
@@ -173,14 +173,14 @@ export const register: Register = (on, options) => {
 
     if (!unusableReported) {
       unusableReported = true
-      $.ui.log(`[jev-model-router] provider "${forced}" has no key set; using the built-in classifier`)
+      $.ui.log(`[jev-model-router] provider "${forced}" has no key set; using the built-in classifier`,{to:'debug'})
     }
 
     // A slash command alone gives the decision model only the command's name.
     // Its turn keeps the session's model and effort; the null put keeps a
     // previous prompt's decision from reaching it.
     if (/^\/router(?:\s|$)/.test(e.text.trim()) || bareCommand(e.text)) {
-      if (logDecisions) $.ui.log('[jev-model-router] a command with nothing after it; leaving the turn alone')
+      if (logDecisions) $.ui.log('[jev-model-router] a command with nothing after it; leaving the turn alone',{to:'debug'})
       pending.put(null)
       return next(e)
     }
@@ -198,10 +198,10 @@ export const register: Register = (on, options) => {
           $.clock.sleep(timeoutMs),
         ])
         if (response && response.ok) decision = readDecision(response.text)
-        else if (response) $.ui.log(`[jev-model-router] ${active} responded ${response.status}`)
-        else $.ui.log(`[jev-model-router] classification passed ${timeoutMs}ms; leaving the turn alone`)
+        else if (response) $.ui.log(`[jev-model-router] ${active} responded ${response.status}`,{to:'debug'})
+        else $.ui.log(`[jev-model-router] classification passed ${timeoutMs}ms; leaving the turn alone`,{to:'debug'})
       } catch (error) {
-        $.ui.log(`[jev-model-router] classification failed: ${String(error)}`)
+        $.ui.log(`[jev-model-router] classification failed: ${String(error)}`,{to:'debug'})
       }
     } else {
       // No backend: the engine's own small-model classifier answers the same
@@ -218,7 +218,7 @@ export const register: Register = (on, options) => {
           }
         }
       } catch (error) {
-        $.ui.log(`[jev-model-router] built-in classifier failed: ${String(error)}`)
+        $.ui.log(`[jev-model-router] built-in classifier failed: ${String(error)}`,{to:'debug'})
       }
     }
 
@@ -226,7 +226,7 @@ export const register: Register = (on, options) => {
     // does with it. This is the line that proves the classification ran.
     if (logDecisions) {
       const ms = (await $.clock.now()) - startedAt
-      $.ui.log(`[router] classification (recommendation only): ${describeDecision(decision, ms)}`)
+      $.ui.log(`[router] classification (recommendation only): ${describeDecision(decision, ms)}`,{to:'debug'})
     }
 
     pending.put(decision)
@@ -251,7 +251,7 @@ export const register: Register = (on, options) => {
     const decision = pending.take()
     const routing = route(decision, { model: e.model, effort: e.effort }, policy)
     const task = recommendation(decision)
-    if (taskEnabled && logDecisions) $.ui.log(`[router] task ${taskMode} recommendation: ${decision?.task?.role ?? 'unknown'}/${decision?.task?.implementationCategory ?? 'unknown'} → ${task.model ?? 'original tier policy'}${task.effort ? ` · effort ${task.effort}` : ''}; ${task.reason}`)
+    if (taskEnabled && logDecisions) $.ui.log(`[router] task ${taskMode} recommendation: ${decision?.task?.role ?? 'unknown'}/${decision?.task?.implementationCategory ?? 'unknown'} → ${task.model ?? 'original tier policy'}${task.effort ? ` · effort ${task.effort}` : ''}; ${task.reason}`,{to:'debug'})
     if (taskMode === 'custom' && task.preferredModel && !task.model && (decision?.risky ?? 0) <= 0.7) {
       routing.model = null; routing.effort = null; routing.reason = task.reason
     }
@@ -272,19 +272,10 @@ export const register: Register = (on, options) => {
     // A row in the transcript scrolls away; this line stays on screen.
     if (logDecisions) $.ui.status(`Router ${taskMode} · ${change.model ?? e.model} · effort ${change.effort ?? e.effort ?? 'harness default'}`)
 
-    if (!applied) {
-      // A turn left alone is the common case, and it used to be silent, which
-      // made a working mod look like one that never loaded. Say what happened.
-      if (logDecisions) {
-        $.ui.log(`[router] main unchanged: ${e.model} · effort ${e.effort ?? 'harness default'}; model routing ${routeMainModel ? 'on' : 'off'}, effort routing ${routeMainEffort ? 'on' : 'off'}${routeMainLoop ? `; ${routing.reason}` : '; recommendations only for this turn'}`)
-      }
-      return yield* next(e)
-    }
     if (logDecisions) {
-      const what = [change.model, change.effort && `effort ${change.effort}`]
-        .filter(Boolean)
-        .join(', ')
-      $.ui.log(`[router] main applied: ${what}; effective ${change.model ?? e.model} · effort ${change.effort ?? e.effort ?? 'harness default'}; ${routing.reason}`)
+      const source = taskMode === 'custom' && task.model && (change.model || change.effort)
+        ? 'custom' : taskMode === 'custom' && !task.preferredModel && applied ? 'basic fallback' : taskMode
+      $.ui.log(`[router] ${change.model ?? e.model} · effort ${change.effort ?? e.effort ?? 'harness default'} · ${source}${applied ? '' : ' · unchanged'}`)
     }
     return yield* next({ ...e, ...change })
   })
@@ -311,7 +302,7 @@ export const register: Register = (on, options) => {
               mainModel: routeMainModel,
             },
             forced === 'builtin',
-          )}`,
+          )}`, {to:'debug'},
         )
       }
     }
@@ -321,7 +312,7 @@ export const register: Register = (on, options) => {
 
     if (!unusableReported) {
       unusableReported = true
-      $.ui.log(`[jev-model-router] provider "${forced}" has no key set; using the built-in classifier`)
+      $.ui.log(`[jev-model-router] provider "${forced}" has no key set; using the built-in classifier`,{to:'debug'})
     }
 
     const startedAt = await $.clock.now()
@@ -342,10 +333,10 @@ export const register: Register = (on, options) => {
           $.clock.sleep(timeoutMs),
         ])
         if (response && response.ok) decision = readDecision(response.text)
-        else if (response) $.ui.log(`[jev-model-router] ${active} responded ${response.status}`)
-        else $.ui.log(`[jev-model-router] classification passed ${timeoutMs}ms; leaving the subagent alone`)
+        else if (response) $.ui.log(`[jev-model-router] ${active} responded ${response.status}`,{to:'debug'})
+        else $.ui.log(`[jev-model-router] classification passed ${timeoutMs}ms; leaving the subagent alone`,{to:'debug'})
       } catch (error) {
-        $.ui.log(`[jev-model-router] classification failed: ${String(error)}`)
+        $.ui.log(`[jev-model-router] classification failed: ${String(error)}`,{to:'debug'})
       }
     } else {
       try {
@@ -360,13 +351,13 @@ export const register: Register = (on, options) => {
           }
         }
       } catch (error) {
-        $.ui.log(`[jev-model-router] built-in classifier failed: ${String(error)}`)
+        $.ui.log(`[jev-model-router] built-in classifier failed: ${String(error)}`,{to:'debug'})
       }
     }
 
     if (logDecisions) {
       const ms = (await $.clock.now()) - startedAt
-      $.ui.log(`[jev-model-router] jev (${e.subagentType}): ${describeDecision(decision, ms)}`)
+      $.ui.log(`[jev-model-router] jev (${e.subagentType}): ${describeDecision(decision, ms)}`,{to:'debug'})
     }
 
     // The subagent's own model wins when the caller named one; otherwise it
@@ -375,7 +366,7 @@ export const register: Register = (on, options) => {
     const current = e.model ?? e.parentModel
     const routing = route(decision, { model: current }, policy)
     const task = recommendation(decision)
-    if (taskEnabled && logDecisions) $.ui.log(`[router] task ${taskMode} recommendation: ${decision?.task?.role ?? 'unknown'}/${decision?.task?.implementationCategory ?? 'unknown'} → ${task.model ?? 'original tier policy'}${task.effort ? ` · effort ${task.effort}` : ''}; ${task.reason}`)
+    if (taskEnabled && logDecisions) $.ui.log(`[router] task ${taskMode} recommendation: ${decision?.task?.role ?? 'unknown'}/${decision?.task?.implementationCategory ?? 'unknown'} → ${task.model ?? 'original tier policy'}${task.effort ? ` · effort ${task.effort}` : ''}; ${task.reason}`,{to:'debug'})
     // agent.spawn has no effort control: do not claim medium orchestration here.
     if (taskMode === 'custom' && task.preferredModel && (!task.model || task.effort) && (decision?.risky ?? 0) <= 0.7) {
       routing.model = null; routing.reason = task.effort ? 'agent.spawn cannot enforce orchestration effort; retain current model' : task.reason
@@ -386,10 +377,10 @@ export const register: Register = (on, options) => {
     }
     const {model, reason} = routing
     if (!model) {
-      if (logDecisions) $.ui.log(`[jev-model-router] ${e.subagentType}: ${reason}`)
+      if (logDecisions) $.ui.log(`[router] ${e.subagentType}: ${current} · unchanged`)
       return next(e)
     }
-    if (logDecisions) $.ui.log(`[jev-model-router] ${e.subagentType} → ${model}: ${reason}`)
+    if (logDecisions) $.ui.log(`[router] ${e.subagentType}: ${model} · ${taskMode === 'custom' && task.model ? 'custom' : 'basic'}`)
     return next({ ...e, model })
   })
 }

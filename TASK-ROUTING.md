@@ -28,7 +28,7 @@ Set options under `pluginConfigs.jev-model-router.options` in user settings. Pre
 ```
 
 - `basic`: original questions and routing.
-- `observe` (default): additional questions and recommendation logs; the original policy controls model/effort changes. Adding questions may affect the classifier's answers, so observation is not a guarantee of identical legacy predictions.
+- `observe` (default): additional questions and debug recommendation logs; the original policy controls model/effort changes. Adding questions may affect the classifier's answers, so observation is not a guarantee of identical legacy predictions.
 - `custom`: apply eligible user preferences. Low-confidence preferred routes and unverified preferred models retain the current model and effort. Unsupported roles use legacy routing. Consequential actions retain the legacy risk escalation.
 
 The original `routeMainModel`, `routeMainEffort` and `routeSubagentModel` options supply initial permissions. `/router` can change them immediately for this session; see `ROUTER-CONTROLS.md`. `classifyTurns` defaults to true for independent per-turn classification/logging even when both main permissions are off. Main-model routing remains off by default. Main orchestration can set medium effort when permitted; `agent.spawn` has no effort control, so it does not apply the orchestration preference there. It logs that limitation instead.

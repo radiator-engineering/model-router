@@ -63,9 +63,9 @@ test('nonfinite confidence cannot authorize routing',()=>{
 })
 // Exercise actual registered hooks with the Claude runtime mocked, without model calls.
 function harness(mode:string){
- const handlers:any={};const logs:string[]=[];let sent:any
+ const handlers:any={};const logs:string[]=[];const debug:string[]=[];let sent:any
  register(((name:string,handler:any)=>{handlers[name]=handler}) as any,{taskRoutingMode:mode} as any)
- const $:any={ui:{log:(x:string)=>logs.push(x),status:()=>{}},clock:{now:async()=>0,sleep:()=>new Promise(()=>{})},http:{fetch:async(_u:any,opts:any)=>{sent=JSON.parse(opts.body);return {ok:true,text:JSON.stringify({answers:answers()})}}}}
+ const $:any={ui:{log:(x:string,options?:any)=>(options?.to==='debug'?debug:logs).push(x),status:()=>{}},clock:{now:async()=>0,sleep:()=>new Promise(()=>{})},http:{fetch:async(_u:any,opts:any)=>{sent=JSON.parse(opts.body);return {ok:true,text:JSON.stringify({answers:answers()})}}}}
  return {handlers,$,logs,get sent(){return sent}}
 }
 test('observe hooks collect new fields but keep legacy routing',async()=>{
@@ -76,7 +76,7 @@ test('observe hooks collect new fields but keep legacy routing',async()=>{
  let result:any
  for await(const _ of handlers['turn.step'](h.$,{model:'sonnet',effort:'medium',index:0,turnId:'a'},async function*(e:any){result=e;yield e})){}
  expect(h.sent.questions.taskRole.type).toBe('choice')
- expect(result.model).toBe('claude-haiku-4-5-20251001')
+ expect(result.model).toBe('claude-haiku-5-5')
 })
 test('apply hooks keep current model when preferred catalog entry is unverified',async()=>{
  const h=harness('custom');const handlers:any={}
@@ -102,4 +102,17 @@ test('simple answers route to Haiku while substantive explanations use tier/effo
  expect(recommendTask({...task('simple-answer'),roleConfidence:.5},verified()).model).toBeNull()
  expect(recommendTask(task('simple-answer'),verified(),DEFAULT_PREFERENCES,.8,true).model).toBeNull()
  expect(recommendTask(task('simple-answer'),catalog()).model).toBeNull()
+})
+
+
+test('custom logs only the effective request and reuses its route across tool steps',async()=>{
+ const h=harness('custom');const handlers:any={}
+ register(((n:string,f:any)=>handlers[n]=f) as any,{taskRoutingMode:'custom',typesafeApiKey:'fake',routeMainModel:true} as any)
+ await handlers['prompt.submit'](h.$,{text:'Implement supplied spec'},async(e:any)=>e)
+ const results:any[]=[]
+ for(const index of [0,1,2]) {
+  for await(const _ of handlers['turn.step'](h.$,{model:'opus',effort:'medium',index,turnId:'one'},async function*(e:any){results.push(e);yield e})){}
+ }
+ expect(h.logs).toEqual(['[router] claude-sonnet-5-5 · effort medium · custom'])
+ expect(results.every(e=>e.model==='claude-sonnet-5-5'&&e.effort==='medium')).toBe(true)
 })

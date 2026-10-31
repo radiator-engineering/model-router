@@ -63,15 +63,16 @@ test('status reads do not write storage; unrelated commands pass through',async(
  expect(routerStatus(initial)).toContain('Per-turn classification/logging: on')
 })
 test('classification and recommendation logging operate with both main switches off',async()=>{
- const handlers:any={};const logs:string[]=[];let calls=0
+ const handlers:any={};const logs:string[]=[];const debug:string[]=[];let calls=0
  register(((n:string,f:any)=>handlers[n]=f) as any,{typesafeApiKey:'fake',routeMainModel:false,routeMainEffort:false,classifyTurns:true} as any)
- const $:any={ui:{log:(s:string)=>logs.push(s),status:()=>{}},clock:{now:async()=>0,sleep:()=>new Promise(()=>{})},http:{fetch:async()=>{calls++;return {ok:true,text:JSON.stringify({answers:{tier:{choice:'deep',confidence:1},effort:{score:3,confidence:1},risky:{noul:0},taskRole:{choice:'implementation',confidence:1},implementationCategory:{choice:'design-led',confidence:1}}})}}}}
+ const $:any={ui:{log:(s:string,options?:any)=>(options?.to==='debug'?debug:logs).push(s),status:()=>{}},clock:{now:async()=>0,sleep:()=>new Promise(()=>{})},http:{fetch:async()=>{calls++;return {ok:true,text:JSON.stringify({answers:{tier:{choice:'deep',confidence:1},effort:{score:3,confidence:1},risky:{noul:0},taskRole:{choice:'implementation',confidence:1},implementationCategory:{choice:'design-led',confidence:1}}})}}}}
  await handlers['prompt.submit']($,{text:'Design an architecture'},async(e:any)=>e)
  let result:any;for await(const _ of handlers['turn.step']($,{model:'sonnet',effort:'medium',index:0,turnId:'a'},async function*(e:any){result=e;yield e})){}
  expect(calls).toBe(1);expect(result.model).toBe('sonnet');expect(result.effort).toBe('medium')
- expect(logs.some(l=>l.includes('task observe recommendation'))).toBe(true)
- expect(logs.some(l=>l.includes('main unchanged: sonnet · effort medium; model routing off, effort routing off; recommendations only'))).toBe(true)
- expect(logs.some(l=>l.includes('classification (recommendation only)'))).toBe(true)
+ expect(debug.some(l=>l.includes('task observe recommendation'))).toBe(true)
+ expect(logs.length).toBe(1)
+ expect(logs[0]).toBe('[router] sonnet · effort medium · observe · unchanged')
+ expect(debug.some(l=>l.includes('classification (recommendation only)'))).toBe(true)
  await handlers['command.run']($,{command:'router',args:'classify-turns off',origin:{kind:'composer'}},async()=>({}))
  await handlers['prompt.submit']($,{text:'Another task'},async(e:any)=>e)
  expect(calls).toBe(1)
