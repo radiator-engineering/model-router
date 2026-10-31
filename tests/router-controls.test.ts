@@ -69,7 +69,9 @@ test('classification and recommendation logging operate with both main switches 
  await handlers['prompt.submit']($,{text:'Design an architecture'},async(e:any)=>e)
  let result:any;for await(const _ of handlers['turn.step']($,{model:'sonnet',effort:'medium',index:0,turnId:'a'},async function*(e:any){result=e;yield e})){}
  expect(calls).toBe(1);expect(result.model).toBe('sonnet');expect(result.effort).toBe('medium')
- expect(logs.some(l=>l.includes('task observe'))).toBe(true)
+ expect(logs.some(l=>l.includes('task observe recommendation'))).toBe(true)
+ expect(logs.some(l=>l.includes('main unchanged: sonnet · effort medium; model routing off, effort routing off; recommendations only'))).toBe(true)
+ expect(logs.some(l=>l.includes('classification (recommendation only)'))).toBe(true)
  await handlers['command.run']($,{command:'router',args:'classify-turns off',origin:{kind:'composer'}},async()=>({}))
  await handlers['prompt.submit']($,{text:'Another task'},async(e:any)=>e)
  expect(calls).toBe(1)

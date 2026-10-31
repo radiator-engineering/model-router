@@ -87,7 +87,7 @@ export function registerRouterControls(on:Parameters<Register>[0],controls:Retur
     if(routerOnly && !field)return next({...e,isHidden:true})
     if(!field)return next(e)
     const row=ROUTER_TOGGLES.find(row=>row.key===field)
-    return next({...e,label:row ? `Router · ${row.label}` : 'Router · Mode',description:row?.description ?? 'Off uses legacy tiers; Observe logs role preferences; Apply uses verified model preferences.',isHidden:false})
+    return next({...e,label:row ? `Router · ${row.label}` : 'Router · Mode',description:row?.description ?? 'Original (off): tier policy. Observe: tier policy plus task recommendations. Apply: verified task preferences with tier fallback. Model/effort switches apply in all modes.',isHidden:false})
   })
   on('config.set',async($,e,next)=>{
     const field=routerField(e.key,e.provider?.plugin)

@@ -128,7 +128,7 @@
     "taskRoutingMode": {
       "type": "string",
       "title": "Task routing mode",
-      "description": "Observe logs user-preference recommendations; apply uses verified catalog entries; off keeps the original classifier.",
+      "description": "Original (off) uses tier routing. Observe logs task preferences while tier routing remains active. Apply uses verified task preferences with tier fallback. All modes respect the model and effort switches.",
       "default": "observe",
       "options": [
         "off",

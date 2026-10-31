@@ -51,7 +51,6 @@ import {
   DEFAULT_MODEL,
   describeDecision,
   describeSetup,
-  describeStatus,
   endpoint,
   pendingDecisions,
   readDecision,
@@ -165,7 +164,7 @@ export const register: Register = (on, options) => {
               mainModel: routeMainModel,
             },
             forced === 'builtin',
-          )}`,
+          )}; mode ${taskMode === "off" ? "original" : taskMode}; main model ${routeMainModel ? "on" : "off"}; main effort ${routeMainEffort ? "on" : "off"}; subagents ${routeSubagentModel ? "on" : "off"}; per-turn logging ${runtime.classifyTurns ? "on" : "off"}`,
         )
       }
     }
@@ -226,7 +225,7 @@ export const register: Register = (on, options) => {
     // does with it. This is the line that proves the classification ran.
     if (logDecisions) {
       const ms = (await $.clock.now()) - startedAt
-      $.ui.log(`[jev-model-router] jev: ${describeDecision(decision, ms)}`)
+      $.ui.log(`[router] classification (recommendation only): ${describeDecision(decision, ms)}`)
     }
 
     pending.put(decision)
@@ -251,7 +250,7 @@ export const register: Register = (on, options) => {
     const decision = pending.take()
     const routing = route(decision, { model: e.model, effort: e.effort }, policy)
     const task = recommendation(decision)
-    if (taskEnabled && logDecisions) $.ui.log(`[jev-model-router] task ${taskMode}: ${decision?.task?.role ?? 'unknown'}/${decision?.task?.implementationCategory ?? 'unknown'} → ${task.preferredModel ?? 'legacy'}; ${task.reason}`)
+    if (taskEnabled && logDecisions) $.ui.log(`[router] task ${taskMode} recommendation: ${decision?.task?.role ?? 'unknown'}/${decision?.task?.implementationCategory ?? 'unknown'} → ${task.model ?? 'original tier policy'}${task.effort ? ` · effort ${task.effort}` : ''}; ${task.reason}`)
     if (taskMode === 'apply' && task.preferredModel && !task.model && (decision?.risky ?? 0) <= 0.7) {
       routing.model = null; routing.effort = null; routing.reason = task.reason
     }
@@ -270,14 +269,13 @@ export const register: Register = (on, options) => {
     appliedTurnId = e.turnId
     applied = Object.keys(change).length > 0 ? change : null
     // A row in the transcript scrolls away; this line stays on screen.
-    if (logDecisions) $.ui.status(describeStatus(decision, applied))
+    if (logDecisions) $.ui.status(`Router ${taskMode === 'off' ? 'original' : taskMode} · ${change.model ?? e.model} · effort ${change.effort ?? e.effort ?? 'harness default'}`)
 
     if (!applied) {
       // A turn left alone is the common case, and it used to be silent, which
       // made a working mod look like one that never loaded. Say what happened.
       if (logDecisions) {
-        const suppressed = routing.model && !routeMainModel ? ' (main-loop model routing off)' : ''
-        $.ui.log(`[jev-model-router] main loop: ${routing.reason}${suppressed}`)
+        $.ui.log(`[router] main unchanged: ${e.model} · effort ${e.effort ?? 'harness default'}; model routing ${routeMainModel ? 'on' : 'off'}, effort routing ${routeMainEffort ? 'on' : 'off'}${routeMainLoop ? `; ${routing.reason}` : '; recommendations only for this turn'}`)
       }
       return yield* next(e)
     }
@@ -285,7 +283,7 @@ export const register: Register = (on, options) => {
       const what = [change.model, change.effort && `effort ${change.effort}`]
         .filter(Boolean)
         .join(', ')
-      $.ui.log(`[jev-model-router] main loop → ${what}: ${routing.reason}`)
+      $.ui.log(`[router] main applied: ${what}; effective ${change.model ?? e.model} · effort ${change.effort ?? e.effort ?? 'harness default'}; ${routing.reason}`)
     }
     return yield* next({ ...e, ...change })
   })
@@ -376,7 +374,7 @@ export const register: Register = (on, options) => {
     const current = e.model ?? e.parentModel
     const routing = route(decision, { model: current }, policy)
     const task = recommendation(decision)
-    if (taskEnabled && logDecisions) $.ui.log(`[jev-model-router] task ${taskMode}: ${decision?.task?.role ?? 'unknown'}/${decision?.task?.implementationCategory ?? 'unknown'} → ${task.preferredModel ?? 'legacy'}; ${task.reason}`)
+    if (taskEnabled && logDecisions) $.ui.log(`[router] task ${taskMode} recommendation: ${decision?.task?.role ?? 'unknown'}/${decision?.task?.implementationCategory ?? 'unknown'} → ${task.model ?? 'original tier policy'}${task.effort ? ` · effort ${task.effort}` : ''}; ${task.reason}`)
     // agent.spawn has no effort control: do not claim medium orchestration here.
     if (taskMode === 'apply' && task.preferredModel && (!task.model || task.effort) && (decision?.risky ?? 0) <= 0.7) {
       routing.model = null; routing.reason = task.effort ? 'agent.spawn cannot enforce orchestration effort; retain current model' : task.reason
