@@ -1,0 +1,5154 @@
+{
+  "schemaVersion": 1,
+  "note": "Normalized v2 replay snapshots with hand-written expected outcomes from decision-contract \u00a710. 'synthetic' cases use the clearly synthetic catalog/policy below; 'production' cases use catalog/models.json and hooks/v2/policy-data.ts. Synthetic approvals are not workload approvals.",
+  "synthetic": {
+    "catalog": {
+      "schemaVersion": 2,
+      "legacy": {
+        "schemaVersion": 1,
+        "models": []
+      },
+      "models": [
+        {
+          "id": "syn-astra",
+          "provider": "openai",
+          "family": "gpt",
+          "enabled": true
+        },
+        {
+          "id": "syn-disabled",
+          "provider": "anthropic",
+          "family": "claude",
+          "enabled": false
+        },
+        {
+          "id": "syn-haiku",
+          "provider": "anthropic",
+          "family": "claude",
+          "enabled": true
+        },
+        {
+          "id": "syn-opus",
+          "provider": "anthropic",
+          "family": "claude",
+          "enabled": true
+        },
+        {
+          "id": "syn-sonnet",
+          "provider": "anthropic",
+          "family": "claude",
+          "enabled": true
+        },
+        {
+          "id": "syn-stale",
+          "provider": "anthropic",
+          "family": "claude",
+          "enabled": true
+        }
+      ],
+      "environments": [
+        {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages",
+          "evidenceIds": [
+            "synthetic/evidence/env"
+          ]
+        }
+      ],
+      "availability": [
+        {
+          "id": "synthetic/availability/syn-astra",
+          "modelId": "syn-astra",
+          "status": "verified",
+          "observedAt": "2026-10-30T00:00:00Z",
+          "validUntil": "2026-11-30T00:00:00Z",
+          "evidenceId": "synthetic/evidence/eval"
+        },
+        {
+          "id": "synthetic/availability/syn-disabled",
+          "modelId": "syn-disabled",
+          "status": "verified",
+          "observedAt": "2026-10-30T00:00:00Z",
+          "validUntil": "2026-11-30T00:00:00Z",
+          "evidenceId": "synthetic/evidence/eval"
+        },
+        {
+          "id": "synthetic/availability/syn-haiku",
+          "modelId": "syn-haiku",
+          "status": "verified",
+          "observedAt": "2026-10-30T00:00:00Z",
+          "validUntil": "2026-11-30T00:00:00Z",
+          "evidenceId": "synthetic/evidence/eval"
+        },
+        {
+          "id": "synthetic/availability/syn-opus",
+          "modelId": "syn-opus",
+          "status": "verified",
+          "observedAt": "2026-10-30T00:00:00Z",
+          "validUntil": "2026-11-30T00:00:00Z",
+          "evidenceId": "synthetic/evidence/eval"
+        },
+        {
+          "id": "synthetic/availability/syn-sonnet",
+          "modelId": "syn-sonnet",
+          "status": "verified",
+          "observedAt": "2026-10-30T00:00:00Z",
+          "validUntil": "2026-11-30T00:00:00Z",
+          "evidenceId": "synthetic/evidence/eval"
+        },
+        {
+          "id": "synthetic/availability/syn-stale",
+          "modelId": "syn-stale",
+          "status": "verified",
+          "observedAt": "2026-10-30T00:00:00Z",
+          "validUntil": "2026-10-31T00:00:00Z",
+          "evidenceId": "synthetic/evidence/eval"
+        }
+      ],
+      "configurations": [
+        {
+          "id": "configuration/syn-astra/level-medium/synthetic-proxy%2Fmessages",
+          "modelId": "syn-astra",
+          "effort": {
+            "kind": "level",
+            "value": "medium"
+          },
+          "requestPath": "synthetic-proxy/messages"
+        },
+        {
+          "id": "configuration/syn-disabled/level-medium/synthetic-proxy%2Fmessages",
+          "modelId": "syn-disabled",
+          "effort": {
+            "kind": "level",
+            "value": "medium"
+          },
+          "requestPath": "synthetic-proxy/messages"
+        },
+        {
+          "id": "configuration/syn-haiku/level-low/synthetic-proxy%2Fmessages",
+          "modelId": "syn-haiku",
+          "effort": {
+            "kind": "level",
+            "value": "low"
+          },
+          "requestPath": "synthetic-proxy/messages"
+        },
+        {
+          "id": "configuration/syn-haiku/level-medium/synthetic-proxy%2Fmessages",
+          "modelId": "syn-haiku",
+          "effort": {
+            "kind": "level",
+            "value": "medium"
+          },
+          "requestPath": "synthetic-proxy/messages"
+        },
+        {
+          "id": "configuration/syn-opus/level-high/synthetic-proxy%2Fmessages",
+          "modelId": "syn-opus",
+          "effort": {
+            "kind": "level",
+            "value": "high"
+          },
+          "requestPath": "synthetic-proxy/messages"
+        },
+        {
+          "id": "configuration/syn-opus/level-medium/synthetic-proxy%2Fmessages",
+          "modelId": "syn-opus",
+          "effort": {
+            "kind": "level",
+            "value": "medium"
+          },
+          "requestPath": "synthetic-proxy/messages"
+        },
+        {
+          "id": "configuration/syn-opus/level-xhigh/synthetic-proxy%2Fmessages",
+          "modelId": "syn-opus",
+          "effort": {
+            "kind": "level",
+            "value": "xhigh"
+          },
+          "requestPath": "synthetic-proxy/messages"
+        },
+        {
+          "id": "configuration/syn-sonnet/level-high/synthetic-proxy%2Fmessages",
+          "modelId": "syn-sonnet",
+          "effort": {
+            "kind": "level",
+            "value": "high"
+          },
+          "requestPath": "synthetic-proxy/messages"
+        },
+        {
+          "id": "configuration/syn-sonnet/level-medium/synthetic-proxy%2Fmessages",
+          "modelId": "syn-sonnet",
+          "effort": {
+            "kind": "level",
+            "value": "medium"
+          },
+          "requestPath": "synthetic-proxy/messages"
+        },
+        {
+          "id": "configuration/syn-stale/level-medium/synthetic-proxy%2Fmessages",
+          "modelId": "syn-stale",
+          "effort": {
+            "kind": "level",
+            "value": "medium"
+          },
+          "requestPath": "synthetic-proxy/messages"
+        }
+      ],
+      "compatibility": [
+        {
+          "id": "synthetic/compatibility/configuration%2Fsyn-astra%2Flevel-medium%2Fsynthetic-proxy%252Fmessages",
+          "configurationId": "configuration/syn-astra/level-medium/synthetic-proxy%2Fmessages",
+          "environmentId": "synthetic/env-a",
+          "status": "verified",
+          "toolCalling": true,
+          "imageInput": true,
+          "streaming": true,
+          "continuation": null,
+          "interruptions": null,
+          "effectiveEffortVerified": true,
+          "contextWindowTokens": 200000,
+          "supportedEfforts": [
+            {
+              "kind": "level",
+              "value": "medium"
+            }
+          ],
+          "evidenceIds": [
+            "synthetic/evidence/eval"
+          ]
+        },
+        {
+          "id": "synthetic/compatibility/configuration%2Fsyn-disabled%2Flevel-medium%2Fsynthetic-proxy%252Fmessages",
+          "configurationId": "configuration/syn-disabled/level-medium/synthetic-proxy%2Fmessages",
+          "environmentId": "synthetic/env-a",
+          "status": "verified",
+          "toolCalling": true,
+          "imageInput": false,
+          "streaming": true,
+          "continuation": null,
+          "interruptions": null,
+          "effectiveEffortVerified": true,
+          "contextWindowTokens": 200000,
+          "supportedEfforts": [
+            {
+              "kind": "level",
+              "value": "medium"
+            }
+          ],
+          "evidenceIds": [
+            "synthetic/evidence/eval"
+          ]
+        },
+        {
+          "id": "synthetic/compatibility/configuration%2Fsyn-haiku%2Flevel-low%2Fsynthetic-proxy%252Fmessages",
+          "configurationId": "configuration/syn-haiku/level-low/synthetic-proxy%2Fmessages",
+          "environmentId": "synthetic/env-a",
+          "status": "verified",
+          "toolCalling": true,
+          "imageInput": false,
+          "streaming": true,
+          "continuation": null,
+          "interruptions": null,
+          "effectiveEffortVerified": true,
+          "contextWindowTokens": 200000,
+          "supportedEfforts": [
+            {
+              "kind": "level",
+              "value": "low"
+            },
+            {
+              "kind": "level",
+              "value": "medium"
+            }
+          ],
+          "evidenceIds": [
+            "synthetic/evidence/eval"
+          ]
+        },
+        {
+          "id": "synthetic/compatibility/configuration%2Fsyn-haiku%2Flevel-medium%2Fsynthetic-proxy%252Fmessages",
+          "configurationId": "configuration/syn-haiku/level-medium/synthetic-proxy%2Fmessages",
+          "environmentId": "synthetic/env-a",
+          "status": "verified",
+          "toolCalling": true,
+          "imageInput": false,
+          "streaming": true,
+          "continuation": null,
+          "interruptions": null,
+          "effectiveEffortVerified": true,
+          "contextWindowTokens": 200000,
+          "supportedEfforts": [
+            {
+              "kind": "level",
+              "value": "low"
+            },
+            {
+              "kind": "level",
+              "value": "medium"
+            }
+          ],
+          "evidenceIds": [
+            "synthetic/evidence/eval"
+          ]
+        },
+        {
+          "id": "synthetic/compatibility/configuration%2Fsyn-opus%2Flevel-high%2Fsynthetic-proxy%252Fmessages",
+          "configurationId": "configuration/syn-opus/level-high/synthetic-proxy%2Fmessages",
+          "environmentId": "synthetic/env-a",
+          "status": "verified",
+          "toolCalling": true,
+          "imageInput": true,
+          "streaming": true,
+          "continuation": null,
+          "interruptions": null,
+          "effectiveEffortVerified": true,
+          "contextWindowTokens": 200000,
+          "supportedEfforts": [
+            {
+              "kind": "level",
+              "value": "medium"
+            },
+            {
+              "kind": "level",
+              "value": "high"
+            },
+            {
+              "kind": "level",
+              "value": "xhigh"
+            }
+          ],
+          "evidenceIds": [
+            "synthetic/evidence/eval"
+          ]
+        },
+        {
+          "id": "synthetic/compatibility/configuration%2Fsyn-opus%2Flevel-medium%2Fsynthetic-proxy%252Fmessages",
+          "configurationId": "configuration/syn-opus/level-medium/synthetic-proxy%2Fmessages",
+          "environmentId": "synthetic/env-a",
+          "status": "verified",
+          "toolCalling": true,
+          "imageInput": true,
+          "streaming": true,
+          "continuation": null,
+          "interruptions": null,
+          "effectiveEffortVerified": true,
+          "contextWindowTokens": 200000,
+          "supportedEfforts": [
+            {
+              "kind": "level",
+              "value": "medium"
+            },
+            {
+              "kind": "level",
+              "value": "high"
+            },
+            {
+              "kind": "level",
+              "value": "xhigh"
+            }
+          ],
+          "evidenceIds": [
+            "synthetic/evidence/eval"
+          ]
+        },
+        {
+          "id": "synthetic/compatibility/configuration%2Fsyn-opus%2Flevel-xhigh%2Fsynthetic-proxy%252Fmessages",
+          "configurationId": "configuration/syn-opus/level-xhigh/synthetic-proxy%2Fmessages",
+          "environmentId": "synthetic/env-a",
+          "status": "verified",
+          "toolCalling": true,
+          "imageInput": true,
+          "streaming": true,
+          "continuation": null,
+          "interruptions": null,
+          "effectiveEffortVerified": true,
+          "contextWindowTokens": 200000,
+          "supportedEfforts": [
+            {
+              "kind": "level",
+              "value": "medium"
+            },
+            {
+              "kind": "level",
+              "value": "high"
+            },
+            {
+              "kind": "level",
+              "value": "xhigh"
+            }
+          ],
+          "evidenceIds": [
+            "synthetic/evidence/eval"
+          ]
+        },
+        {
+          "id": "synthetic/compatibility/configuration%2Fsyn-sonnet%2Flevel-high%2Fsynthetic-proxy%252Fmessages",
+          "configurationId": "configuration/syn-sonnet/level-high/synthetic-proxy%2Fmessages",
+          "environmentId": "synthetic/env-a",
+          "status": "verified",
+          "toolCalling": true,
+          "imageInput": null,
+          "streaming": true,
+          "continuation": null,
+          "interruptions": null,
+          "effectiveEffortVerified": true,
+          "contextWindowTokens": 200000,
+          "supportedEfforts": [
+            {
+              "kind": "level",
+              "value": "medium"
+            },
+            {
+              "kind": "level",
+              "value": "high"
+            }
+          ],
+          "evidenceIds": [
+            "synthetic/evidence/eval"
+          ]
+        },
+        {
+          "id": "synthetic/compatibility/configuration%2Fsyn-sonnet%2Flevel-medium%2Fsynthetic-proxy%252Fmessages",
+          "configurationId": "configuration/syn-sonnet/level-medium/synthetic-proxy%2Fmessages",
+          "environmentId": "synthetic/env-a",
+          "status": "verified",
+          "toolCalling": true,
+          "imageInput": null,
+          "streaming": true,
+          "continuation": null,
+          "interruptions": null,
+          "effectiveEffortVerified": true,
+          "contextWindowTokens": 200000,
+          "supportedEfforts": [
+            {
+              "kind": "level",
+              "value": "medium"
+            },
+            {
+              "kind": "level",
+              "value": "high"
+            }
+          ],
+          "evidenceIds": [
+            "synthetic/evidence/eval"
+          ]
+        },
+        {
+          "id": "synthetic/compatibility/configuration%2Fsyn-stale%2Flevel-medium%2Fsynthetic-proxy%252Fmessages",
+          "configurationId": "configuration/syn-stale/level-medium/synthetic-proxy%2Fmessages",
+          "environmentId": "synthetic/env-a",
+          "status": "verified",
+          "toolCalling": true,
+          "imageInput": false,
+          "streaming": true,
+          "continuation": null,
+          "interruptions": null,
+          "effectiveEffortVerified": true,
+          "contextWindowTokens": 200000,
+          "supportedEfforts": [
+            {
+              "kind": "level",
+              "value": "medium"
+            }
+          ],
+          "evidenceIds": [
+            "synthetic/evidence/eval"
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "id": "synthetic/evidence/env",
+          "source": "manual",
+          "checkedDate": "2026-10-30",
+          "observedAt": "2026-10-30T00:00:00Z",
+          "environmentId": "synthetic/env-a",
+          "notes": "SYNTHETIC FIXTURE for offline replay only. Not an observation of any real model, proxy or harness.",
+          "payload": {
+            "synthetic": true
+          }
+        },
+        {
+          "id": "synthetic/evidence/eval",
+          "source": "evaluation",
+          "checkedDate": "2026-10-30",
+          "observedAt": "2026-10-30T00:00:00Z",
+          "environmentId": "synthetic/env-a",
+          "notes": "SYNTHETIC FIXTURE for offline replay only. Not an observation of any real model, proxy or harness.",
+          "payload": {
+            "synthetic": true
+          }
+        }
+      ],
+      "approvals": [
+        {
+          "id": "synthetic/approval/syn-astra/medium/implementation",
+          "configurationId": "configuration/syn-astra/level-medium/synthetic-proxy%2Fmessages",
+          "environmentId": "synthetic/env-a",
+          "role": "implementation",
+          "policyRuleIds": [
+            "syn-specified"
+          ],
+          "state": "approved",
+          "evidenceIds": [
+            "synthetic/evidence/eval"
+          ],
+          "checkedAt": "2026-10-30T00:00:00Z",
+          "validUntil": "2026-12-31T00:00:00Z",
+          "limits": {
+            "maxInputTokens": 150000,
+            "maxGeneratedTokens": 32000,
+            "maxToolCalls": 200,
+            "maxWallTimeMs": 600000,
+            "outputReserveTokens": 32000,
+            "contextMarginFraction": 0.1
+          }
+        },
+        {
+          "id": "synthetic/approval/syn-astra/medium/review",
+          "configurationId": "configuration/syn-astra/level-medium/synthetic-proxy%2Fmessages",
+          "environmentId": "synthetic/env-a",
+          "role": "review",
+          "policyRuleIds": [
+            "syn-review"
+          ],
+          "state": "approved",
+          "evidenceIds": [
+            "synthetic/evidence/eval"
+          ],
+          "checkedAt": "2026-10-30T00:00:00Z",
+          "validUntil": "2026-12-31T00:00:00Z",
+          "limits": {
+            "maxInputTokens": 150000,
+            "maxGeneratedTokens": 32000,
+            "maxToolCalls": 200,
+            "maxWallTimeMs": 600000,
+            "outputReserveTokens": 32000,
+            "contextMarginFraction": 0.1
+          }
+        },
+        {
+          "id": "synthetic/approval/syn-astra/medium/visual-analysis",
+          "configurationId": "configuration/syn-astra/level-medium/synthetic-proxy%2Fmessages",
+          "environmentId": "synthetic/env-a",
+          "role": "visual-analysis",
+          "policyRuleIds": [
+            "syn-visual"
+          ],
+          "state": "approved",
+          "evidenceIds": [
+            "synthetic/evidence/eval"
+          ],
+          "checkedAt": "2026-10-30T00:00:00Z",
+          "validUntil": "2026-12-31T00:00:00Z",
+          "limits": {
+            "maxInputTokens": 150000,
+            "maxGeneratedTokens": 32000,
+            "maxToolCalls": 200,
+            "maxWallTimeMs": 600000,
+            "outputReserveTokens": 32000,
+            "contextMarginFraction": 0.1
+          }
+        },
+        {
+          "id": "synthetic/approval/syn-haiku/medium/implementation",
+          "configurationId": "configuration/syn-haiku/level-medium/synthetic-proxy%2Fmessages",
+          "environmentId": "synthetic/env-a",
+          "role": "implementation",
+          "policyRuleIds": [
+            "syn-mechanical"
+          ],
+          "state": "approved",
+          "evidenceIds": [
+            "synthetic/evidence/eval"
+          ],
+          "checkedAt": "2026-10-30T00:00:00Z",
+          "validUntil": "2026-12-31T00:00:00Z",
+          "limits": {
+            "maxInputTokens": 150000,
+            "maxGeneratedTokens": 32000,
+            "maxToolCalls": 200,
+            "maxWallTimeMs": 600000,
+            "outputReserveTokens": 32000,
+            "contextMarginFraction": 0.1
+          }
+        },
+        {
+          "id": "synthetic/approval/syn-opus/medium/implementation",
+          "configurationId": "configuration/syn-opus/level-medium/synthetic-proxy%2Fmessages",
+          "environmentId": "synthetic/env-a",
+          "role": "implementation",
+          "policyRuleIds": [
+            "syn-broad",
+            "syn-specified"
+          ],
+          "state": "approved",
+          "evidenceIds": [
+            "synthetic/evidence/eval"
+          ],
+          "checkedAt": "2026-10-30T00:00:00Z",
+          "validUntil": "2026-12-31T00:00:00Z",
+          "limits": {
+            "maxInputTokens": 150000,
+            "maxGeneratedTokens": 32000,
+            "maxToolCalls": 200,
+            "maxWallTimeMs": 600000,
+            "outputReserveTokens": 32000,
+            "contextMarginFraction": 0.1
+          }
+        },
+        {
+          "id": "synthetic/approval/syn-opus/medium/orchestration",
+          "configurationId": "configuration/syn-opus/level-medium/synthetic-proxy%2Fmessages",
+          "environmentId": "synthetic/env-a",
+          "role": "orchestration",
+          "policyRuleIds": [
+            "syn-broad"
+          ],
+          "state": "approved",
+          "evidenceIds": [
+            "synthetic/evidence/eval"
+          ],
+          "checkedAt": "2026-10-30T00:00:00Z",
+          "validUntil": "2026-12-31T00:00:00Z",
+          "limits": {
+            "maxInputTokens": 150000,
+            "maxGeneratedTokens": 32000,
+            "maxToolCalls": 200,
+            "maxWallTimeMs": 600000,
+            "outputReserveTokens": 32000,
+            "contextMarginFraction": 0.1
+          }
+        },
+        {
+          "id": "synthetic/approval/syn-opus/medium/review",
+          "configurationId": "configuration/syn-opus/level-medium/synthetic-proxy%2Fmessages",
+          "environmentId": "synthetic/env-a",
+          "role": "review",
+          "policyRuleIds": [
+            "syn-review"
+          ],
+          "state": "approved",
+          "evidenceIds": [
+            "synthetic/evidence/eval"
+          ],
+          "checkedAt": "2026-10-30T00:00:00Z",
+          "validUntil": "2026-12-31T00:00:00Z",
+          "limits": {
+            "maxInputTokens": 150000,
+            "maxGeneratedTokens": 32000,
+            "maxToolCalls": 200,
+            "maxWallTimeMs": 600000,
+            "outputReserveTokens": 32000,
+            "contextMarginFraction": 0.1
+          }
+        },
+        {
+          "id": "synthetic/approval/syn-opus/xhigh/implementation",
+          "configurationId": "configuration/syn-opus/level-xhigh/synthetic-proxy%2Fmessages",
+          "environmentId": "synthetic/env-a",
+          "role": "implementation",
+          "policyRuleIds": [
+            "syn-specified"
+          ],
+          "state": "approved",
+          "evidenceIds": [
+            "synthetic/evidence/eval"
+          ],
+          "checkedAt": "2026-10-30T00:00:00Z",
+          "validUntil": "2026-12-31T00:00:00Z",
+          "limits": {
+            "maxInputTokens": 150000,
+            "maxGeneratedTokens": 32000,
+            "maxToolCalls": 200,
+            "maxWallTimeMs": 600000,
+            "outputReserveTokens": 32000,
+            "contextMarginFraction": 0.1
+          }
+        },
+        {
+          "id": "synthetic/approval/syn-sonnet/medium/implementation",
+          "configurationId": "configuration/syn-sonnet/level-medium/synthetic-proxy%2Fmessages",
+          "environmentId": "synthetic/env-a",
+          "role": "implementation",
+          "policyRuleIds": [
+            "syn-specified"
+          ],
+          "state": "approved",
+          "evidenceIds": [
+            "synthetic/evidence/eval"
+          ],
+          "checkedAt": "2026-10-30T00:00:00Z",
+          "validUntil": "2026-12-31T00:00:00Z",
+          "limits": {
+            "maxInputTokens": 150000,
+            "maxGeneratedTokens": 32000,
+            "maxToolCalls": 200,
+            "maxWallTimeMs": 600000,
+            "outputReserveTokens": 32000,
+            "contextMarginFraction": 0.1
+          }
+        },
+        {
+          "id": "synthetic/approval/syn-stale/medium/implementation",
+          "configurationId": "configuration/syn-stale/level-medium/synthetic-proxy%2Fmessages",
+          "environmentId": "synthetic/env-a",
+          "role": "implementation",
+          "policyRuleIds": [
+            "syn-specified"
+          ],
+          "state": "approved",
+          "evidenceIds": [
+            "synthetic/evidence/eval"
+          ],
+          "checkedAt": "2026-10-30T00:00:00Z",
+          "validUntil": "2026-12-31T00:00:00Z",
+          "limits": {
+            "maxInputTokens": 150000,
+            "maxGeneratedTokens": 32000,
+            "maxToolCalls": 200,
+            "maxWallTimeMs": 600000,
+            "outputReserveTokens": 32000,
+            "contextMarginFraction": 0.1
+          }
+        }
+      ]
+    },
+    "policy": {
+      "policyRevision": "synthetic-policy-1",
+      "contractVersion": 3,
+      "confidenceThreshold": 0.8,
+      "providerPreference": [
+        "anthropic"
+      ],
+      "clarifyWhen": {
+        "specification": [
+          "unresolved"
+        ]
+      },
+      "reviewTriggers": [
+        {
+          "id": "consequential-effect",
+          "when": {
+            "consequence": [
+              "consequential"
+            ]
+          }
+        }
+      ],
+      "rules": [
+        {
+          "id": "syn-mechanical",
+          "priority": 40,
+          "purpose": "execution",
+          "roles": [
+            "implementation"
+          ],
+          "when": {
+            "specification": [
+              "explicit"
+            ],
+            "verification": [
+              "executable"
+            ],
+            "executionSpan": [
+              "bounded"
+            ]
+          },
+          "primary": [
+            "configuration/syn-haiku/level-medium/synthetic-proxy%2Fmessages"
+          ],
+          "preference": null
+        },
+        {
+          "id": "syn-broad",
+          "priority": 30,
+          "purpose": "execution",
+          "roles": [
+            "implementation",
+            "orchestration",
+            "investigation"
+          ],
+          "when": {
+            "executionSpan": [
+              "extended"
+            ]
+          },
+          "primary": [
+            "configuration/syn-opus/level-medium/synthetic-proxy%2Fmessages"
+          ],
+          "preference": null
+        },
+        {
+          "id": "syn-visual",
+          "priority": 30,
+          "purpose": "execution",
+          "roles": [
+            "visual-analysis"
+          ],
+          "when": {},
+          "primary": [
+            "configuration/syn-astra/level-medium/synthetic-proxy%2Fmessages"
+          ],
+          "preference": null
+        },
+        {
+          "id": "syn-specified",
+          "priority": 20,
+          "purpose": "execution",
+          "roles": [
+            "implementation"
+          ],
+          "when": {
+            "specification": [
+              "explicit",
+              "inferable"
+            ],
+            "verification": [
+              "executable",
+              "partial"
+            ]
+          },
+          "primary": [
+            "configuration/syn-sonnet/level-medium/synthetic-proxy%2Fmessages"
+          ],
+          "preference": null
+        },
+        {
+          "id": "syn-review",
+          "priority": 10,
+          "purpose": "review",
+          "roles": [
+            "review"
+          ],
+          "when": {},
+          "primary": [
+            "configuration/syn-astra/level-medium/synthetic-proxy%2Fmessages",
+            "configuration/syn-opus/level-medium/synthetic-proxy%2Fmessages"
+          ],
+          "preference": "configuration/syn-astra/level-medium/synthetic-proxy%2Fmessages"
+        }
+      ],
+      "manualLimits": {
+        "contextMarginFraction": 0.1,
+        "outputReserveTokens": 32000
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "mechanical-select",
+      "example": "Exact mechanical edit; Haiku approved",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "explicit",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "executable",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "bounded",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "select",
+        "reasons": [
+          "rule_selected"
+        ],
+        "ruleId": "syn-mechanical",
+        "configurationId": "configuration/syn-haiku/level-medium/synthetic-proxy%2Fmessages",
+        "changes": {
+          "model": "syn-haiku"
+        }
+      },
+      "legacy": {
+        "tier": "fast",
+        "confidence": 0.99,
+        "risky": 0.01,
+        "effort": 0,
+        "effortConfidence": 0.99
+      }
+    },
+    {
+      "id": "mechanical-already",
+      "example": "Exact mechanical edit; Haiku already selected",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-haiku",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "explicit",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "executable",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "bounded",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "preserve",
+        "reasons": [
+          "already_selected"
+        ],
+        "qualification": "verified",
+        "configurationId": "configuration/syn-haiku/level-medium/synthetic-proxy%2Fmessages"
+      }
+    },
+    {
+      "id": "specified-downgrade",
+      "example": "Specified change; Sonnet qualifies; current Opus",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "select",
+        "reasons": [
+          "rule_selected"
+        ],
+        "ruleId": "syn-specified",
+        "configurationId": "configuration/syn-sonnet/level-medium/synthetic-proxy%2Fmessages",
+        "changes": {
+          "model": "syn-sonnet"
+        }
+      },
+      "legacy": {
+        "tier": "balanced",
+        "confidence": 0.9,
+        "risky": 0.05,
+        "effort": 1,
+        "effortConfidence": 0.9
+      }
+    },
+    {
+      "id": "openai-pin-approved",
+      "example": "Explicit OpenAI pin; compatible and approved",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [
+          {
+            "field": "model",
+            "value": "syn-astra",
+            "scope": "session",
+            "purpose": "execution",
+            "source": "router-command",
+            "experimental": false
+          }
+        ],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "select",
+        "reasons": [
+          "pin_selected"
+        ],
+        "configurationId": "configuration/syn-astra/level-medium/synthetic-proxy%2Fmessages",
+        "changes": {
+          "model": "syn-astra"
+        },
+        "experimental": false
+      }
+    },
+    {
+      "id": "experimental-pin",
+      "example": "Explicit compatible unapproved pair with experimental use",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [
+          {
+            "field": "model",
+            "value": "syn-sonnet",
+            "scope": "session",
+            "purpose": "execution",
+            "source": "router-command",
+            "experimental": true
+          },
+          {
+            "field": "effort",
+            "value": "high",
+            "scope": "session",
+            "purpose": "execution",
+            "source": "router-command",
+            "experimental": true
+          }
+        ],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "select",
+        "reasons": [
+          "pin_selected"
+        ],
+        "configurationId": "configuration/syn-sonnet/level-high/synthetic-proxy%2Fmessages",
+        "experimental": true,
+        "changes": {
+          "model": "syn-sonnet",
+          "effort": {
+            "kind": "level",
+            "value": "high"
+          }
+        }
+      }
+    },
+    {
+      "id": "unapproved-pin-not-experimental",
+      "example": "Explicit unapproved pair without experimental use",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [
+          {
+            "field": "model",
+            "value": "syn-sonnet",
+            "scope": "session",
+            "purpose": "execution",
+            "source": "router-command",
+            "experimental": false
+          },
+          {
+            "field": "effort",
+            "value": "high",
+            "scope": "session",
+            "purpose": "execution",
+            "source": "router-command",
+            "experimental": false
+          }
+        ],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "unavailable",
+        "reasonsInclude": [
+          "workload_unapproved"
+        ]
+      }
+    },
+    {
+      "id": "openai-pin-exhausted",
+      "example": "Explicit OpenAI pin; confirmed exhaustion; no fallback",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [
+          {
+            "field": "model",
+            "value": "syn-astra",
+            "scope": "session",
+            "purpose": "execution",
+            "source": "router-command",
+            "experimental": false
+          }
+        ],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [
+            "syn-astra"
+          ],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "unavailable",
+        "reasonsInclude": [
+          "model_unavailable"
+        ]
+      }
+    },
+    {
+      "id": "authorized-opus-fallback",
+      "example": "Sonnet fails availability; one authorized Opus alternative",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-haiku",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [
+            "syn-sonnet"
+          ],
+          "hardBudget": null
+        },
+        "fallback": {
+          "ruleIds": [
+            "syn-specified"
+          ],
+          "coversPins": false,
+          "alternatives": [
+            "configuration/syn-opus/level-medium/synthetic-proxy%2Fmessages"
+          ],
+          "failures": [
+            "model_unavailable"
+          ],
+          "maxSubstitutions": 1,
+          "used": 0,
+          "allowProviderChange": false,
+          "authorizationRef": "synthetic/authorization/authorized-opus-fallback",
+          "lineageId": "lin-1",
+          "policyRevision": "synthetic-policy-1",
+          "purpose": "execution",
+          "roles": [
+            "implementation"
+          ],
+          "allowFamilyChange": false,
+          "from": {
+            "modelId": "syn-sonnet",
+            "effort": {
+              "kind": "level",
+              "value": "medium"
+            }
+          }
+        },
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "select",
+        "reasons": [
+          "rule_selected"
+        ],
+        "configurationId": "configuration/syn-opus/level-medium/synthetic-proxy%2Fmessages",
+        "substitution": true,
+        "candidateIds": [
+          "configuration/syn-sonnet/level-medium/synthetic-proxy%2Fmessages",
+          "configuration/syn-opus/level-medium/synthetic-proxy%2Fmessages"
+        ]
+      }
+    },
+    {
+      "id": "fallback-limit-reached",
+      "example": "Substitution limit reached",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-haiku",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [
+            "syn-sonnet"
+          ],
+          "hardBudget": null
+        },
+        "fallback": {
+          "ruleIds": [
+            "syn-specified"
+          ],
+          "coversPins": false,
+          "alternatives": [
+            "configuration/syn-opus/level-medium/synthetic-proxy%2Fmessages"
+          ],
+          "failures": [
+            "model_unavailable"
+          ],
+          "maxSubstitutions": 1,
+          "used": 1,
+          "allowProviderChange": false,
+          "authorizationRef": "synthetic/authorization/fallback-limit-reached",
+          "lineageId": "lin-1",
+          "policyRevision": "synthetic-policy-1",
+          "purpose": "execution",
+          "roles": [
+            "implementation"
+          ],
+          "allowFamilyChange": false,
+          "from": {
+            "modelId": "syn-sonnet",
+            "effort": {
+              "kind": "level",
+              "value": "medium"
+            }
+          }
+        },
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "unavailable",
+        "reasonsInclude": [
+          "fallback_exhausted",
+          "model_unavailable"
+        ]
+      }
+    },
+    {
+      "id": "no-authority-to-retain-current",
+      "example": "Preferred fails; current usable; no rule authorizes retaining it",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [
+            "syn-sonnet"
+          ],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "unavailable",
+        "reasonsInclude": [
+          "model_unavailable"
+        ]
+      }
+    },
+    {
+      "id": "model-off-effort-on",
+      "example": "Model switch off; effort switch on",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-sonnet",
+          "modelOrigin": "inherited",
+          "effort": "high",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": false,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "select",
+        "reasons": [
+          "rule_selected"
+        ],
+        "configurationId": "configuration/syn-sonnet/level-medium/synthetic-proxy%2Fmessages",
+        "changes": {
+          "effort": {
+            "kind": "level",
+            "value": "medium"
+          }
+        }
+      }
+    },
+    {
+      "id": "pin-vs-fixed-model",
+      "example": "Model pin differs from fixed outgoing model",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": false,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [
+          {
+            "field": "model",
+            "value": "syn-sonnet",
+            "scope": "session",
+            "purpose": "execution",
+            "source": "router-command",
+            "experimental": false
+          }
+        ],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "unavailable",
+        "reasons": [
+          "routing_fixed"
+        ]
+      }
+    },
+    {
+      "id": "both-off-preserve",
+      "example": "Both switches off; no known hard failure",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-sonnet",
+          "modelOrigin": "inherited",
+          "effort": "high",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": false,
+          "changeEffort": false,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "preserve",
+        "reasons": [
+          "routing_fixed"
+        ],
+        "qualification": "unverified"
+      }
+    },
+    {
+      "id": "effort-off-unsupported",
+      "example": "Effort switch off at a level the proposed model lacks",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-haiku",
+          "modelOrigin": "inherited",
+          "effort": "xhigh",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": false,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "unavailable",
+        "reasons": [
+          "effort_unsupported"
+        ]
+      }
+    },
+    {
+      "id": "effort-off-authorized-alternative",
+      "example": "Effort fixed; authorized compatible alternative",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-haiku",
+          "modelOrigin": "inherited",
+          "effort": "xhigh",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": false,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": {
+          "ruleIds": [
+            "syn-specified"
+          ],
+          "coversPins": false,
+          "alternatives": [
+            "configuration/syn-opus/level-xhigh/synthetic-proxy%2Fmessages"
+          ],
+          "failures": [
+            "effort_unsupported"
+          ],
+          "maxSubstitutions": 1,
+          "used": 0,
+          "allowProviderChange": false,
+          "authorizationRef": "synthetic/authorization/effort-off-authorized-alternative",
+          "lineageId": "lin-1",
+          "policyRevision": "synthetic-policy-1",
+          "purpose": "execution",
+          "roles": [
+            "implementation"
+          ],
+          "allowFamilyChange": false,
+          "from": {
+            "modelId": "syn-sonnet",
+            "effort": {
+              "kind": "level",
+              "value": "xhigh"
+            }
+          }
+        },
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "select",
+        "configurationId": "configuration/syn-opus/level-xhigh/synthetic-proxy%2Fmessages",
+        "changes": {
+          "model": "syn-opus"
+        },
+        "substitution": true
+      }
+    },
+    {
+      "id": "subagent-medium-unsettable",
+      "example": "Subagent rule needs medium; hook cannot set effort",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": "asg-0",
+          "lineageId": "lin-1",
+          "boundary": "subagent",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": null,
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": false,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "explicit",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "executable",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "bounded",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "unavailable",
+        "reasons": [
+          "effort_unsupported"
+        ]
+      }
+    },
+    {
+      "id": "fork-inherits-model",
+      "example": "Forked subagent inherits; hook cannot change it",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": "asg-0",
+          "lineageId": "lin-1",
+          "boundary": "subagent",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": false,
+          "changeEffort": false,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "preserve",
+        "reasons": [
+          "routing_fixed"
+        ]
+      }
+    },
+    {
+      "id": "fork-inherits-exhausted",
+      "example": "Forked subagent inherits a known-exhausted model",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": "asg-0",
+          "lineageId": "lin-1",
+          "boundary": "subagent",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": false,
+          "changeEffort": false,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [
+            "syn-opus"
+          ],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "unavailable",
+        "reasonsInclude": [
+          "model_unavailable"
+        ]
+      }
+    },
+    {
+      "id": "classifier-timeout",
+      "example": "Classifier times out; no hard failure",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "timeout",
+          "output": null
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "preserve",
+        "reasons": [
+          "classification_timeout"
+        ]
+      }
+    },
+    {
+      "id": "queued-unmatched",
+      "example": "Queued prompts prevent a classification match",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "unmatched",
+          "output": null
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "preserve",
+        "reasons": [
+          "classification_unmatched"
+        ]
+      }
+    },
+    {
+      "id": "low-confidence",
+      "example": "Matching values below threshold",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.7
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.7
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.7
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.7
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.7
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "preserve",
+        "reasons": [
+          "classification_uncertain"
+        ]
+      }
+    },
+    {
+      "id": "no-rule",
+      "example": "Confident observations match no rule",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "explanation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "explicit",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "judgment",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "bounded",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "preserve",
+        "reasons": [
+          "no_matching_rule"
+        ]
+      }
+    },
+    {
+      "id": "same-scope-pin-conflict",
+      "example": "Same-scope pins conflict",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [
+          {
+            "field": "model",
+            "value": "syn-sonnet",
+            "scope": "session",
+            "purpose": "execution",
+            "source": "router-command",
+            "experimental": false
+          },
+          {
+            "field": "model",
+            "value": "syn-opus",
+            "scope": "session",
+            "purpose": "execution",
+            "source": "router-command",
+            "experimental": false
+          }
+        ],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "clarify",
+        "reasons": [
+          "override_conflict"
+        ]
+      }
+    },
+    {
+      "id": "assignment-pin-beats-session",
+      "example": "Assignment model pin over session pin; session effort kept",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [
+          {
+            "field": "model",
+            "value": "syn-sonnet",
+            "scope": "session",
+            "purpose": "execution",
+            "source": "router-command",
+            "experimental": false
+          },
+          {
+            "field": "model",
+            "value": "syn-opus",
+            "scope": "assignment",
+            "purpose": "execution",
+            "source": "router-command",
+            "experimental": false
+          },
+          {
+            "field": "effort",
+            "value": "xhigh",
+            "scope": "session",
+            "purpose": "execution",
+            "source": "router-command",
+            "experimental": false
+          }
+        ],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "select",
+        "reasons": [
+          "pin_selected"
+        ],
+        "configurationId": "configuration/syn-opus/level-xhigh/synthetic-proxy%2Fmessages",
+        "changes": {
+          "effort": {
+            "kind": "level",
+            "value": "xhigh"
+          }
+        }
+      }
+    },
+    {
+      "id": "review-pin-ignored-for-execution",
+      "example": "Review-purpose pin does not affect execution",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [
+          {
+            "field": "model",
+            "value": "syn-astra",
+            "scope": "session",
+            "purpose": "review",
+            "source": "coordinator",
+            "experimental": false
+          }
+        ],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "select",
+        "reasons": [
+          "rule_selected"
+        ],
+        "configurationId": "configuration/syn-sonnet/level-medium/synthetic-proxy%2Fmessages"
+      }
+    },
+    {
+      "id": "unresolved-authorization",
+      "example": "Unresolved authorization requirement",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [
+            "Who may read another customer's invoices?"
+          ],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "clarify",
+        "reasons": [
+          "requirement_unresolved"
+        ]
+      }
+    },
+    {
+      "id": "classifier-unresolved",
+      "example": "Confident unresolved specification",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.9
+            },
+            "specification": {
+              "value": "unresolved",
+              "confidence": 0.9
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.9
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.9
+            },
+            "consequence": {
+              "value": "unknown",
+              "confidence": null
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "clarify",
+        "reasons": [
+          "requirement_unresolved"
+        ]
+      }
+    },
+    {
+      "id": "image-unknown",
+      "example": "Images required; preferred image support unknown",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": true,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "unavailable",
+        "reasons": [
+          "compatibility_unknown"
+        ]
+      }
+    },
+    {
+      "id": "image-authorized-alternative",
+      "example": "Images required; authorized eligible alternative",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-haiku",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": true,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": {
+          "ruleIds": [
+            "syn-specified"
+          ],
+          "coversPins": false,
+          "alternatives": [
+            "configuration/syn-opus/level-medium/synthetic-proxy%2Fmessages"
+          ],
+          "failures": [
+            "compatibility_unknown"
+          ],
+          "maxSubstitutions": 1,
+          "used": 0,
+          "allowProviderChange": false,
+          "authorizationRef": "synthetic/authorization/image-authorized-alternative",
+          "lineageId": "lin-1",
+          "policyRevision": "synthetic-policy-1",
+          "purpose": "execution",
+          "roles": [
+            "implementation"
+          ],
+          "allowFamilyChange": false,
+          "from": {
+            "modelId": "syn-sonnet",
+            "effort": {
+              "kind": "level",
+              "value": "medium"
+            }
+          }
+        },
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "select",
+        "configurationId": "configuration/syn-opus/level-medium/synthetic-proxy%2Fmessages",
+        "substitution": true
+      }
+    },
+    {
+      "id": "mandatory-image-unknown-blocks-preserve",
+      "example": "Mandatory image requirement; inherited image support unknown",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-sonnet",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "timeout",
+          "output": null
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": true,
+          "mandatory": true,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "unavailable",
+        "reasonsInclude": [
+          "classification_timeout",
+          "compatibility_unknown"
+        ]
+      }
+    },
+    {
+      "id": "known-image-lack-blocks-preserve",
+      "example": "Images required; inherited model known to lack image input",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-haiku",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "timeout",
+          "output": null
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": true,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "unavailable",
+        "reasonsInclude": [
+          "capability_missing"
+        ]
+      }
+    },
+    {
+      "id": "quota-unknown",
+      "example": "Quota unknown; static provider policy permits",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-haiku",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "select",
+        "configurationId": "configuration/syn-sonnet/level-medium/synthetic-proxy%2Fmessages",
+        "reservationRequired": false
+      }
+    },
+    {
+      "id": "hard-budget-no-accounting",
+      "example": "Hard budget without accounting",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": {
+            "accounting": "unavailable",
+            "permits": true
+          }
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "unavailable",
+        "reasonsInclude": [
+          "accounting_unknown"
+        ]
+      }
+    },
+    {
+      "id": "hard-budget-reserved",
+      "example": "Hard budget with reliable accounting needs a reservation",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-haiku",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": {
+            "accounting": "reliable",
+            "permits": true
+          }
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "select",
+        "configurationId": "configuration/syn-sonnet/level-medium/synthetic-proxy%2Fmessages",
+        "reservationRequired": true
+      }
+    },
+    {
+      "id": "disabled-pin",
+      "example": "Pinned model is disabled",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [
+          {
+            "field": "model",
+            "value": "syn-disabled",
+            "scope": "session",
+            "purpose": "execution",
+            "source": "router-command",
+            "experimental": false
+          }
+        ],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "unavailable",
+        "reasonsInclude": [
+          "model_disabled"
+        ]
+      }
+    },
+    {
+      "id": "stale-availability-pin",
+      "example": "Pinned model availability observation expired",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [
+          {
+            "field": "model",
+            "value": "syn-stale",
+            "scope": "session",
+            "purpose": "execution",
+            "source": "router-command",
+            "experimental": false
+          }
+        ],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "unavailable",
+        "reasonsInclude": [
+          "availability_unknown"
+        ]
+      }
+    },
+    {
+      "id": "origin-unknown",
+      "example": "Model origin unknown is preserved",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "unknown",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "preserve",
+        "reasons": [
+          "routing_fixed",
+          "override_origin_unknown"
+        ]
+      }
+    },
+    {
+      "id": "numeric-effort-literal",
+      "example": "Numeric inherited effort carried literally",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": 4096,
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": false,
+          "changeEffort": false,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "preserve",
+        "reasons": [
+          "routing_fixed"
+        ],
+        "effort": {
+          "kind": "budget",
+          "value": 4096
+        },
+        "qualification": "unverified"
+      }
+    },
+    {
+      "id": "consequence-recommends-review",
+      "example": "Consequential effect recommends review",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "explicit",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "executable",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "consequential",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "select",
+        "configurationId": "configuration/syn-sonnet/level-medium/synthetic-proxy%2Fmessages",
+        "review": "recommended"
+      }
+    },
+    {
+      "id": "review-mode-off",
+      "example": "reviewMode off suppresses recommendations",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "off"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "explicit",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "executable",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "consequential",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "select",
+        "review": "not-requested"
+      }
+    },
+    {
+      "id": "trusted-review-required",
+      "example": "Trusted requirement makes review required",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "syn-opus",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "off"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": true,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "select",
+        "review": "required"
+      }
+    },
+    {
+      "id": "reviewer-cross-family",
+      "example": "Required cross-family reviewer",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-review",
+          "parentId": "asg-1",
+          "lineageId": "lin-1",
+          "boundary": "review",
+          "purpose": "review",
+          "reviewStage": "full",
+          "authorFamily": "claude",
+          "requestedRole": null
+        },
+        "current": {
+          "model": null,
+          "modelOrigin": "router",
+          "effort": null,
+          "effortOrigin": "router"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "unmatched",
+          "output": null
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": true,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "select",
+        "reasons": [
+          "rule_selected"
+        ],
+        "ruleId": "syn-review",
+        "configurationId": "configuration/syn-astra/level-medium/synthetic-proxy%2Fmessages",
+        "changes": {
+          "model": "syn-astra",
+          "effort": {
+            "kind": "level",
+            "value": "medium"
+          }
+        }
+      }
+    },
+    {
+      "id": "reviewer-preferred-provider-restricted",
+      "example": "Preferred reviewer provider is restricted; other primaries do not authorize fallback",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-review",
+          "parentId": "asg-1",
+          "lineageId": "lin-1",
+          "boundary": "review",
+          "purpose": "review",
+          "reviewStage": "full",
+          "authorFamily": "claude",
+          "requestedRole": null
+        },
+        "current": {
+          "model": null,
+          "modelOrigin": "router",
+          "effort": null,
+          "effortOrigin": "router"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "unmatched",
+          "output": null
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": true,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [
+            "openai"
+          ],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "unavailable",
+        "reasons": [
+          "budget_denied"
+        ],
+        "candidateIds": [
+          "configuration/syn-astra/level-medium/synthetic-proxy%2Fmessages"
+        ]
+      }
+    },
+    {
+      "id": "reviewer-unknown-author-family",
+      "example": "Unknown author family cannot verify independence",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-review",
+          "parentId": "asg-1",
+          "lineageId": "lin-1",
+          "boundary": "review",
+          "purpose": "review",
+          "reviewStage": "full",
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": null,
+          "modelOrigin": "router",
+          "effort": null,
+          "effortOrigin": "router"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "unmatched",
+          "output": null
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": true,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "unavailable",
+        "reasonsInclude": [
+          "independence_unverified"
+        ]
+      }
+    },
+    {
+      "id": "execution-pin-not-reviewer-pin",
+      "example": "Execution pin does not choose the reviewer",
+      "catalog": "synthetic",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-review",
+          "parentId": "asg-1",
+          "lineageId": "lin-1",
+          "boundary": "review",
+          "purpose": "review",
+          "reviewStage": "full",
+          "authorFamily": "claude",
+          "requestedRole": null
+        },
+        "current": {
+          "model": null,
+          "modelOrigin": "router",
+          "effort": null,
+          "effortOrigin": "router"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [
+          {
+            "field": "model",
+            "value": "syn-opus",
+            "scope": "session",
+            "purpose": "execution",
+            "source": "router-command",
+            "experimental": false
+          }
+        ],
+        "classification": {
+          "status": "unmatched",
+          "output": null
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": true,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": "synthetic/env-a",
+          "harnessVersion": "2.1.316",
+          "proxyVersion": "synthetic-proxy 1.0",
+          "requestPath": "synthetic-proxy/messages"
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "select",
+        "configurationId": "configuration/syn-astra/level-medium/synthetic-proxy%2Fmessages"
+      }
+    },
+    {
+      "id": "production-mechanical-unqualified",
+      "example": "Migrated catalog cannot qualify automatic selection",
+      "catalog": "production",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "claude-opus-5-5",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "explicit",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "executable",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "bounded",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": null,
+          "harnessVersion": "2.1.316",
+          "proxyVersion": null,
+          "requestPath": null
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "unavailable",
+        "reasonsInclude": [
+          "availability_unknown",
+          "compatibility_unknown",
+          "workload_unapproved"
+        ],
+        "ruleId": "mechanical-exact"
+      },
+      "legacy": {
+        "tier": "fast",
+        "confidence": 0.99,
+        "risky": 0.01,
+        "effort": 0,
+        "effortConfidence": 0.99
+      }
+    },
+    {
+      "id": "production-timeout-preserves",
+      "example": "Classifier timeout preserves under production data",
+      "catalog": "production",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "claude-opus-5-5",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [],
+        "classification": {
+          "status": "timeout",
+          "output": null
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": null,
+          "harnessVersion": "2.1.316",
+          "proxyVersion": null,
+          "requestPath": null
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "preserve",
+        "reasons": [
+          "classification_timeout"
+        ],
+        "qualification": "unverified"
+      },
+      "legacy": null
+    },
+    {
+      "id": "production-pin-unqualified",
+      "example": "Explicit pin cannot pass without evidence",
+      "catalog": "production",
+      "snapshot": {
+        "schemaVersion": 1,
+        "assignment": {
+          "id": "asg-1",
+          "parentId": null,
+          "lineageId": "lin-1",
+          "boundary": "main",
+          "purpose": "execution",
+          "reviewStage": null,
+          "authorFamily": null,
+          "requestedRole": null
+        },
+        "current": {
+          "model": "claude-opus-5-5",
+          "modelOrigin": "inherited",
+          "effort": "medium",
+          "effortOrigin": "inherited"
+        },
+        "controls": {
+          "changeModel": true,
+          "changeEffort": true,
+          "reviewMode": "recommend"
+        },
+        "pins": [
+          {
+            "field": "model",
+            "value": "claude-sonnet-5-5",
+            "scope": "session",
+            "purpose": "execution",
+            "source": "router-command",
+            "experimental": false
+          }
+        ],
+        "classification": {
+          "status": "ok",
+          "output": {
+            "role": {
+              "value": "implementation",
+              "confidence": 0.95
+            },
+            "specification": {
+              "value": "inferable",
+              "confidence": 0.95
+            },
+            "verification": {
+              "value": "partial",
+              "confidence": 0.95
+            },
+            "executionSpan": {
+              "value": "dependent-steps",
+              "confidence": 0.95
+            },
+            "consequence": {
+              "value": "reversible",
+              "confidence": 0.95
+            }
+          }
+        },
+        "requirements": {
+          "tools": true,
+          "imageInput": false,
+          "mandatory": false,
+          "inputTokens": 20000,
+          "unresolved": [],
+          "requireReview": false,
+          "distinctFamily": false,
+          "streaming": false,
+          "continuation": false,
+          "interruptions": false
+        },
+        "environment": {
+          "id": null,
+          "harnessVersion": "2.1.316",
+          "proxyVersion": null,
+          "requestPath": null
+        },
+        "resources": {
+          "restrictedProviders": [],
+          "exhaustedModels": [],
+          "hardBudget": null
+        },
+        "fallback": null,
+        "now": "2026-10-31T12:00:00Z"
+      },
+      "expected": {
+        "outcome": "unavailable",
+        "reasonsInclude": [
+          "availability_unknown"
+        ]
+      }
+    }
+  ]
+}

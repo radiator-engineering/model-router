@@ -1,0 +1,1226 @@
+{
+  "note": "Frozen from legacy code at d858909 before v2 phases 1-3. Regenerate only for an intentional legacy behavior change.",
+  "requests": [
+    {
+      "provider": "typesafe",
+      "tasks": false,
+      "model": "jev-latest",
+      "state": {
+        "prompt": "Rename parseRow."
+      },
+      "body": {
+        "model": "jev-latest",
+        "state": {
+          "prompt": "Rename parseRow."
+        },
+        "questions": {
+          "tier": {
+            "type": "choice",
+            "instructions": "Which is the cheapest tier that can complete this coding task well?",
+            "criteria": {
+              "fast": "Mechanical and local: read or summarise a file, run one command, rename a symbol, answer something already in context.",
+              "balanced": "Ordinary engineering: implement a well-specified change across a few files, write tests, fix a clearly described bug, review a small diff.",
+              "deep": "Hard or high-stakes: architecture and design, debugging a failure whose cause is unknown, security, data migrations, concurrency, anything touching production or money."
+            }
+          },
+          "effort": {
+            "type": "score",
+            "instructions": "How much step-by-step reasoning does this task need?",
+            "criteria": [
+              "almost none",
+              "some",
+              "a lot",
+              "as much as possible"
+            ]
+          },
+          "risky": {
+            "type": "noul",
+            "instructions": "Carrying out this task would itself change production, move real money, or alter data that cannot be restored. Writing or testing code that deals with such things, without running it against the real system, does not count."
+          }
+        }
+      },
+      "headers": {
+        "content-type": "application/json",
+        "authorization": "Bearer KEY"
+      }
+    },
+    {
+      "provider": "typesafe",
+      "tasks": true,
+      "model": "jev-latest",
+      "state": {
+        "prompt": "Rename parseRow."
+      },
+      "body": {
+        "model": "jev-latest",
+        "state": {
+          "prompt": "Rename parseRow."
+        },
+        "questions": {
+          "tier": {
+            "type": "choice",
+            "instructions": "Which is the cheapest tier that can complete this coding task well?",
+            "criteria": {
+              "fast": "Mechanical and local: read or summarise a file, run one command, rename a symbol, answer something already in context.",
+              "balanced": "Ordinary engineering: implement a well-specified change across a few files, write tests, fix a clearly described bug, review a small diff.",
+              "deep": "Hard or high-stakes: architecture and design, debugging a failure whose cause is unknown, security, data migrations, concurrency, anything touching production or money."
+            }
+          },
+          "effort": {
+            "type": "score",
+            "instructions": "How much step-by-step reasoning does this task need?",
+            "criteria": [
+              "almost none",
+              "some",
+              "a lot",
+              "as much as possible"
+            ]
+          },
+          "risky": {
+            "type": "noul",
+            "instructions": "Carrying out this task would itself change production, move real money, or alter data that cannot be restored. Writing or testing code that deals with such things, without running it against the real system, does not count."
+          },
+          "taskRole": {
+            "type": "choice",
+            "instructions": "Simple answers are spelling, short literal counts, direct lookups in supplied information, and straightforward stable facts requiring no synthesis. Short prompts are not automatically simple: teaching, causal reasoning, comparisons and tradeoffs are explanation; uncertain causes are investigation. Medical/legal/financial judgments and current facts requiring research are not simple answers. Classify the assignment itself, not its subject vocabulary. Architecture is design-led. Frontend implementation with an exact design is specified; original UX/UI requires design judgment. Schema/endpoints with unresolved authorization, concurrency or compatibility decisions are not routine. Mechanical means the exact edit is already given and verification is predetermined. Choosing the fix or designing boundary tests requires specified implementation, even for a local known bug. Examples: [{\"task\":\"Spell the word blueberry.\",\"role\":\"simple-answer\",\"category\":\"not-applicable\"},{\"task\":\"How many letters are in banana?\",\"role\":\"simple-answer\",\"category\":\"not-applicable\"},{\"task\":\"What is the capital of France?\",\"role\":\"simple-answer\",\"category\":\"not-applicable\"},{\"task\":\"Teach me how database indexes work, including tradeoffs and worked examples.\",\"role\":\"explanation\",\"category\":\"not-applicable\"},{\"task\":\"Explain why counting letters can be difficult for token-based language models.\",\"role\":\"explanation\",\"category\":\"not-applicable\"},{\"task\":\"Coordinate specialists and reconcile their findings into a plan.\",\"role\":\"orchestration\",\"category\":\"not-applicable\"},{\"task\":\"Analyze a screenshot for alignment, hierarchy and visual defects.\",\"role\":\"visual-analysis\",\"category\":\"not-applicable\"},{\"task\":\"Find files containing cache invalidation and return paths with matching lines; do not diagnose the design.\",\"role\":\"file-scout\",\"category\":\"not-applicable\"},{\"task\":\"Choose service boundaries and design a system architecture with tradeoffs.\",\"role\":\"implementation\",\"category\":\"design-led\"},{\"task\":\"Invent an original dashboard layout and its interaction patterns.\",\"role\":\"implementation\",\"category\":\"design-led\"},{\"task\":\"Build a form from the supplied exact mockup, component references and acceptance criteria.\",\"role\":\"implementation\",\"category\":\"specified\"},{\"task\":\"Implement an endpoint with an explicit schema, existing pattern and acceptance tests.\",\"role\":\"implementation\",\"category\":\"specified\"},{\"task\":\"Apply this exact string replacement in a known list of files and verify no old matches remain.\",\"role\":\"implementation\",\"category\":\"mechanical\"},{\"task\":\"Trace an unexplained race in token refresh before deciding on a fix.\",\"role\":\"investigation\",\"category\":\"not-applicable\"}]",
+            "criteria": {
+              "orchestration": "Decompose, coordinate, delegate or reconcile work across agents.",
+              "visual-analysis": "Interpret screenshots, visual references or rendered layouts.",
+              "file-scout": "Locate files or gather paths/snippets without interpreting the system.",
+              "implementation": "Create a plan/design/architecture or change code; use the implementation category to express judgment required.",
+              "investigation": "Determine an unknown cause or understand interacting systems.",
+              "review": "Independently evaluate work for defects or verify its behavior.",
+              "simple-answer": "Give a short literal answer: spelling, a small count, a direct supplied lookup, or a straightforward stable fact. No teaching, synthesis, investigation, research or consequential advice.",
+              "explanation": "Teach or explain concepts, causes, comparisons or tradeoffs, or summarize information; reasoning complexity is assessed separately by tier and effort."
+            }
+          },
+          "implementationCategory": {
+            "type": "choice",
+            "instructions": "Simple answers are spelling, short literal counts, direct lookups in supplied information, and straightforward stable facts requiring no synthesis. Short prompts are not automatically simple: teaching, causal reasoning, comparisons and tradeoffs are explanation; uncertain causes are investigation. Medical/legal/financial judgments and current facts requiring research are not simple answers. Classify the assignment itself, not its subject vocabulary. Architecture is design-led. Frontend implementation with an exact design is specified; original UX/UI requires design judgment. Schema/endpoints with unresolved authorization, concurrency or compatibility decisions are not routine. Mechanical means the exact edit is already given and verification is predetermined. Choosing the fix or designing boundary tests requires specified implementation, even for a local known bug. Examples: [{\"task\":\"Spell the word blueberry.\",\"role\":\"simple-answer\",\"category\":\"not-applicable\"},{\"task\":\"How many letters are in banana?\",\"role\":\"simple-answer\",\"category\":\"not-applicable\"},{\"task\":\"What is the capital of France?\",\"role\":\"simple-answer\",\"category\":\"not-applicable\"},{\"task\":\"Teach me how database indexes work, including tradeoffs and worked examples.\",\"role\":\"explanation\",\"category\":\"not-applicable\"},{\"task\":\"Explain why counting letters can be difficult for token-based language models.\",\"role\":\"explanation\",\"category\":\"not-applicable\"},{\"task\":\"Coordinate specialists and reconcile their findings into a plan.\",\"role\":\"orchestration\",\"category\":\"not-applicable\"},{\"task\":\"Analyze a screenshot for alignment, hierarchy and visual defects.\",\"role\":\"visual-analysis\",\"category\":\"not-applicable\"},{\"task\":\"Find files containing cache invalidation and return paths with matching lines; do not diagnose the design.\",\"role\":\"file-scout\",\"category\":\"not-applicable\"},{\"task\":\"Choose service boundaries and design a system architecture with tradeoffs.\",\"role\":\"implementation\",\"category\":\"design-led\"},{\"task\":\"Invent an original dashboard layout and its interaction patterns.\",\"role\":\"implementation\",\"category\":\"design-led\"},{\"task\":\"Build a form from the supplied exact mockup, component references and acceptance criteria.\",\"role\":\"implementation\",\"category\":\"specified\"},{\"task\":\"Implement an endpoint with an explicit schema, existing pattern and acceptance tests.\",\"role\":\"implementation\",\"category\":\"specified\"},{\"task\":\"Apply this exact string replacement in a known list of files and verify no old matches remain.\",\"role\":\"implementation\",\"category\":\"mechanical\"},{\"task\":\"Trace an unexplained race in token refresh before deciding on a fix.\",\"role\":\"investigation\",\"category\":\"not-applicable\"}]",
+            "criteria": {
+              "design-led": "Architecture/system design, original UX/UI, or implementation requiring invention and unresolved design tradeoffs.",
+              "specified": "Implement an established solution with explicit contracts, specifications and references.",
+              "mechanical": "Apply an exact prescribed transformation, with predetermined checks and no need to choose a fix or design test cases. Small code changes alone are not mechanical.",
+              "not-applicable": "The assignment is orchestration, visual analysis, file scouting, investigation, review, simple answer or explanation rather than implementation/design."
+            }
+          }
+        }
+      },
+      "headers": {
+        "content-type": "application/json",
+        "authorization": "Bearer KEY"
+      }
+    },
+    {
+      "provider": "gateway",
+      "tasks": false,
+      "model": "jev-latest",
+      "state": {
+        "prompt": "Rename parseRow."
+      },
+      "body": {
+        "state": {
+          "prompt": "Rename parseRow."
+        },
+        "questions": {
+          "tier": {
+            "type": "choice",
+            "instructions": "Which is the cheapest tier that can complete this coding task well?",
+            "criteria": {
+              "fast": "Mechanical and local: read or summarise a file, run one command, rename a symbol, answer something already in context.",
+              "balanced": "Ordinary engineering: implement a well-specified change across a few files, write tests, fix a clearly described bug, review a small diff.",
+              "deep": "Hard or high-stakes: architecture and design, debugging a failure whose cause is unknown, security, data migrations, concurrency, anything touching production or money."
+            }
+          },
+          "effort": {
+            "type": "score",
+            "instructions": "How much step-by-step reasoning does this task need?",
+            "criteria": [
+              "almost none",
+              "some",
+              "a lot",
+              "as much as possible"
+            ]
+          },
+          "risky": {
+            "type": "boolean",
+            "instructions": "Carrying out this task would itself change production, move real money, or alter data that cannot be restored. Writing or testing code that deals with such things, without running it against the real system, does not count."
+          }
+        }
+      },
+      "headers": {
+        "content-type": "application/json",
+        "authorization": "Bearer KEY",
+        "ai-gateway-auth-method": "api-key",
+        "ai-model-id": "jev-latest",
+        "ai-gateway-protocol-version": "0.0.1",
+        "ai-evaluation-model-specification-version": "4"
+      }
+    },
+    {
+      "provider": "gateway",
+      "tasks": true,
+      "model": "jev-latest",
+      "state": {
+        "prompt": "Rename parseRow."
+      },
+      "body": {
+        "state": {
+          "prompt": "Rename parseRow."
+        },
+        "questions": {
+          "tier": {
+            "type": "choice",
+            "instructions": "Which is the cheapest tier that can complete this coding task well?",
+            "criteria": {
+              "fast": "Mechanical and local: read or summarise a file, run one command, rename a symbol, answer something already in context.",
+              "balanced": "Ordinary engineering: implement a well-specified change across a few files, write tests, fix a clearly described bug, review a small diff.",
+              "deep": "Hard or high-stakes: architecture and design, debugging a failure whose cause is unknown, security, data migrations, concurrency, anything touching production or money."
+            }
+          },
+          "effort": {
+            "type": "score",
+            "instructions": "How much step-by-step reasoning does this task need?",
+            "criteria": [
+              "almost none",
+              "some",
+              "a lot",
+              "as much as possible"
+            ]
+          },
+          "risky": {
+            "type": "boolean",
+            "instructions": "Carrying out this task would itself change production, move real money, or alter data that cannot be restored. Writing or testing code that deals with such things, without running it against the real system, does not count."
+          },
+          "taskRole": {
+            "type": "choice",
+            "instructions": "Simple answers are spelling, short literal counts, direct lookups in supplied information, and straightforward stable facts requiring no synthesis. Short prompts are not automatically simple: teaching, causal reasoning, comparisons and tradeoffs are explanation; uncertain causes are investigation. Medical/legal/financial judgments and current facts requiring research are not simple answers. Classify the assignment itself, not its subject vocabulary. Architecture is design-led. Frontend implementation with an exact design is specified; original UX/UI requires design judgment. Schema/endpoints with unresolved authorization, concurrency or compatibility decisions are not routine. Mechanical means the exact edit is already given and verification is predetermined. Choosing the fix or designing boundary tests requires specified implementation, even for a local known bug. Examples: [{\"task\":\"Spell the word blueberry.\",\"role\":\"simple-answer\",\"category\":\"not-applicable\"},{\"task\":\"How many letters are in banana?\",\"role\":\"simple-answer\",\"category\":\"not-applicable\"},{\"task\":\"What is the capital of France?\",\"role\":\"simple-answer\",\"category\":\"not-applicable\"},{\"task\":\"Teach me how database indexes work, including tradeoffs and worked examples.\",\"role\":\"explanation\",\"category\":\"not-applicable\"},{\"task\":\"Explain why counting letters can be difficult for token-based language models.\",\"role\":\"explanation\",\"category\":\"not-applicable\"},{\"task\":\"Coordinate specialists and reconcile their findings into a plan.\",\"role\":\"orchestration\",\"category\":\"not-applicable\"},{\"task\":\"Analyze a screenshot for alignment, hierarchy and visual defects.\",\"role\":\"visual-analysis\",\"category\":\"not-applicable\"},{\"task\":\"Find files containing cache invalidation and return paths with matching lines; do not diagnose the design.\",\"role\":\"file-scout\",\"category\":\"not-applicable\"},{\"task\":\"Choose service boundaries and design a system architecture with tradeoffs.\",\"role\":\"implementation\",\"category\":\"design-led\"},{\"task\":\"Invent an original dashboard layout and its interaction patterns.\",\"role\":\"implementation\",\"category\":\"design-led\"},{\"task\":\"Build a form from the supplied exact mockup, component references and acceptance criteria.\",\"role\":\"implementation\",\"category\":\"specified\"},{\"task\":\"Implement an endpoint with an explicit schema, existing pattern and acceptance tests.\",\"role\":\"implementation\",\"category\":\"specified\"},{\"task\":\"Apply this exact string replacement in a known list of files and verify no old matches remain.\",\"role\":\"implementation\",\"category\":\"mechanical\"},{\"task\":\"Trace an unexplained race in token refresh before deciding on a fix.\",\"role\":\"investigation\",\"category\":\"not-applicable\"}]",
+            "criteria": {
+              "orchestration": "Decompose, coordinate, delegate or reconcile work across agents.",
+              "visual-analysis": "Interpret screenshots, visual references or rendered layouts.",
+              "file-scout": "Locate files or gather paths/snippets without interpreting the system.",
+              "implementation": "Create a plan/design/architecture or change code; use the implementation category to express judgment required.",
+              "investigation": "Determine an unknown cause or understand interacting systems.",
+              "review": "Independently evaluate work for defects or verify its behavior.",
+              "simple-answer": "Give a short literal answer: spelling, a small count, a direct supplied lookup, or a straightforward stable fact. No teaching, synthesis, investigation, research or consequential advice.",
+              "explanation": "Teach or explain concepts, causes, comparisons or tradeoffs, or summarize information; reasoning complexity is assessed separately by tier and effort."
+            }
+          },
+          "implementationCategory": {
+            "type": "choice",
+            "instructions": "Simple answers are spelling, short literal counts, direct lookups in supplied information, and straightforward stable facts requiring no synthesis. Short prompts are not automatically simple: teaching, causal reasoning, comparisons and tradeoffs are explanation; uncertain causes are investigation. Medical/legal/financial judgments and current facts requiring research are not simple answers. Classify the assignment itself, not its subject vocabulary. Architecture is design-led. Frontend implementation with an exact design is specified; original UX/UI requires design judgment. Schema/endpoints with unresolved authorization, concurrency or compatibility decisions are not routine. Mechanical means the exact edit is already given and verification is predetermined. Choosing the fix or designing boundary tests requires specified implementation, even for a local known bug. Examples: [{\"task\":\"Spell the word blueberry.\",\"role\":\"simple-answer\",\"category\":\"not-applicable\"},{\"task\":\"How many letters are in banana?\",\"role\":\"simple-answer\",\"category\":\"not-applicable\"},{\"task\":\"What is the capital of France?\",\"role\":\"simple-answer\",\"category\":\"not-applicable\"},{\"task\":\"Teach me how database indexes work, including tradeoffs and worked examples.\",\"role\":\"explanation\",\"category\":\"not-applicable\"},{\"task\":\"Explain why counting letters can be difficult for token-based language models.\",\"role\":\"explanation\",\"category\":\"not-applicable\"},{\"task\":\"Coordinate specialists and reconcile their findings into a plan.\",\"role\":\"orchestration\",\"category\":\"not-applicable\"},{\"task\":\"Analyze a screenshot for alignment, hierarchy and visual defects.\",\"role\":\"visual-analysis\",\"category\":\"not-applicable\"},{\"task\":\"Find files containing cache invalidation and return paths with matching lines; do not diagnose the design.\",\"role\":\"file-scout\",\"category\":\"not-applicable\"},{\"task\":\"Choose service boundaries and design a system architecture with tradeoffs.\",\"role\":\"implementation\",\"category\":\"design-led\"},{\"task\":\"Invent an original dashboard layout and its interaction patterns.\",\"role\":\"implementation\",\"category\":\"design-led\"},{\"task\":\"Build a form from the supplied exact mockup, component references and acceptance criteria.\",\"role\":\"implementation\",\"category\":\"specified\"},{\"task\":\"Implement an endpoint with an explicit schema, existing pattern and acceptance tests.\",\"role\":\"implementation\",\"category\":\"specified\"},{\"task\":\"Apply this exact string replacement in a known list of files and verify no old matches remain.\",\"role\":\"implementation\",\"category\":\"mechanical\"},{\"task\":\"Trace an unexplained race in token refresh before deciding on a fix.\",\"role\":\"investigation\",\"category\":\"not-applicable\"}]",
+            "criteria": {
+              "design-led": "Architecture/system design, original UX/UI, or implementation requiring invention and unresolved design tradeoffs.",
+              "specified": "Implement an established solution with explicit contracts, specifications and references.",
+              "mechanical": "Apply an exact prescribed transformation, with predetermined checks and no need to choose a fix or design test cases. Small code changes alone are not mechanical.",
+              "not-applicable": "The assignment is orchestration, visual analysis, file scouting, investigation, review, simple answer or explanation rather than implementation/design."
+            }
+          }
+        }
+      },
+      "headers": {
+        "content-type": "application/json",
+        "authorization": "Bearer KEY",
+        "ai-gateway-auth-method": "api-key",
+        "ai-model-id": "jev-latest",
+        "ai-gateway-protocol-version": "0.0.1",
+        "ai-evaluation-model-specification-version": "4"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "decision": null,
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": null,
+        "effort": null,
+        "reason": "no decision"
+      }
+    },
+    {
+      "decision": null,
+      "current": {
+        "model": "claude-opus-5-5",
+        "effort": "xhigh"
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": null,
+        "effort": null,
+        "reason": "no decision"
+      }
+    },
+    {
+      "decision": null,
+      "current": {
+        "model": "haiku",
+        "effort": 4096
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": null,
+        "effort": null,
+        "reason": "no decision"
+      }
+    },
+    {
+      "decision": null,
+      "current": {
+        "model": "unknown-model"
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": null,
+        "effort": null,
+        "reason": "no decision"
+      }
+    },
+    {
+      "decision": {
+        "tier": "fast",
+        "confidence": 0.99,
+        "risky": 0.01,
+        "effort": 0,
+        "effortConfidence": 0.99
+      },
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": "haiku",
+        "effort": "low",
+        "reason": "fast (confidence 0.99)"
+      }
+    },
+    {
+      "decision": {
+        "tier": "fast",
+        "confidence": 0.99,
+        "risky": 0.01,
+        "effort": 0,
+        "effortConfidence": 0.99
+      },
+      "current": {
+        "model": "claude-opus-5-5",
+        "effort": "xhigh"
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": "haiku",
+        "effort": "low",
+        "reason": "fast (confidence 0.99)"
+      }
+    },
+    {
+      "decision": {
+        "tier": "fast",
+        "confidence": 0.99,
+        "risky": 0.01,
+        "effort": 0,
+        "effortConfidence": 0.99
+      },
+      "current": {
+        "model": "haiku",
+        "effort": 4096
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": null,
+        "effort": null,
+        "reason": "kept haiku/4096, wanted haiku/low (confidence 0.99)"
+      }
+    },
+    {
+      "decision": {
+        "tier": "fast",
+        "confidence": 0.99,
+        "risky": 0.01,
+        "effort": 0,
+        "effortConfidence": 0.99
+      },
+      "current": {
+        "model": "unknown-model"
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": "haiku",
+        "effort": "low",
+        "reason": "fast (confidence 0.99)"
+      }
+    },
+    {
+      "decision": {
+        "tier": "fast",
+        "confidence": 0.5,
+        "risky": 0.01,
+        "effort": 0,
+        "effortConfidence": 0.5
+      },
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": null,
+        "effort": null,
+        "reason": "kept sonnet/medium, wanted haiku/low (confidence 0.50)"
+      }
+    },
+    {
+      "decision": {
+        "tier": "fast",
+        "confidence": 0.5,
+        "risky": 0.01,
+        "effort": 0,
+        "effortConfidence": 0.5
+      },
+      "current": {
+        "model": "claude-opus-5-5",
+        "effort": "xhigh"
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": null,
+        "effort": null,
+        "reason": "kept claude-opus-5-5/xhigh, wanted haiku/low (confidence 0.50)"
+      }
+    },
+    {
+      "decision": {
+        "tier": "fast",
+        "confidence": 0.5,
+        "risky": 0.01,
+        "effort": 0,
+        "effortConfidence": 0.5
+      },
+      "current": {
+        "model": "haiku",
+        "effort": 4096
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": null,
+        "effort": null,
+        "reason": "kept haiku/4096, wanted haiku/low (confidence 0.50)"
+      }
+    },
+    {
+      "decision": {
+        "tier": "fast",
+        "confidence": 0.5,
+        "risky": 0.01,
+        "effort": 0,
+        "effortConfidence": 0.5
+      },
+      "current": {
+        "model": "unknown-model"
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": "haiku",
+        "effort": "low",
+        "reason": "fast (confidence 0.50)"
+      }
+    },
+    {
+      "decision": {
+        "tier": "balanced",
+        "confidence": 0.9,
+        "risky": 0.1,
+        "effort": 1,
+        "effortConfidence": 0.9
+      },
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": null,
+        "effort": null,
+        "reason": "kept sonnet/medium, wanted sonnet/medium (confidence 0.90)"
+      }
+    },
+    {
+      "decision": {
+        "tier": "balanced",
+        "confidence": 0.9,
+        "risky": 0.1,
+        "effort": 1,
+        "effortConfidence": 0.9
+      },
+      "current": {
+        "model": "claude-opus-5-5",
+        "effort": "xhigh"
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": "sonnet",
+        "effort": "medium",
+        "reason": "balanced (confidence 0.90)"
+      }
+    },
+    {
+      "decision": {
+        "tier": "balanced",
+        "confidence": 0.9,
+        "risky": 0.1,
+        "effort": 1,
+        "effortConfidence": 0.9
+      },
+      "current": {
+        "model": "haiku",
+        "effort": 4096
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": "sonnet",
+        "effort": null,
+        "reason": "balanced (confidence 0.90)"
+      }
+    },
+    {
+      "decision": {
+        "tier": "balanced",
+        "confidence": 0.9,
+        "risky": 0.1,
+        "effort": 1,
+        "effortConfidence": 0.9
+      },
+      "current": {
+        "model": "unknown-model"
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": "sonnet",
+        "effort": "medium",
+        "reason": "balanced (confidence 0.90)"
+      }
+    },
+    {
+      "decision": {
+        "tier": "deep",
+        "confidence": 0.4,
+        "risky": 0.2,
+        "effort": 3,
+        "effortConfidence": 0.4
+      },
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": "opus",
+        "effort": "xhigh",
+        "reason": "deep (confidence 0.40)"
+      }
+    },
+    {
+      "decision": {
+        "tier": "deep",
+        "confidence": 0.4,
+        "risky": 0.2,
+        "effort": 3,
+        "effortConfidence": 0.4
+      },
+      "current": {
+        "model": "claude-opus-5-5",
+        "effort": "xhigh"
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": null,
+        "effort": null,
+        "reason": "kept claude-opus-5-5/xhigh, wanted opus/xhigh (confidence 0.40)"
+      }
+    },
+    {
+      "decision": {
+        "tier": "deep",
+        "confidence": 0.4,
+        "risky": 0.2,
+        "effort": 3,
+        "effortConfidence": 0.4
+      },
+      "current": {
+        "model": "haiku",
+        "effort": 4096
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": "opus",
+        "effort": null,
+        "reason": "deep (confidence 0.40)"
+      }
+    },
+    {
+      "decision": {
+        "tier": "deep",
+        "confidence": 0.4,
+        "risky": 0.2,
+        "effort": 3,
+        "effortConfidence": 0.4
+      },
+      "current": {
+        "model": "unknown-model"
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": "opus",
+        "effort": "xhigh",
+        "reason": "deep (confidence 0.40)"
+      }
+    },
+    {
+      "decision": {
+        "tier": "deep",
+        "confidence": null,
+        "risky": null,
+        "effort": null,
+        "effortConfidence": null
+      },
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": "opus",
+        "effort": null,
+        "reason": "deep (confidence n/d)"
+      }
+    },
+    {
+      "decision": {
+        "tier": "deep",
+        "confidence": null,
+        "risky": null,
+        "effort": null,
+        "effortConfidence": null
+      },
+      "current": {
+        "model": "claude-opus-5-5",
+        "effort": "xhigh"
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": null,
+        "effort": null,
+        "reason": "kept claude-opus-5-5/xhigh, wanted opus (confidence n/d)"
+      }
+    },
+    {
+      "decision": {
+        "tier": "deep",
+        "confidence": null,
+        "risky": null,
+        "effort": null,
+        "effortConfidence": null
+      },
+      "current": {
+        "model": "haiku",
+        "effort": 4096
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": "opus",
+        "effort": null,
+        "reason": "deep (confidence n/d)"
+      }
+    },
+    {
+      "decision": {
+        "tier": "deep",
+        "confidence": null,
+        "risky": null,
+        "effort": null,
+        "effortConfidence": null
+      },
+      "current": {
+        "model": "unknown-model"
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": "opus",
+        "effort": null,
+        "reason": "deep (confidence n/d)"
+      }
+    },
+    {
+      "decision": {
+        "tier": "fast",
+        "confidence": 0.99,
+        "risky": 0.95,
+        "effort": 0,
+        "effortConfidence": 0.99
+      },
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": "opus",
+        "effort": "high",
+        "reason": "deep, forced by risk"
+      }
+    },
+    {
+      "decision": {
+        "tier": "fast",
+        "confidence": 0.99,
+        "risky": 0.95,
+        "effort": 0,
+        "effortConfidence": 0.99
+      },
+      "current": {
+        "model": "claude-opus-5-5",
+        "effort": "xhigh"
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": "opus",
+        "effort": null,
+        "reason": "deep, forced by risk"
+      }
+    },
+    {
+      "decision": {
+        "tier": "fast",
+        "confidence": 0.99,
+        "risky": 0.95,
+        "effort": 0,
+        "effortConfidence": 0.99
+      },
+      "current": {
+        "model": "haiku",
+        "effort": 4096
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": "opus",
+        "effort": null,
+        "reason": "deep, forced by risk"
+      }
+    },
+    {
+      "decision": {
+        "tier": "fast",
+        "confidence": 0.99,
+        "risky": 0.95,
+        "effort": 0,
+        "effortConfidence": 0.99
+      },
+      "current": {
+        "model": "unknown-model"
+      },
+      "config": {
+        "tiers": {
+          "fast": "haiku",
+          "balanced": "sonnet",
+          "deep": "opus"
+        },
+        "minUpgradeConfidence": 0.3,
+        "minDowngradeConfidence": 0.6
+      },
+      "routing": {
+        "model": "opus",
+        "effort": "high",
+        "reason": "deep, forced by risk"
+      }
+    }
+  ],
+  "reads": [
+    {
+      "text": "{\"answers\":{\"tier\":{\"choice\":\"balanced\",\"confidence\":0.9},\"effort\":{\"score\":1.2,\"confidence\":0.8},\"risky\":{\"noul\":0.1}}}",
+      "decision": {
+        "tier": "balanced",
+        "confidence": 0.9,
+        "effort": 1.2,
+        "effortConfidence": 0.8,
+        "risky": 0.1
+      }
+    },
+    {
+      "text": "{\"answers\":{\"tier\":{\"choice\":\"deep\",\"probabilities\":{\"fast\":0.1,\"balanced\":0.2,\"deep\":0.7}},\"effort\":{\"score\":2},\"risky\":{\"probability\":0.4}}}",
+      "decision": {
+        "tier": "deep",
+        "confidence": 0.7,
+        "effort": 2,
+        "effortConfidence": null,
+        "risky": 0.4
+      }
+    },
+    {
+      "text": "{\"answers\":{\"tier\":{\"choice\":\"fast\",\"confidence\":0.99},\"effort\":{\"score\":0,\"confidence\":0.99},\"risky\":{\"noul\":0.01},\"taskRole\":{\"choice\":\"implementation\",\"confidence\":0.95},\"implementationCategory\":{\"choice\":\"mechanical\",\"confidence\":0.9}}}",
+      "decision": {
+        "task": {
+          "role": "implementation",
+          "implementationCategory": "mechanical",
+          "roleConfidence": 0.95,
+          "categoryConfidence": 0.9
+        },
+        "tier": "fast",
+        "confidence": 0.99,
+        "effort": 0,
+        "effortConfidence": 0.99,
+        "risky": 0.01
+      }
+    },
+    {
+      "text": "not json",
+      "decision": null
+    },
+    {
+      "text": "{\"answers\":{\"tier\":{\"choice\":\"huge\"}}}",
+      "decision": null
+    }
+  ],
+  "tasks": [
+    {
+      "task": {
+        "role": "implementation",
+        "implementationCategory": "mechanical",
+        "roleConfidence": 0.95,
+        "categoryConfidence": 0.95
+      },
+      "risky": false,
+      "recommendation": {
+        "preferredModel": "claude-haiku-5-5",
+        "model": "claude-haiku-5-5",
+        "effort": null,
+        "reason": "user preference for implementation/mechanical"
+      }
+    },
+    {
+      "task": {
+        "role": "implementation",
+        "implementationCategory": "mechanical",
+        "roleConfidence": 0.95,
+        "categoryConfidence": 0.95
+      },
+      "risky": true,
+      "recommendation": {
+        "preferredModel": "claude-haiku-5-5",
+        "model": null,
+        "effort": null,
+        "reason": "consequential action: retain legacy risk escalation"
+      }
+    },
+    {
+      "task": {
+        "role": "implementation",
+        "implementationCategory": "specified",
+        "roleConfidence": 0.95,
+        "categoryConfidence": 0.95
+      },
+      "risky": false,
+      "recommendation": {
+        "preferredModel": "claude-sonnet-5-5",
+        "model": "claude-sonnet-5-5",
+        "effort": null,
+        "reason": "user preference for implementation/specified"
+      }
+    },
+    {
+      "task": {
+        "role": "implementation",
+        "implementationCategory": "specified",
+        "roleConfidence": 0.95,
+        "categoryConfidence": 0.95
+      },
+      "risky": true,
+      "recommendation": {
+        "preferredModel": "claude-sonnet-5-5",
+        "model": null,
+        "effort": null,
+        "reason": "consequential action: retain legacy risk escalation"
+      }
+    },
+    {
+      "task": {
+        "role": "implementation",
+        "implementationCategory": "design-led",
+        "roleConfidence": 0.95,
+        "categoryConfidence": 0.95
+      },
+      "risky": false,
+      "recommendation": {
+        "preferredModel": "claude-opus-5-5",
+        "model": "claude-opus-5-5",
+        "effort": null,
+        "reason": "user preference for implementation/design-led"
+      }
+    },
+    {
+      "task": {
+        "role": "implementation",
+        "implementationCategory": "design-led",
+        "roleConfidence": 0.95,
+        "categoryConfidence": 0.95
+      },
+      "risky": true,
+      "recommendation": {
+        "preferredModel": "claude-opus-5-5",
+        "model": null,
+        "effort": null,
+        "reason": "consequential action: retain legacy risk escalation"
+      }
+    },
+    {
+      "task": {
+        "role": "orchestration",
+        "implementationCategory": "not-applicable",
+        "roleConfidence": 0.95,
+        "categoryConfidence": 0.95
+      },
+      "risky": false,
+      "recommendation": {
+        "preferredModel": "claude-opus-5-5",
+        "model": "claude-opus-5-5",
+        "effort": "medium",
+        "reason": "user preference for orchestration/not-applicable"
+      }
+    },
+    {
+      "task": {
+        "role": "orchestration",
+        "implementationCategory": "not-applicable",
+        "roleConfidence": 0.95,
+        "categoryConfidence": 0.95
+      },
+      "risky": true,
+      "recommendation": {
+        "preferredModel": "claude-opus-5-5",
+        "model": null,
+        "effort": null,
+        "reason": "consequential action: retain legacy risk escalation"
+      }
+    },
+    {
+      "task": {
+        "role": "visual-analysis",
+        "implementationCategory": "not-applicable",
+        "roleConfidence": 0.95,
+        "categoryConfidence": 0.95
+      },
+      "risky": false,
+      "recommendation": {
+        "preferredModel": "gpt-6-astra",
+        "model": "gpt-6-astra",
+        "effort": null,
+        "reason": "user preference for visual-analysis/not-applicable"
+      }
+    },
+    {
+      "task": {
+        "role": "visual-analysis",
+        "implementationCategory": "not-applicable",
+        "roleConfidence": 0.95,
+        "categoryConfidence": 0.95
+      },
+      "risky": true,
+      "recommendation": {
+        "preferredModel": "gpt-6-astra",
+        "model": null,
+        "effort": null,
+        "reason": "consequential action: retain legacy risk escalation"
+      }
+    },
+    {
+      "task": {
+        "role": "review",
+        "implementationCategory": "not-applicable",
+        "roleConfidence": 0.95,
+        "categoryConfidence": 0.95
+      },
+      "risky": false,
+      "recommendation": {
+        "preferredModel": null,
+        "model": null,
+        "effort": null,
+        "reason": "no preference for review; retain legacy routing"
+      }
+    },
+    {
+      "task": {
+        "role": "review",
+        "implementationCategory": "not-applicable",
+        "roleConfidence": 0.95,
+        "categoryConfidence": 0.95
+      },
+      "risky": true,
+      "recommendation": {
+        "preferredModel": null,
+        "model": null,
+        "effort": null,
+        "reason": "no preference for review; retain legacy routing"
+      }
+    },
+    {
+      "task": {
+        "role": "simple-answer",
+        "implementationCategory": "not-applicable",
+        "roleConfidence": 0.95,
+        "categoryConfidence": 0.95
+      },
+      "risky": false,
+      "recommendation": {
+        "preferredModel": "claude-haiku-5-5",
+        "model": "claude-haiku-5-5",
+        "effort": null,
+        "reason": "user preference for simple-answer/not-applicable"
+      }
+    },
+    {
+      "task": {
+        "role": "simple-answer",
+        "implementationCategory": "not-applicable",
+        "roleConfidence": 0.95,
+        "categoryConfidence": 0.95
+      },
+      "risky": true,
+      "recommendation": {
+        "preferredModel": "claude-haiku-5-5",
+        "model": null,
+        "effort": null,
+        "reason": "consequential action: retain legacy risk escalation"
+      }
+    },
+    {
+      "task": null,
+      "risky": false,
+      "recommendation": {
+        "preferredModel": null,
+        "model": null,
+        "effort": null,
+        "reason": "missing or inconsistent task classification"
+      }
+    }
+  ]
+}

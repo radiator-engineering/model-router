@@ -4,7 +4,7 @@ A Claude Code mod that uses [TypeSafe’s Jev](https://typesafe.ai/) to choose m
 
 This project started from the Jev model router in [Daniel (San) Ávila’s claude-code-templates](https://github.com/davila7/claude-code-templates/tree/8f1f608e9396ba7e70d73372cabc85c028c2f79d/cli-tool/components/mods/productivity/jev-model-router). It retains the original MIT license. See [Credits](#credits).
 
-The [documentation index](docs/README.md) links current usage, contributor setup, and research. The [v2 specs](docs/v2/product.md) describe the proposed redesign; this README describes the current plugin.
+The [documentation index](docs/README.md) links current usage, contributor setup, and research. The [v2 design brief](docs/v2/design-brief.md) defines the proposed redesign; this README describes the current plugin.
 
 ## How it works
 
@@ -43,7 +43,7 @@ Custom preferences:
 | Simple answers: spelling, small counts, straightforward stable facts | Haiku 5.5 |
 | Investigation, review, substantive explanation | Basic tier and effort policy |
 
-These are editable preferences, not benchmark rankings or a measured cost optimizer. The router applies a preference only when confidence, risk, availability, and tool compatibility checks permit it. An unverified preferred model or low-confidence preference retains the current request; consequential tasks use the original risk policy. Subagents have no effort parameter, so the router cannot enforce the orchestration model/medium-effort combination there.
+These are editable preferences, not benchmark rankings or a measured cost optimizer. The router applies a preference only when confidence, risk, availability, and tool compatibility checks permit it. An unverified preferred model or low-confidence preference retains the current request; consequential tasks use the original risk policy. This router does not currently apply subagent effort preferences; the [v2 harness research](docs/r-and-d/03-claude-code-mods-harness-validation.md) distinguishes available effort controls from that implementation limit.
 
 ## Setup
 

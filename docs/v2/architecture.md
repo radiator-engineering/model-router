@@ -2,9 +2,13 @@
 
 Status: Draft design baseline. Date: October 31, 2026.
 
+The [official v2 design brief](design-brief.md) selects the architecture and file-level implementation plan. This document describes its component responsibilities and logical interfaces.
+
 The architecture separates task observation, deterministic selection, and execution. Jev classifies assignments. The policy engine selects configurations from an immutable snapshot. A harness adapter applies or blocks the decision, and the orchestrator manages tools, review, repair, and acceptance.
 
-The [decision contract](decision-contract.md) governs precedence and failure behavior. The schemas below describe logical interfaces to implement after harness validation. They do not claim that the current plugin or Jev endpoint already uses these shapes.
+The [decision contract](decision-contract.md) governs precedence and failure behavior. The schemas below describe logical interfaces to implement after harness validation. The [runtime contracts](runtime-contracts.md) define concrete catalog storage/reader APIs, candidate enrollment, and trusted checks. They do not claim that the current plugin or Jev endpoint already uses these shapes.
+
+The [Mods validation report](../r-and-d/03-claude-code-mods-harness-validation.md) establishes an in-process implementation path. V2 selects harness and review-coordinator modules inside the existing plugin. Keeping them separate from pure selection is a component boundary, not a requirement for a separate service. A companion Mod remains a future alternative.
 
 ## Components and ownership
 
@@ -37,7 +41,7 @@ flowchart TD
     H2 --> C
 ```
 
-Review execution in this flow requires an orchestration integration. A hook that can only select models cannot supply the whole workflow.
+Review execution in this flow requires the coordinator. Mods expose agent registration, spawning, and completion events for that workflow. A hook that only selects models remains one part of it.
 
 ## Classifier interface
 
@@ -84,7 +88,7 @@ type Configuration = {
   model: string // Exact catalog/request identity
   effort: {
     source: 'explicit' | 'inherited' | 'harness-default'
-    value: string | null // Unknown never proves an effort requirement
+    value: string | number | null // Preserve numeric caller values literally
   }
 }
 
@@ -121,24 +125,34 @@ Pins enter through trusted user controls or explicit orchestrator metadata. For 
 
 The adapter adds the pin's origin and scope identity. It resolves assignment over session over persistent pins for each field. A task-specific model pin can replace the session model without clearing a session effort pin; the resulting pair must still qualify.
 
-An automatic selection made earlier is not a manual pin. If origin is unknown, preserve the field and explain the limitation. A switch that is off forbids mutation. A pin that conflicts with a fixed outgoing field produces an explicit failure rather than a hidden change. Pin UI and native selection detection need harness validation.
+An automatic selection made earlier is not a manual pin. If origin is unknown, preserve the field and explain the limitation. A switch that is off forbids mutation. A pin that conflicts with a fixed outgoing field produces an explicit failure rather than a hidden change. Use router-owned controls for reliable pin intent. Native `classic.PostModelSwitch` can report successful changes and their source; account for default selection, fast mode, SDK changes, automatic fallback, and resume before mapping an event to a pin. Live native-selection and effort-origin checks remain necessary.
 
 ## Execution and review flow
 
-1. Capture controls and request state at an assignment boundary. Tie classifier output to that exact assignment; discard ambiguous or late output.
-2. Evaluate the decision. For selection, acquire any required resource reservation before dispatch. For clarification or unavailability, stop that assignment through a supported harness mechanism.
-3. Keep the applied model/effort stable across the assignment's tool loop. Record requested values separately from any observable upstream identity and effective effort.
+1. Reject known intake failures at `prompt.submit`. Use `turn.start`'s `turnId` for canonical assignment state and tie classifier output to it; discard ambiguous or late output. A queued-prompt implementation still needs a live check.
+2. Evaluate the decision before dispatch at `turn.step`. For selection, acquire any required resource reservation. For clarification or unavailability, use the event's supported short-circuit shape: a prompt drop, a spawn denial, or a synthetic streamed policy response with no tool calls. Preserve the policy outcome separately from the stream's stop reason.
+3. Keep selection stable across the tool loop while checking actual outgoing targets for authorized fallback. Record requested values separately from observable upstream identity and effective effort. Native/provider fallback must conform to the contract before application; a later step observation cannot prove the first substitute request was authorized.
 4. Run available deterministic verification. A reproducible failure normally returns to the author for bounded repair.
-5. When authorized, create a separate reviewer assignment using the same policy. Supply requirements, artifact/diff, context manifest, and executed test evidence tied to the artifact revision.
+5. When authorized, create a fresh, non-fork reviewer assignment using the same policy. Set effort, tool permissions, and run limits on its registered type. `$.agent.spawn` returns after startup; collect the answer through the matching completion event, with bounded lifecycle handling. Supply requirements, artifact/diff, context manifest, and executed test evidence tied to the artifact revision.
 6. Verify material findings and perform any bounded repair. Recheck changed artifacts. Acceptance depends on required checks and completed required review.
 
 Each substantive review finding contains its requirement or invariant, artifact location, consequence, evidence status, and smallest useful reproduction or verification step. Distinguish suggested tests from executed results. Record actual reviewer identity where observable; unknown identity cannot establish required family independence.
 
 Review execution state is separate from the routing disposition. The orchestrator tracks whether review is pending, running, completed, or blocked, and invalidates affected evidence when the artifact changes. A completed review can report no supported findings. A recommendation alone never marks review completed.
 
+After repair, deterministic checks do not renew independent review. Use only the authorized, qualified targeted-closure transition in [decision-contract §8](decision-contract.md#8-review-disposition). Bind the new result to the repaired revision; broader changes, new material findings, stale context, or inconclusive verification keep acceptance blocked. Repairs keep the candidate ID and attempt counters.
+
+The [checkpoint interface](runtime-contracts.md#review-checkpoints) determines when the coordinator starts review of a multi-turn candidate. Serialize launch intent and preserve attempt counters across reload and revisions; do not infer completion from a turn boundary. [Assignment/pin purpose](runtime-contracts.md#assignment-and-pin-purpose) separates execution controls from reviewer selection.
+
+The [candidate interface](runtime-contracts.md#candidate-enrollment) supplies explicit artifact/context paths, requirements, and check IDs from trusted enrollment. The [trusted-check interface](runtime-contracts.md#trusted-checks) supplies provenance-verified commands; run them through the governed tool path and invalidate evidence if checks change covered content. These inputs cannot originate from classifier or model prose.
+
+A `turn.complete` annotation cannot retract an answer that already streamed. The initial acceptance boundary is a router-managed artifact record; the brief defines its revision binding and explicit acceptance action. Buffering and universal publication guards are deferred. Guard error paths before `next`; streamed content and completed external actions cannot be undone. Include fail-closed error handlers where policy enforcement requires them.
+
 ## Data and failure boundaries
 
 Keep availability, compatibility, evaluation evidence, workload approvals, preferences, and resource policy separate. Discovery updates availability only. Approval names a configuration, workload, environment, and operating conditions. Dynamic credentials and account usage stay outside committed model evidence.
+
+Use [catalog document version 2](runtime-contracts.md#catalog-document-version-2) and its deterministic v1 migration. Keep the lossless legacy snapshot separate from v2 observations; imported records grant no workload approval. Legacy consumers use `parseCatalog` for the validated legacy projection, the v2 adapter uses `parseCatalogV2`, and generation uses `parseCatalogDocument` to preserve the full document.
 
 Start with static provider preference. Add locally enforced budgets only where accounting can support their units and scope. Unknown live quota remains unknown. If hard budget enforcement needs a reservation, the orchestrator owns the atomic accounting operation; the policy engine only evaluates the snapshot and requests the reservation.
 
@@ -146,8 +160,10 @@ Classifier failure usually preserves the request, subject to mandatory checks. I
 
 ## Integration and rollout
 
-The existing code has main-turn and subagent hooks, task preferences, a catalog, and separate mutation controls. It does not yet implement these logical interfaces or the review workflow. The current code also treats subagent effort as outside the spawn hook's control; v2 must not promise effort enforcement without evidence for the installed harness.
+The existing code has main-turn and subagent hooks, task preferences, a catalog, and separate mutation controls. It does not yet implement these logical interfaces or the review workflow. The current router skips subagent `turn.step` events and does not apply subagent effort preferences. The harness does expose definition/registration effort, the Agent tool's invocation effort, and subagent step effort. The narrower `$.agent.spawn` interface has no effort argument in the inspected declarations. Validate the chosen path's timing, environment caps, and proxy translation.
 
-First evaluate v2 in shadow mode alongside the active policy. Current Observe mode still applies Basic routing and must retain that meaning. Shadow records never appear as applied changes. Enable application only after the adapter can enforce the outcomes required by its policy. Keep legacy routing as an explicit rollback selection.
+Hooks active when an agent is spawned can be skipped on its loop. Put reviewer restrictions on the definition and validate current re-entry behavior; do not depend solely on the spawning Mod observing every child request. Keep long-lived coordinator state outside an arbitrary pending promise in a blocking hook. Headless operation, cancellation, later Mods, and managed policy also need explicit handling.
+
+First evaluate v2 in shadow mode alongside the active policy. The proposed `policyEngine` selects `legacy`, `v2-shadow`, or `v2`, defaulting to legacy. Current Observe mode still applies Basic routing and must retain that meaning. Keep its classifier request unchanged; a separate live v2 classification can add explicit evaluation overhead. Shadow records never appear as applied changes. Enable application only after the adapter can enforce the outcomes required by its policy. Keep legacy routing as an explicit rollback selection.
 
 The [validation plan](validation.md) covers hook support, pin origins, identity and effort translation, review orchestration, telemetry, and quality comparisons. Those findings can change the integration design while preserving explicit control and observable failure behavior.

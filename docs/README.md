@@ -10,6 +10,7 @@ Use this index for current plugin usage, contributor setup, the proposed v2 desi
 | [Router controls](usage/router-controls.md) | Current routing switches, native configuration, manual selection, and logs |
 | [Task routing](usage/task-routing.md) | Current classifier categories, model preferences, and catalog checks |
 | [Model catalog](../catalog/README.md) | Editable model profiles, evidence, and generated runtime data |
+| [Harness contract probes](../experiments/harness-contracts/README.md) | Isolated, offline native-host checks for v2 integration primitives |
 
 ## Personal development material
 
@@ -17,19 +18,27 @@ Use ignored `/local/` for workstation notes, private experiment records, and unr
 
 ## V2 specification
 
-Read these documents in order:
+Start with the [official v2 design brief](v2/design-brief.md). It consolidates the product direction, selected architecture, control interfaces, alternatives, implementation plan, and release gates. Its status is Proposed; it is not implementation or rollout approval.
+
+The supporting documents have narrower responsibilities:
 
 | Document | Purpose |
 |---|---|
+| [Design brief](v2/design-brief.md) | Entry point and selected product/architecture decisions |
+| [C4 overview](v2/c4-overview.md) | System context and the components inside the router Mod |
+| [Implementation handoff](v2/implementation-handoff.md) | Starting point for a fresh coding session, final clarifications, and delivery checkpoints |
 | [Product spec](v2/product.md) | Goals, user controls, scope, examples, and acceptance criteria |
 | [Architecture spec](v2/architecture.md) | Component responsibilities, logical schemas, and execution flows |
 | [Decision contract](v2/decision-contract.md) | Detailed precedence, eligibility, outcomes, fallback, and boundary cases |
+| [Runtime contracts](v2/runtime-contracts.md) | Catalog schema/migration, candidate enrollment, and trusted-check interfaces |
 | [Validation plan](v2/validation.md) | Questions and evidence needed before implementation and rollout |
 
-Status: **Draft v2 design baseline, October 31, 2026.** These documents do not establish harness support, grant model approvals, or authorize model experiments. The decision contract governs routing semantics. The product and architecture specs describe how those semantics serve the user and fit together. Resolve contradictions explicitly before implementation.
+Status: **Proposed v2 design baseline, October 31, 2026.** These documents do not grant model approvals or authorize model experiments. The brief owns selected product/architecture choices, the decision contract governs routing semantics, runtime contracts define stored data and authority-bearing inputs, and validation records the evidence for each enabled path. Resolve contradictions explicitly before implementation.
 
 ## Research inputs
 
 [Research and development](r-and-d/README.md) contains public copies of the two supplied research files. Personal resource details have been generalized; untouched originals remain in ignored `/local/`. Benchmark, pricing, and vendor claims remain source material for validation. They do not automatically become routing rules.
+
+The [Claude Mods harness validation](r-and-d/03-claude-code-mods-harness-validation.md) records official capabilities, primary community evidence, local offline results, and the remaining live checks.
 
 Update the specs when research changes a design decision. Preserve source provenance and record new findings separately, with their sources, tested versions, and limits.
