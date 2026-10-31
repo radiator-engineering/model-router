@@ -1,4 +1,4 @@
-import {registerRouterControls, createRouterControls} from './router-controls.ts'
+import {registerRouterControls, createRouterControls, normalizeRouterMode} from './router-controls.ts'
 import catalogData from '../catalog/model-data.ts'
 import {parseCatalog} from './model-catalog.ts'
 import {recommendTask, DEFAULT_PREFERENCES} from './task-routing.ts'
@@ -98,8 +98,8 @@ export const register: Register = (on, options) => {
   // built-in classifier, which is silent; say so once, when a hook first runs.
   let unusableReported = forced === 'auto' || forced === 'builtin' || active !== null
 
-  const taskMode = text('taskRoutingMode', 'observe')
-  const taskEnabled = taskMode === 'observe' || taskMode === 'apply'
+  const taskMode = normalizeRouterMode(text('taskRoutingMode', 'observe'))
+  const taskEnabled = taskMode === 'observe' || taskMode === 'custom'
   const catalog = parseCatalog(catalogData)
   const taskThreshold = Math.min(1, Math.max(0, number('taskMinConfidence', 0.8)))
   const preferences = {
@@ -115,7 +115,7 @@ export const register: Register = (on, options) => {
   const routeSubagentModel = flag('routeSubagentModel', true)
   const routeMainEffort = flag('routeMainEffort', true)
   const routeMainModel = flag('routeMainModel', false)
-  const controls = createRouterControls({mode: ['off','observe','apply'].includes(taskMode) ? taskMode as 'off'|'observe'|'apply' : 'observe', mainModel:routeMainModel, mainEffort:routeMainEffort, subagents:routeSubagentModel, classifyTurns:flag('classifyTurns', true)})
+  const controls = createRouterControls({mode:taskMode, mainModel:routeMainModel, mainEffort:routeMainEffort, subagents:routeSubagentModel, classifyTurns:flag('classifyTurns', true)})
   registerRouterControls(on, controls)
   const logDecisions = flag('logDecisions', true)
 
@@ -145,7 +145,7 @@ export const register: Register = (on, options) => {
   on('prompt.submit', async ($, e, next) => {
     const runtime=controls.current()
     const taskMode=runtime.mode
-    const taskEnabled=taskMode==='observe'||taskMode==='apply'
+    const taskEnabled=taskMode==='observe'||taskMode==='custom'
     const routeMainModel=runtime.mainModel, routeMainEffort=runtime.mainEffort, routeSubagentModel=runtime.subagents
     const routeMainLoop=routeMainModel||routeMainEffort
 
@@ -164,7 +164,7 @@ export const register: Register = (on, options) => {
               mainModel: routeMainModel,
             },
             forced === 'builtin',
-          )}; mode ${taskMode === "off" ? "original" : taskMode}; main model ${routeMainModel ? "on" : "off"}; main effort ${routeMainEffort ? "on" : "off"}; subagents ${routeSubagentModel ? "on" : "off"}; per-turn logging ${runtime.classifyTurns ? "on" : "off"}`,
+          )}; mode ${taskMode}; main model ${routeMainModel ? "on" : "off"}; main effort ${routeMainEffort ? "on" : "off"}; subagents ${routeSubagentModel ? "on" : "off"}; per-turn logging ${runtime.classifyTurns ? "on" : "off"}`,
         )
       }
     }
@@ -235,7 +235,7 @@ export const register: Register = (on, options) => {
   on('turn.step', async function* ($, e, next) {
     const runtime=controls.current()
     const taskMode=runtime.mode
-    const taskEnabled=taskMode==='observe'||taskMode==='apply'
+    const taskEnabled=taskMode==='observe'||taskMode==='custom'
     const routeMainModel=runtime.mainModel, routeMainEffort=runtime.mainEffort, routeSubagentModel=runtime.subagents
     const routeMainLoop=routeMainModel||routeMainEffort
 
@@ -251,10 +251,10 @@ export const register: Register = (on, options) => {
     const routing = route(decision, { model: e.model, effort: e.effort }, policy)
     const task = recommendation(decision)
     if (taskEnabled && logDecisions) $.ui.log(`[router] task ${taskMode} recommendation: ${decision?.task?.role ?? 'unknown'}/${decision?.task?.implementationCategory ?? 'unknown'} → ${task.model ?? 'original tier policy'}${task.effort ? ` · effort ${task.effort}` : ''}; ${task.reason}`)
-    if (taskMode === 'apply' && task.preferredModel && !task.model && (decision?.risky ?? 0) <= 0.7) {
+    if (taskMode === 'custom' && task.preferredModel && !task.model && (decision?.risky ?? 0) <= 0.7) {
       routing.model = null; routing.effort = null; routing.reason = task.reason
     }
-    if (taskMode === 'apply' && task.model) {
+    if (taskMode === 'custom' && task.model) {
       routing.model = task.model === e.model ? null : task.model
       // Keep the user's established effort for other roles; orchestration is medium.
       routing.effort = task.effort
@@ -269,7 +269,7 @@ export const register: Register = (on, options) => {
     appliedTurnId = e.turnId
     applied = Object.keys(change).length > 0 ? change : null
     // A row in the transcript scrolls away; this line stays on screen.
-    if (logDecisions) $.ui.status(`Router ${taskMode === 'off' ? 'original' : taskMode} · ${change.model ?? e.model} · effort ${change.effort ?? e.effort ?? 'harness default'}`)
+    if (logDecisions) $.ui.status(`Router ${taskMode} · ${change.model ?? e.model} · effort ${change.effort ?? e.effort ?? 'harness default'}`)
 
     if (!applied) {
       // A turn left alone is the common case, and it used to be silent, which
@@ -291,7 +291,7 @@ export const register: Register = (on, options) => {
   on('agent.spawn', async ($, e, next) => {
     const runtime=controls.current()
     const taskMode=runtime.mode
-    const taskEnabled=taskMode==='observe'||taskMode==='apply'
+    const taskEnabled=taskMode==='observe'||taskMode==='custom'
     const routeMainModel=runtime.mainModel, routeMainEffort=runtime.mainEffort, routeSubagentModel=runtime.subagents
     const routeMainLoop=routeMainModel||routeMainEffort
 
@@ -376,10 +376,10 @@ export const register: Register = (on, options) => {
     const task = recommendation(decision)
     if (taskEnabled && logDecisions) $.ui.log(`[router] task ${taskMode} recommendation: ${decision?.task?.role ?? 'unknown'}/${decision?.task?.implementationCategory ?? 'unknown'} → ${task.model ?? 'original tier policy'}${task.effort ? ` · effort ${task.effort}` : ''}; ${task.reason}`)
     // agent.spawn has no effort control: do not claim medium orchestration here.
-    if (taskMode === 'apply' && task.preferredModel && (!task.model || task.effort) && (decision?.risky ?? 0) <= 0.7) {
+    if (taskMode === 'custom' && task.preferredModel && (!task.model || task.effort) && (decision?.risky ?? 0) <= 0.7) {
       routing.model = null; routing.reason = task.effort ? 'agent.spawn cannot enforce orchestration effort; retain current model' : task.reason
     }
-    if (taskMode === 'apply' && task.model && !task.effort) {
+    if (taskMode === 'custom' && task.model && !task.effort) {
       routing.model = task.model === current ? null : task.model
       routing.reason = task.reason
     }

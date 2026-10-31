@@ -1,6 +1,6 @@
 import type {Register} from 'claude-code'
 export interface RouterSettings {
-  mode: 'off' | 'observe' | 'apply'
+  mode: 'basic' | 'custom' | 'observe'
   mainModel: boolean
   mainEffort: boolean
   subagents: boolean
@@ -12,17 +12,22 @@ export const ROUTER_TOGGLES = [
   {key:'subagents',label:'Subagent routing',description:'Choose models for delegated tasks using task type and your preferences.'},
   {key:'classifyTurns',label:'Per-turn logging',description:'Classify each prompt and show recommendations even when main routing is fixed.'},
 ] as const
+export function normalizeRouterMode(value:unknown):RouterSettings['mode'] {
+  if(value==='apply'||value==='custom')return 'custom'
+  if(value==='off'||value==='basic')return 'basic'
+  return 'observe'
+}
 const STORE_KEY = 'model-router.defaults.v1'
 export function validSettings(input: unknown): input is RouterSettings {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return false
   const v=input as Record<string,unknown>
-  return ['off','observe','apply'].includes(v.mode as string) && ['mainModel','mainEffort','subagents','classifyTurns'].every(k=>typeof v[k]==='boolean')
+  return ['basic','custom','observe','off','apply'].includes(v.mode as string) && ['mainModel','mainEffort','subagents','classifyTurns'].every(k=>typeof v[k]==='boolean')
 }
 export function routerStatus(s:RouterSettings):string {
   const yes=(v:boolean)=>v?'on':'off'
   return `Model router\nClassifier: Jev\nMode: ${s.mode}\nMain model routing: ${yes(s.mainModel)}\nMain effort routing: ${yes(s.mainEffort)}\nSubagent routing: ${yes(s.subagents)}\nPer-turn classification/logging: ${yes(s.classifyTurns)}`
 }
-export const ROUTER_HELP = '/router opens the menu. Commands: status; mode [off|observe|apply]; main-model on|off; main-effort on|off; subagents on|off; classify-turns on|off; save; reset. Changes affect this session immediately. Save persists defaults for future sessions; reset removes saved defaults and restores plugin options.'
+export const ROUTER_HELP = '/router opens the menu. Commands: status; mode [basic|custom|observe]; main-model on|off; main-effort on|off; subagents on|off; classify-turns on|off; save; reset. Changes affect this session immediately. Save persists defaults for future sessions; reset removes saved defaults and restores plugin options.'
 const KEYS = {'main-model':'mainModel','main-effort':'mainEffort',subagents:'subagents','classify-turns':'classifyTurns'} as const
 export function parseRouterCommand(args:string): {kind:'status'|'menu'|'mode-menu'|'save'|'reset'|'help'} | {kind:'change'; patch:Partial<RouterSettings>} | {kind:'error'} {
   const tokens=args.trim().split(/\s+/).filter(Boolean)
@@ -30,7 +35,7 @@ export function parseRouterCommand(args:string): {kind:'status'|'menu'|'mode-men
   if(tokens.length===1&&tokens[0]==='mode')return {kind:'mode-menu'}
   if (tokens.length===1 && ['status','save','reset','help'].includes(tokens[0])) return {kind:tokens[0] as 'status'|'save'|'reset'|'help'}
   if (tokens.length!==2) return {kind:'error'}
-  if (tokens[0]==='mode' && ['off','observe','apply'].includes(tokens[1])) return {kind:'change',patch:{mode:tokens[1] as RouterSettings['mode']}}
+  if (tokens[0]==='mode' && ['basic','custom','observe','off','apply'].includes(tokens[1])) return {kind:'change',patch:{mode:normalizeRouterMode(tokens[1])}}
   const key=KEYS[tokens[0] as keyof typeof KEYS]
   if(key && ['on','off'].includes(tokens[1])) return {kind:'change',patch:{[key]:tokens[1]==='on'}}
   return {kind:'error'}
@@ -45,7 +50,7 @@ export function registerRouterControls(on:Parameters<Register>[0],controls:Retur
   on('session.start',async($,e,next)=>{
     try {
       const saved=await $.store.get(STORE_KEY)
-      if(validSettings(saved)) controls.state={mode:saved.mode,mainModel:saved.mainModel,mainEffort:saved.mainEffort,subagents:saved.subagents,classifyTurns:saved.classifyTurns}
+      if(validSettings(saved)) controls.state={mode:normalizeRouterMode(saved.mode),mainModel:saved.mainModel,mainEffort:saved.mainEffort,subagents:saved.subagents,classifyTurns:saved.classifyTurns}
     } catch { $.ui.log('[router] Could not read saved defaults; using plugin options.') }
     await $.command.register({name:'router',description:'Model routing menu and session controls',argumentHint:'[status | mode | main-model | main-effort | subagents | classify-turns | save | reset]'})
     return next(e)
@@ -87,7 +92,7 @@ export function registerRouterControls(on:Parameters<Register>[0],controls:Retur
     if(routerOnly && !field)return next({...e,isHidden:true})
     if(!field)return next(e)
     const row=ROUTER_TOGGLES.find(row=>row.key===field)
-    return next({...e,label:row ? `Router · ${row.label}` : 'Router · Mode',description:row?.description ?? 'Original (off): tier policy. Observe: tier policy plus task recommendations. Apply: verified task preferences with tier fallback. Model/effort switches apply in all modes.',isHidden:false})
+    return next({...e,label:row ? `Router · ${row.label}` : 'Router · Mode',description:row?.description ?? 'Basic: fast/balanced/deep routing. Custom: our task preferences with Basic fallback. Observe: Basic still routes; only logs what Custom would pick. All respect routing switches. Customize hooks/task-routing.ts (rules/examples) and catalog/models.json (models; run node scripts/build-catalog.mjs after editing).',isHidden:false})
   })
   on('config.set',async($,e,next)=>{
     const field=routerField(e.key,e.provider?.plugin)
@@ -95,8 +100,8 @@ export function registerRouterControls(on:Parameters<Register>[0],controls:Retur
     const result=await next(e)
     if(result.deny!==undefined)return result
     const value=result.value
-    if(field==='mode' ? !['off','observe','apply'].includes(value as string) : typeof value!=='boolean')return result
-    controls.state={...controls.state,[field]:value}
+    if(field==='mode' ? !['basic','custom','observe','off','apply'].includes(value as string) : typeof value!=='boolean')return result
+    controls.state={...controls.state,[field]:field==='mode'?normalizeRouterMode(value):value}
     // Keep compatibility with defaults saved by earlier /router versions.
     try {await $.store.set(STORE_KEY,controls.state)} catch {$.ui.log('[router] Native setting saved; legacy defaults cache could not be updated.')}
     return result

@@ -1,6 +1,6 @@
 {
   "name": "jev-model-router",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Picks the model and the reasoning effort for each task with TypeSafe's Jev, a System One decision model reached either through TypeSafe's own API or the Vercel AI Gateway. Routes subagent models at agent.spawn and the main loop's effort and model at turn.step, in both directions, falling back to the engine's built-in classifier when no key is set.",
   "author": {
     "name": "claude-code-templates",
@@ -128,12 +128,12 @@
     "taskRoutingMode": {
       "type": "string",
       "title": "Task routing mode",
-      "description": "Original (off) uses tier routing. Observe logs task preferences while tier routing remains active. Apply uses verified task preferences with tier fallback. All modes respect the model and effort switches.",
+      "description": "Basic uses fast/balanced/deep routing. Custom uses our task preferences with Basic fallback. Observe keeps Basic routing active and only logs what Custom would pick. All respect routing switches. Edit hooks/task-routing.ts for rules/examples and catalog/models.json for model capabilities; then run node scripts/build-catalog.mjs.",
       "default": "observe",
       "options": [
-        "off",
-        "observe",
-        "apply"
+        "basic",
+        "custom",
+        "observe"
       ]
     },
     "taskMinConfidence": {

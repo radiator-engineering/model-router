@@ -6,12 +6,14 @@ Use Down to focus a setting. Space or Enter toggles a boolean in place; Mode ope
 
 The menu filter uses session state that survives plugin hot reloads. Running `/config` normally shows all settings.
 
-`/router status` prints effective settings. Existing direct commands remain available: `main-model on|off`, `main-effort on|off`, `subagents on|off`, `classify-turns on|off`, and `mode off|observe|apply`. Direct commands change this session; `/router save` stores their defaults, and `/router reset` restores plugin options.
+`/router status` prints effective settings. Existing direct commands remain available: `main-model on|off`, `main-effort on|off`, `subagents on|off`, `classify-turns on|off`, and `mode basic|custom|observe`. Direct commands change this session; `/router save` stores their defaults, and `/router reset` restores plugin options.
 
 Implementation follows the native `userConfig`, `config.describe`, and `config.set` APIs documented at https://code.claude.com/docs/en/plugins/mods/reference.md . Opening config is deferred until the router command releases the turn, as the engine forbids nested command dispatch.
 
 ## Modes and logs
 
-Original (`off`) runs the original tier policy. Observe runs that same policy and logs task preferences without applying those preferences. Apply uses verified task preferences, falling back to the original policy for tasks without a preference. Every mode respects the model and effort switches: Observe is not a global dry run.
+**Basic** uses the original fast/balanced/deep tier policy. **Custom** uses our task preferences (Opus for orchestration/design, Astra for visual analysis, Sonnet for specified work, Haiku for mechanical work/file scouting), with Basic fallback where no preference exists. **Observe** keeps Basic routing active and logs what Custom would recommend, without applying Custom recommendations. Observe can still change models through Basic routing when the corresponding switches are enabled. Every mode respects the model and effort switches.
+
+Customize `hooks/task-routing.ts` for role/category rules, default model preferences, confidence checks, and classifier examples. Customize `catalog/models.json` for available models and verified capabilities, then run `node scripts/build-catalog.mjs` to regenerate the runtime catalog. Existing plugin model preference options override defaults in code. Old `off`/`apply` values remain accepted as aliases for Basic/Custom.
 
 Classification and task recommendation lines describe suggestions. The main result line and status show the effective model and effort, explicitly distinguishing unchanged requests from applied changes. With both main switches off, recommendations cannot change the main request.

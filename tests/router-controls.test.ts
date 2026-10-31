@@ -2,7 +2,7 @@ import {expect,test} from 'claude-code/testing'
 import {registerRouterControls,createRouterControls,parseRouterCommand,routerStatus,ROUTER_TOGGLES} from '../hooks/router-controls.ts'
 import type {RouterSettings} from '../hooks/router-controls.ts'
 import {register} from '../hooks/jev-model-router.ts'
-const initial:RouterSettings={mode:'apply',mainModel:false,mainEffort:false,subagents:true,classifyTurns:true}
+const initial:RouterSettings={mode:'custom',mainModel:false,mainEffort:false,subagents:true,classifyTurns:true}
 function setup(saved?:unknown){
  const handlers:any={};const store=new Map<string,unknown>();if(saved!==undefined)store.set('model-router.defaults.v1',saved)
  const registered:any[]=[];const choices:string[]=[];const asks:any[]=[];const timers:any[]=[];const opened:any[]=[];let menu=false
@@ -17,7 +17,7 @@ test('session start registers /router and loads valid saved defaults',async()=>{
  expect(h.registered[0].name).toBe('router');expect(h.controls.current().classifyTurns).toBe(false)
 })
 test('invalid saved defaults do not override plugin options',async()=>{
- const h=setup({mode:'apply',mainModel:'yes'})
+ const h=setup({mode:'custom',mainModel:'yes'})
  await h.handlers['session.start'](h.$,{},async()=>({}))
  expect(h.controls.current()).toEqual(initial)
 })
@@ -93,4 +93,16 @@ test('router menu filtering survives a fresh hook registration',async()=>{
  await handlers['command.run'](h.$,{command:'config',origin:{kind:'composer'}},async()=>({}))
  const normal=await handlers['config.describe'](h.$,{key:'theme'},async(e:any)=>e)
  expect(normal.isHidden).toBeUndefined()
+})
+
+test('old mode names preserve the selected policy after upgrade',async()=>{
+ const custom=setup({...initial,mode:'apply'})
+ await custom.handlers['session.start'](custom.$,{},async()=>({}))
+ expect(custom.controls.current().mode).toBe('custom')
+ const basic=setup({...initial,mode:'off'})
+ await basic.handlers['session.start'](basic.$,{},async()=>({}))
+ expect(basic.controls.current().mode).toBe('basic')
+ expect(parseRouterCommand('mode custom')).toEqual({kind:'change',patch:{mode:'custom'}})
+ expect(parseRouterCommand('mode basic')).toEqual({kind:'change',patch:{mode:'basic'}})
+ expect(parseRouterCommand('mode apply')).toEqual({kind:'change',patch:{mode:'custom'}})
 })

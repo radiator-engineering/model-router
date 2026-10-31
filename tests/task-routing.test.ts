@@ -79,16 +79,16 @@ test('observe hooks collect new fields but keep legacy routing',async()=>{
  expect(result.model).toBe('claude-haiku-4-5-20251001')
 })
 test('apply hooks keep current model when preferred catalog entry is unverified',async()=>{
- const h=harness('apply');const handlers:any={}
- register(((n:string,f:any)=>handlers[n]=f) as any,{taskRoutingMode:'apply',typesafeApiKey:'fake',routeMainModel:true,specifiedModel:'gpt-6.1-terra'} as any)
+ const h=harness('custom');const handlers:any={}
+ register(((n:string,f:any)=>handlers[n]=f) as any,{taskRoutingMode:'custom',typesafeApiKey:'fake',routeMainModel:true,specifiedModel:'gpt-6.1-terra'} as any)
  await handlers['prompt.submit'](h.$,{text:'Implement supplied spec'},async(e:any)=>e)
  let result:any
  for await(const _ of handlers['turn.step'](h.$,{model:'sonnet',effort:'medium',index:0,turnId:'a'},async function*(e:any){result=e;yield e})){}
  expect(result.model).toBe('sonnet');expect(result.effort).toBe('medium')
 })
 test('off mode omits task questions and subagent forks remain untouched',async()=>{
- const h=harness('off');const handlers:any={}
- register(((n:string,f:any)=>handlers[n]=f) as any,{taskRoutingMode:'off',typesafeApiKey:'fake'} as any)
+ const h=harness('basic');const handlers:any={}
+ register(((n:string,f:any)=>handlers[n]=f) as any,{taskRoutingMode:'basic',typesafeApiKey:'fake'} as any)
  await handlers['prompt.submit'](h.$,{text:'x'},async(e:any)=>e)
  expect(h.sent.questions.taskRole).toBeUndefined()
  const e={fork:true,model:'opus'};expect(await handlers['agent.spawn'](h.$,e,async(x:any)=>x)).toEqual(e)
