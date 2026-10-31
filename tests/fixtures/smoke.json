@@ -129,5 +129,38 @@
       "role": "file-scout",
       "category": "not-applicable"
     }
+  },
+  {
+    "id": "simple-spelling",
+    "prompt": "How do you spell strawberry?",
+    "tier": "fast",
+    "risky": false,
+    "taskOnly": true,
+    "task": {
+      "role": "simple-answer",
+      "category": "not-applicable"
+    }
+  },
+  {
+    "id": "simple-letter-count",
+    "prompt": "How many Rs are in strawberry?",
+    "tier": "fast",
+    "risky": false,
+    "taskOnly": true,
+    "task": {
+      "role": "simple-answer",
+      "category": "not-applicable"
+    }
+  },
+  {
+    "id": "substantive-explanation",
+    "prompt": "Explain how distributed consensus works, why partitions matter, and the tradeoffs between Raft and Paxos. Teach the concepts with examples.",
+    "tier": "balanced",
+    "risky": false,
+    "taskOnly": true,
+    "task": {
+      "role": "explanation",
+      "category": "not-applicable"
+    }
   }
 ]

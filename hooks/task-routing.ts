@@ -1,5 +1,5 @@
 import type {ModelCatalog} from './model-catalog.ts'
-export const ROLES = ['orchestration', 'visual-analysis', 'file-scout', 'implementation', 'investigation', 'review', 'explanation'] as const
+export const ROLES = ['orchestration', 'visual-analysis', 'file-scout', 'implementation', 'investigation', 'review', 'simple-answer', 'explanation'] as const
 export const IMPLEMENTATION_CATEGORIES = ['design-led', 'specified', 'mechanical', 'not-applicable'] as const
 export interface TaskClassification {
   role: typeof ROLES[number]
@@ -9,14 +9,19 @@ export interface TaskClassification {
 }
 export interface TaskPreferences {
   orchestration: string; visualAnalysis: string; designLed: string
-  specified: string; mechanical: string; fileScout: string
+  specified: string; mechanical: string; fileScout: string; simpleAnswer: string
 }
 export const DEFAULT_PREFERENCES: TaskPreferences = {
   orchestration:'claude-opus-5-5', visualAnalysis:'gpt-6-astra', designLed:'claude-opus-5-5',
-  specified:'claude-sonnet-5-5', mechanical:'claude-haiku-5-5', fileScout:'claude-haiku-5-5',
+  simpleAnswer:'claude-haiku-5-5', specified:'claude-sonnet-5-5', mechanical:'claude-haiku-5-5', fileScout:'claude-haiku-5-5',
 }
 // Examples are boundary guidance, separate from held-out evaluation fixtures.
 export const TASK_EXAMPLES = [
+  {task:'Spell the word blueberry.', role:'simple-answer', category:'not-applicable'},
+  {task:'How many letters are in banana?', role:'simple-answer', category:'not-applicable'},
+  {task:'What is the capital of France?', role:'simple-answer', category:'not-applicable'},
+  {task:'Teach me how database indexes work, including tradeoffs and worked examples.', role:'explanation', category:'not-applicable'},
+  {task:'Explain why counting letters can be difficult for token-based language models.', role:'explanation', category:'not-applicable'},
   {task:'Coordinate specialists and reconcile their findings into a plan.', role:'orchestration', category:'not-applicable'},
   {task:'Analyze a screenshot for alignment, hierarchy and visual defects.', role:'visual-analysis', category:'not-applicable'},
   {task:'Find files containing cache invalidation and return paths with matching lines; do not diagnose the design.', role:'file-scout', category:'not-applicable'},
@@ -28,7 +33,7 @@ export const TASK_EXAMPLES = [
   {task:'Trace an unexplained race in token refresh before deciding on a fix.', role:'investigation', category:'not-applicable'},
 ] as const
 export function taskQuestions(): Record<string, unknown> {
-  const guidance = `Classify the assignment itself, not its subject vocabulary. Architecture is design-led. Frontend implementation with an exact design is specified; original UX/UI requires design judgment. Schema/endpoints with unresolved authorization, concurrency or compatibility decisions are not routine. Mechanical means the exact edit is already given and verification is predetermined. Choosing the fix or designing boundary tests requires specified implementation, even for a local known bug. Examples: ${JSON.stringify(TASK_EXAMPLES)}`
+  const guidance = `Simple answers are spelling, short literal counts, direct lookups in supplied information, and straightforward stable facts requiring no synthesis. Short prompts are not automatically simple: teaching, causal reasoning, comparisons and tradeoffs are explanation; uncertain causes are investigation. Medical/legal/financial judgments and current facts requiring research are not simple answers. Classify the assignment itself, not its subject vocabulary. Architecture is design-led. Frontend implementation with an exact design is specified; original UX/UI requires design judgment. Schema/endpoints with unresolved authorization, concurrency or compatibility decisions are not routine. Mechanical means the exact edit is already given and verification is predetermined. Choosing the fix or designing boundary tests requires specified implementation, even for a local known bug. Examples: ${JSON.stringify(TASK_EXAMPLES)}`
   return {
     taskRole:{type:'choice', instructions:guidance, criteria:{
       orchestration:'Decompose, coordinate, delegate or reconcile work across agents.',
@@ -37,13 +42,14 @@ export function taskQuestions(): Record<string, unknown> {
       implementation:'Create a plan/design/architecture or change code; use the implementation category to express judgment required.',
       investigation:'Determine an unknown cause or understand interacting systems.',
       review:'Independently evaluate work for defects or verify its behavior.',
-      explanation:'Explain or summarize information already available.',
+      'simple-answer':'Give a short literal answer: spelling, a small count, a direct supplied lookup, or a straightforward stable fact. No teaching, synthesis, investigation, research or consequential advice.',
+      explanation:'Teach or explain concepts, causes, comparisons or tradeoffs, or summarize information; reasoning complexity is assessed separately by tier and effort.',
     }},
     implementationCategory:{type:'choice',instructions:guidance,criteria:{
       'design-led':'Architecture/system design, original UX/UI, or implementation requiring invention and unresolved design tradeoffs.',
       specified:'Implement an established solution with explicit contracts, specifications and references.',
       mechanical:'Apply an exact prescribed transformation, with predetermined checks and no need to choose a fix or design test cases. Small code changes alone are not mechanical.',
-      'not-applicable':'The assignment is orchestration, visual analysis, file scouting, investigation, review or explanation rather than implementation/design.',
+      'not-applicable':'The assignment is orchestration, visual analysis, file scouting, investigation, review, simple answer or explanation rather than implementation/design.',
     }},
   }
 }
@@ -67,6 +73,7 @@ export function recommendTask(task: TaskClassification | null, catalog: ModelCat
   let preferred:string|null=null
   if (task.role==='orchestration') preferred=preferences.orchestration
   else if (task.role==='visual-analysis') preferred=preferences.visualAnalysis
+  else if (task.role==='simple-answer') preferred=preferences.simpleAnswer
   else if (task.role==='file-scout') preferred=preferences.fileScout
   else if (task.role==='implementation') preferred=task.implementationCategory==='design-led' ? preferences.designLed : task.implementationCategory==='specified' ? preferences.specified : preferences.mechanical
   if (!preferred) return no(`no preference for ${task.role}; retain legacy routing`)

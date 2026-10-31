@@ -93,3 +93,13 @@ test('off mode omits task questions and subagent forks remain untouched',async()
  expect(h.sent.questions.taskRole).toBeUndefined()
  const e={fork:true,model:'opus'};expect(await handlers['agent.spawn'](h.$,e,async(x:any)=>x)).toEqual(e)
 })
+
+
+test('simple answers route to Haiku while substantive explanations use tier/effort policy',()=>{
+ expect(readTaskClassification(answers('simple-answer','not-applicable'))?.role).toBe('simple-answer')
+ expect(recommendTask(task('simple-answer'),verified()).model).toBe('claude-haiku-5-5')
+ expect(recommendTask(task('explanation'),verified()).preferredModel).toBeNull()
+ expect(recommendTask({...task('simple-answer'),roleConfidence:.5},verified()).model).toBeNull()
+ expect(recommendTask(task('simple-answer'),verified(),DEFAULT_PREFERENCES,.8,true).model).toBeNull()
+ expect(recommendTask(task('simple-answer'),catalog()).model).toBeNull()
+})

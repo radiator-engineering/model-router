@@ -108,6 +108,7 @@ export const register: Register = (on, options) => {
     designLed: text('designLedModel', DEFAULT_PREFERENCES.designLed),
     specified: text('specifiedModel', DEFAULT_PREFERENCES.specified),
     mechanical: text('mechanicalModel', DEFAULT_PREFERENCES.mechanical),
+    simpleAnswer: text('simpleAnswerModel', DEFAULT_PREFERENCES.simpleAnswer),
     fileScout: text('fileScoutModel', DEFAULT_PREFERENCES.fileScout),
   }
   const recommendation = (decision: Decision | null) => recommendTask(decision?.task ?? null, catalog, preferences, taskThreshold, (decision?.risky ?? 0) > 0.7)
