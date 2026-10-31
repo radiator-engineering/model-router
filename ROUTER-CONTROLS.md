@@ -4,9 +4,10 @@ Enter `/router` to open an inline list showing each setting's current draft valu
 
 - Up/Down highlights a setting.
 - Enter selects that setting and flips its draft value.
-- The following dialog offers **Save & Exit**, **Keep editing**, or **Cancel & Exit**.
-- Keep editing returns to the list with the updated draft values.
-- Esc at either dialog discards all staged changes and exits.
+- The same settings list immediately returns with the updated value; no exit/confirmation dialog is opened.
+- To save and exit, choose **Type something** and enter `save`.
+- To discard and exit, press Esc (or enter `cancel` under Type something).
+- Esc at the menu discards all staged changes and exits.
 
 The native single-choice control ignores Space; this version uses Enter for selection and an explicit Save & Exit action. It does not implement Space-to-toggle or Enter-to-save-from-any-row.
 
@@ -50,4 +51,4 @@ Without saved defaults, `classifyTurns` defaults to true. Your current user sett
 
 ## Validation
 
-`node scripts/smoke.mjs` includes parser, menu navigation, dismissal, toggle, persistence, classification and actual-hook tests. The enum list, arrow navigation, Enter selection, Keep editing, descriptions and Escape cancellation were exercised in interactive Claude Code 2.1.314 without model requests. Saving and failed-save rollback also have automated coverage. `claude plugin validate` checks command/store/UI compatibility with the loader.
+`node scripts/smoke.mjs` includes parser, menu navigation, dismissal, toggle, persistence, classification and actual-hook tests. The enum list, arrow navigation, Enter selection, repeated toggles, descriptions and Escape cancellation were exercised in interactive Claude Code 2.1.314 without model requests. Saving and failed-save rollback also have automated coverage. `claude plugin validate` checks command/store/UI compatibility with the loader.

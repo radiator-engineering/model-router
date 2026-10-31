@@ -32,11 +32,12 @@ test('save persists and reset restores original plugin settings',async()=>{
  await h.run('reset');expect(h.controls.current()).toEqual(initial);expect(h.store.size).toBe(0)
 })
 test('bare /router uses On/Off enums without checkbox semantics and saves explicit confirmation',async()=>{
- const h=setup();h.choices.push('Main model routing: Off','Keep editing','Per-turn logging: On','Save & Exit')
+ const h=setup();h.choices.push('Main model routing: Off','Per-turn logging: On','save')
  const result=await h.run('')
- expect(h.asks.length).toBe(4);expect(h.asks[0].opts.multiSelect).toBeUndefined()
+ expect(h.asks.every(ask=>ask.opts.header==='Router')).toBe(true)
+ expect(h.asks.length).toBe(3);expect(h.asks[0].opts.multiSelect).toBeUndefined()
  expect(h.asks[0].opts.options).toEqual(['Main model routing: Off','Main effort routing: Off','Subagent routing: On','Per-turn logging: On'])
- expect(h.asks[2].opts.options[0]).toBe('Main model routing: On')
+ expect(h.asks[1].opts.options[0]).toBe('Main model routing: On')
  expect(h.asks[0].q.includes('→')).toBe(false)
  expect(h.controls.current().mainModel).toBe(true);expect(h.controls.current().classifyTurns).toBe(false)
  expect(h.controls.current().mainEffort).toBe(false);expect(h.store.size).toBe(1)
@@ -52,7 +53,7 @@ test('Escape/dismissal discards staged changes and never saves',async()=>{
  expect(result.text).toContain('staged changes were not applied')
 })
 test('failed saves and unrecognized free text do not apply settings',async()=>{
- const h=setup();h.choices.push('Main effort routing: Off','Save & Exit');h.$.store.set=async()=>{throw Error('disk full')}
+ const h=setup();h.choices.push('Main effort routing: Off','save');h.$.store.set=async()=>{throw Error('disk full')}
  await h.run('');expect(h.controls.current()).toEqual(initial)
  h.choices.push('something unexpected');await h.run('');expect(h.controls.current()).toEqual(initial)
 })
@@ -93,7 +94,16 @@ test('router commands are never sent to Jev as task prompts',async()=>{
  expect(calls).toBe(0)
 })
 
-test('cancelling enum confirmation discards changes without persistence',async()=>{
+test('cancelling enum editing discards changes without persistence',async()=>{
  const h=setup();h.choices.push('Subagent routing: On','Cancel & Exit')
  await h.run('');expect(h.controls.current()).toEqual(initial);expect(h.store.size).toBe(0)
+})
+
+test('repeated Enter toggles stay in the same menu and can restore the original value',async()=>{
+ const h=setup();h.choices.push('Main effort routing: Off','Main effort routing: On','save')
+ await h.run('')
+ expect(h.asks.map(a=>a.opts.header)).toEqual(['Router','Router','Router'])
+ expect(h.asks[1].opts.options[1]).toBe('Main effort routing: On')
+ expect(h.asks[2].opts.options[1]).toBe('Main effort routing: Off')
+ expect(h.controls.current().mainEffort).toBe(false)
 })
