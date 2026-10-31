@@ -33,10 +33,14 @@ const report = {
   node:process.version, policyHash, fixtureHash:hash(fixturesText),
   questionsHash:hash(JSON.stringify(policy.questions('typesafe'))),
   suiteHash:hash(await readFile(path.join(root, 'tests/policy.test.ts'))),
+  catalogHash:hash(await readFile(path.join(root, 'catalog/models.json'))),
+  catalogCodeHash:hash(await readFile(path.join(root, 'hooks/model-catalog.ts'))),
+  catalogSuiteHash:hash(await readFile(path.join(root, 'tests/catalog.test.ts'))),
   runnerHash:hash(await readFile(fileURLToPath(import.meta.url))),
   tests:[], classifications:[],
 };
 await import('../tests/policy.test.ts');
+await import('../tests/catalog.test.ts');
 for (const {name, fn} of cases) {
   const start = performance.now();
   try { await fn(); report.tests.push({name, status:'pass', latencyMs:performance.now()-start}); }
@@ -123,7 +127,7 @@ if (files.length) {
 const filename = `${id}-${mode}.json`;
 await writeFile(path.join(resultsDir, filename), JSON.stringify(report,null,2)+'\n');
 await writeFile(path.join(resultsDir, `latest-${mode}.txt`), filename+'\n');
-console.log(`Policy: ${report.summary.policyPassed}/${report.summary.policyTotal}; live: ${report.summary.livePassed}/${report.summary.liveTotal}`);
+console.log(`Local tests: ${report.summary.policyPassed}/${report.summary.policyTotal}; live: ${report.summary.livePassed}/${report.summary.liveTotal}`);
 console.log(`Report: ${path.join(resultsDir,filename)}`);
 if (report.comparison) console.log(`Compared with ${report.comparison.previousRun}: ${report.comparison.changedTests.length} changed test results, ${report.comparison.changedClassifications.length} changed decisions.`);
 process.exitCode = failed.length || report.classifications.some(x=>x.status!=='pass') ? 1 : 0;

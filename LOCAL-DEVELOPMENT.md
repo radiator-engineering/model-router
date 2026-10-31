@@ -60,7 +60,7 @@ Commit each working change locally. No remote is configured; add your own remote
 Requires Node 23.6+ with native TypeScript support. No package installation is needed.
 
 ```sh
-node scripts/smoke.mjs         # 42 existing policy tests; no network
+node scripts/smoke.mjs         # local policy and catalog tests; no network
 node scripts/smoke.mjs --live  # policy tests plus 8 real Jev requests
 ```
 
@@ -78,3 +78,7 @@ Reports do not contain API keys or raw API response bodies. The proposed route u
 A nonzero exit means an assertion, expected live label, risk check or API call failed. Live labels in `tests/fixtures/smoke.json` are initial human expectations, not objective truth. The irreversible-production case checks risk only, because complexity and action impact are distinct. Review disagreements before changing a label.
 
 Use matching fixtures, question definitions and model versions for controlled comparisons. The `jev-latest` alias may change upstream. Confidence changes alone do not demonstrate better accuracy. These fixtures evaluate routing decisions; they do not evaluate the quality of code produced by the selected models. Keep future classifier examples separate from these evaluation fixtures.
+
+## Model catalog
+
+`catalog/models.json` contains editable model profiles. See `catalog/README.md` for field meanings and the future eligibility rules. This catalog is not yet wired into live routing.
