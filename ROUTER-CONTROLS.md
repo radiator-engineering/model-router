@@ -23,3 +23,11 @@ Classification and task recommendation lines describe suggestions. The main resu
 Custom mode sends high-confidence `simple-answer` tasks to Haiku: spelling, small literal counts, direct supplied lookups, and straightforward stable facts. Substantive `explanation` tasks (teaching, causal reasoning, comparisons, tradeoffs, summaries) continue through the Basic tier/effort complexity policy. Short prompts alone are not evidence of simplicity; investigation and consequential advice are excluded. Catalog verification, confidence and risk checks still apply.
 
 Edit `simpleAnswerModel` in plugin options to override Haiku. Edit `hooks/task-routing.ts` to change the boundary guidance and examples. Main model routing must be enabled for the main conversation to switch. A simple-answer model preference preserves current effort unless another policy explicitly changes it.
+
+## Manual model selection through VibeProxy
+
+The `claude` shell launcher refreshes native `/model` entries from VibeProxy at startup using `python3 ~/Documents/repos/jev-model-router/scripts/sync-model-picker.py --quiet`. Existing native Claude entries and user-added custom entries are preserved. Generated entries are marked “Via VibeProxy”. Image-only endpoints and `codex-auto-review` are excluded; catalog advertisement does not prove that every historical model is currently usable. The compatibility profile controls Claude Code client behavior; requests still use the real model ID.
+
+For manual control, turn **Main model routing** off in `/router`, then select a model in `/model`. Turn **Main effort routing** off too if you want manual effort control. Enter saves the model as the default; `s` selects it for this session only. The launcher no longer forces Opus/medium over your saved default; explicit `claude --model … --effort …` arguments still work.
+
+Refresh immediately by running the sync script, then restart Claude Code. If the proxy is unavailable, refresh reports an error and retains the existing menu. The initial settings backup is `~/.claude/settings.before-vibeproxy-picker.json`.
