@@ -35,6 +35,7 @@ test('bare /router uses the native inline multiselect and applies only submitted
  const h=setup();h.choices.push('Main model routing: off → on, Per-turn logging: on → off')
  const result=await h.run('')
  expect(h.asks.length).toBe(1);expect(h.asks[0].opts.multiSelect).toBe(true)
+ expect(h.asks[0].q.endsWith('?')).toBe(false)
  expect(h.controls.current().mainModel).toBe(true);expect(h.controls.current().classifyTurns).toBe(false)
  expect(h.controls.current().mainEffort).toBe(false);expect(h.store.size).toBe(1)
  expect(result.text).toContain('Saved defaults and exited')

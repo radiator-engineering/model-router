@@ -63,12 +63,12 @@ export function registerRouterControls(on:Parameters<Register>[0],controls:Retur
       if(action.kind==='reset') {await $.store.delete(STORE_KEY);controls.state={...controls.initial};return {text:routerStatus(controls.state)+'\nRestored plugin options and removed saved defaults.'}}
       const draft={...controls.state}
       if(action.kind==='mode-menu') {
-        const chosen=await $.ui.ask('Model router mode: choose a mode. Enter saves and exits; Esc cancels?',{header:'Router mode',options:['off','observe','apply']})
+        const chosen=await $.ui.ask('Model router mode: choose a mode. Enter saves and exits; Esc cancels.',{header:'Router mode',options:['off','observe','apply']})
         if(!['off','observe','apply'].includes(chosen))return {text:'Cancelled; settings unchanged.'}
         draft.mode=chosen as RouterSettings['mode']
       } else {
         const labels=ROUTER_TOGGLES.map(row=>`${row.label}: ${draft[row.key]?'on':'off'} → ${draft[row.key]?'off':'on'}`)
-        const chosen=await $.ui.ask(`Model router · mode ${draft.mode} · classifier Jev\nSelect the settings to toggle. Checked rows are pending changes.\nSpace toggles · Enter on Submit saves and exits · Esc cancels and exits?`,{header:'Router',options:labels,multiSelect:true})
+        const chosen=await $.ui.ask(`Model router · mode ${draft.mode} · classifier Jev\nSelect the settings to toggle. Checked rows are pending changes.\nSpace toggles · Enter on Submit saves and exits · Esc cancels and exits.`,{header:'Router',options:labels,multiSelect:true})
         const selected=chosen ? chosen.split(',').map(x=>x.trim()) : []
         if(selected.some(label=>!labels.includes(label)))return {text:'Cancelled; unrecognized selection. Settings unchanged.'}
         for(const [i,row] of ROUTER_TOGGLES.entries())if(selected.includes(labels[i]))draft[row.key]=!draft[row.key]
