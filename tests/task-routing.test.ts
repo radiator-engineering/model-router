@@ -1,7 +1,7 @@
 import {expect,test} from 'claude-code/testing'
 import {readFileSync} from 'node:fs'
 import {parseCatalog} from '../hooks/model-catalog.ts'
-import {taskQuestions,readTaskClassification,recommendTask,DEFAULT_PREFERENCES} from '../hooks/task-routing.ts'
+import {taskQuestions,readTaskClassification,recommendTask,DEFAULT_PREFERENCES,taskLabel} from '../hooks/task-routing.ts'
 import type {TaskClassification} from '../hooks/task-routing.ts'
 import {requestBody,readDecision} from '../hooks/policy.ts'
 import {register} from '../hooks/jev-model-router.ts'
@@ -113,6 +113,13 @@ test('custom logs only the effective request and reuses its route across tool st
  for(const index of [0,1,2]) {
   for await(const _ of handlers['turn.step'](h.$,{model:'opus',effort:'medium',index,turnId:'one'},async function*(e:any){results.push(e);yield e})){}
  }
- expect(h.logs).toEqual(['[router] claude-sonnet-5-5 · effort medium · custom'])
+ expect(h.logs).toEqual(['[router] implementation/specified · claude-sonnet-5-5 · effort medium · custom'])
  expect(results.every(e=>e.model==='claude-sonnet-5-5'&&e.effort==='medium')).toBe(true)
+})
+
+test('result labels show task types and only applicable implementation categories',()=>{
+ expect(taskLabel(task('explanation'))).toBe('explanation')
+ expect(taskLabel(task('simple-answer'))).toBe('simple-answer')
+ expect(taskLabel(task('implementation','design-led'))).toBe('implementation/design-led')
+ expect(taskLabel(null)).toBe('unclassified')
 })

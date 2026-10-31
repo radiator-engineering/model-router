@@ -71,7 +71,7 @@ test('classification and recommendation logging operate with both main switches 
  expect(calls).toBe(1);expect(result.model).toBe('sonnet');expect(result.effort).toBe('medium')
  expect(debug.some(l=>l.includes('task observe recommendation'))).toBe(true)
  expect(logs.length).toBe(1)
- expect(logs[0]).toBe('[router] sonnet · effort medium · observe · unchanged')
+ expect(logs[0]).toBe('[router] implementation/design-led · sonnet · effort medium · observe · unchanged')
  expect(debug.some(l=>l.includes('classification (recommendation only)'))).toBe(true)
  await handlers['command.run']($,{command:'router',args:'classify-turns off',origin:{kind:'composer'}},async()=>({}))
  await handlers['prompt.submit']($,{text:'Another task'},async(e:any)=>e)

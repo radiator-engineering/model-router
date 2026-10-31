@@ -1,7 +1,7 @@
 import {registerRouterControls, createRouterControls, normalizeRouterMode} from './router-controls.ts'
 import catalogData from '../catalog/model-data.ts'
 import {parseCatalog} from './model-catalog.ts'
-import {recommendTask, DEFAULT_PREFERENCES} from './task-routing.ts'
+import {recommendTask, DEFAULT_PREFERENCES, taskLabel} from './task-routing.ts'
 /**
  * jev-model-router — Claude Mod
  *
@@ -275,7 +275,7 @@ export const register: Register = (on, options) => {
     if (logDecisions) {
       const source = taskMode === 'custom' && task.model && (change.model || change.effort)
         ? 'custom' : taskMode === 'custom' && !task.preferredModel && applied ? 'basic fallback' : taskMode
-      $.ui.log(`[router] ${change.model ?? e.model} · effort ${change.effort ?? e.effort ?? 'harness default'} · ${source}${applied ? '' : ' · unchanged'}`)
+      $.ui.log(`[router] ${taskLabel(decision?.task)} · ${change.model ?? e.model} · effort ${change.effort ?? e.effort ?? 'harness default'} · ${source}${applied ? '' : ' · unchanged'}`)
     }
     return yield* next({ ...e, ...change })
   })
@@ -377,10 +377,10 @@ export const register: Register = (on, options) => {
     }
     const {model, reason} = routing
     if (!model) {
-      if (logDecisions) $.ui.log(`[router] ${e.subagentType}: ${current} · unchanged`)
+      if (logDecisions) $.ui.log(`[router] ${e.subagentType}: ${taskLabel(decision?.task)} · ${current} · unchanged`)
       return next(e)
     }
-    if (logDecisions) $.ui.log(`[router] ${e.subagentType}: ${model} · ${taskMode === 'custom' && task.model ? 'custom' : 'basic'}`)
+    if (logDecisions) $.ui.log(`[router] ${e.subagentType}: ${taskLabel(decision?.task)} · ${model} · ${taskMode === 'custom' && task.model ? 'custom' : 'basic'}`)
     return next({ ...e, model })
   })
 }

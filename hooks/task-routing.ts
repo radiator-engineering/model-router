@@ -7,6 +7,10 @@ export interface TaskClassification {
   roleConfidence: number | null
   categoryConfidence: number | null
 }
+export function taskLabel(task:TaskClassification|null|undefined):string {
+  if(!task)return 'unclassified'
+  return task.role==='implementation' ? `implementation/${task.implementationCategory}` : task.role
+}
 export interface TaskPreferences {
   orchestration: string; visualAnalysis: string; designLed: string
   specified: string; mechanical: string; fileScout: string; simpleAnswer: string

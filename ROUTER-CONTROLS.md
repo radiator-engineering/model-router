@@ -34,4 +34,6 @@ Refresh immediately by running the sync script, then restart Claude Code. If the
 
 ## Decision output
 
-Normal transcript output shows one effective model/effort line per main turn, for example `[router] claude-haiku-5-5 · effort medium · custom`. Unchanged requests include `unchanged`; Basic fallback is identified when it applies. Subagent result lines report their model without claiming an effort setting. Raw classifications, Custom comparisons (including Observe), startup details, and classification errors go to the Claude Code debug log. Enable `claude --debug` to inspect those details. Routing describes the outgoing request, not proof of the model that ultimately served it upstream.
+Normal transcript output shows one effective model/effort line per main turn, for example `[router] simple-answer · claude-haiku-5-5 · effort medium · custom`. Unchanged requests include `unchanged`; Basic fallback is identified when it applies. Subagent result lines report their model without claiming an effort setting. Raw classifications, Custom comparisons (including Observe), startup details, and classification errors go to the Claude Code debug log. Enable `claude --debug` to inspect those details. Routing describes the outgoing request, not proof of the model that ultimately served it upstream.
+
+Result lines include the classified request type. Implementation includes its category, such as `implementation/design-led`. Basic mode and missing classifications show `unclassified`; the log does not invent a task type.
