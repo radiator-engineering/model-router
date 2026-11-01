@@ -1,8 +1,8 @@
 # Model router v2 product spec
 
-Status: Draft design baseline. Date: October 31, 2026.
+Status: Implemented baseline with November 1, 2026 ownership revision.
 
-The [v2 design brief](design-brief.md) is the official design entry point. This supporting spec owns user behavior; the brief selects the control interfaces and delivery sequence. The controls and candidate syntax are implemented offline; real model/reviewer application remains qualification-gated. See the implementation-status section below.
+The [v2 design brief](design-brief.md) is the official design entry point. This supporting spec owns user behavior; the brief selects the control interfaces and delivery sequence. Configured model/effort routing and bounded native review are available; empirical quality approval remains a separate claim. See the implementation-status section below.
 
 V2 routes software and product assignments through a small, inspectable policy. It uses Jev to classify the work, checks model eligibility, and selects a qualified configuration while respecting manual control. It makes model selection, preservation, clarification, and failure visible to the user.
 
@@ -23,9 +23,9 @@ The product must:
 
 ## Assignment model
 
-An assignment is a main user turn, delegated task, or explicit review, retry, or escalation. Jev describes its role, specification uncertainty, verification strength, execution span, and failure consequence. Required tools, image support, and context fit are separate eligibility constraints.
+An assignment is a main user turn, delegated task, or explicit review, retry, or escalation. Jev describes its role, specification uncertainty, verification strength, execution span, and failure consequence. Required tools and image support are separate eligibility constraints; context fitting belongs to the host.
 
-A configuration combines an exact model with its effort setting and tested request path. Approval applies to a defined workload and operating conditions. Model discovery alone grants no automatic routing permission.
+A configuration combines an exact model with its effort setting and request path. Configured admission uses declared model profiles; evidence-only admission additionally requires scoped empirical approval. Discovery alone grants neither compatibility nor workload approval.
 
 The initial hypotheses are Haiku for exact, readily checked work; Sonnet for specified execution; Opus at medium effort for orchestration and broader assignments; and Astra for qualified specialist work. V2 does not assume that these preferences prove quality or that named effort levels are equivalent across models.
 
@@ -58,7 +58,7 @@ Fallback permission defaults to none. An authorized fallback names exact alterna
 
 The router attaches a review disposition: `not-requested`, `recommended`, or `required`. A recommendation does not automatically launch a model call. A trusted policy or explicit user requirement can make review required.
 
-The initial delivery supports review recommendations. The selected v2 architecture adds an optional coordinator module inside the existing plugin: it registers reviewers, starts authorized assignments, collects completion events, and tracks review state. Automatic execution depends on live validation and standing or assignment-specific authorization. If a user requires review and no supported path can complete it, the work must remain visibly unreviewed and unaccepted.
+The coordinator supports explicit review/repair/targeted checkpoints, exact automatic grants and revision-bound acceptance. Default workers are fresh capped native completions, not author forks; a typed agent-backed embedding remains supported. Automatic execution requires both automatic mode and exact candidate/stage authorization. If a user requires review and no supported path can complete it, the work must remain visibly unreviewed and unaccepted.
 
 Required review initially gates a router-managed artifact record through an explicit acceptance action. A post-turn message can report status but cannot withhold text that already streamed. Response buffering and universal publication guards are outside the initial scope; this gate does not commit, publish, or stop external actions outside the workflow.
 
@@ -95,6 +95,6 @@ Before application, demonstrate that all four outcomes work, automatic paths sha
 
 Offline replay validates decision behavior. [Harness research](../r-and-d/03-claude-code-mods-harness-validation.md) identifies supported Mod primitives and records offline native-host probes; it does not establish provider translation or review quality. Paired execution trials evaluate completed work, including repair, latency, and provider consumption. A small pilot can justify a constrained rollout; it cannot establish general reliability. The [validation plan](validation.md) defines the evidence needed before promotion. The [decision contract](decision-contract.md) owns detailed routing semantics.
 
-## Offline implementation status — October 31, 2026
+## Current implementation — November 1, 2026
 
-Phases 1–7 now have implementation and offline checks. This does not enable production v2: legacy remains the default, real environments/approvals remain empty, native origin/context/token-cap/fallback qualification and governed-check terminal success remain unavailable, and no live quality experiment was run. Review mode alone grants no spend; unsupported author/reviewer/repair/verification paths hold. See the [final offline checkpoint and remaining live gates](validation.md#phases-57-offline-checkpoint), [runtime integration](runtime-contracts.md#phases-57-native-integration) and [usage/rollback](../usage/router-controls.md#v2-controls-and-pins) for the implemented boundary.
+Configured native routing and bounded native review are implemented and functionally tested on Claude Code **2.1.316**. Legacy remains the default. The November 1 ownership revision delegates context fitting and ordinary execution/provider behavior to the host; switches, router pins, explicit restrictions/fallback grants and bounded review/acceptance remain router responsibilities. Configured routing reports `qualification=configured` without inventing workload approvals or environment observations. Evidence-only evaluation remains separate. See [current validation](validation.md#configured-native-integration--november-1-2026), [runtime integration](runtime-contracts.md#phases-57-native-integration) and [usage](../usage/router-controls.md#v2-controls-and-pins). Functional tests are not a held-out workload-quality certification.

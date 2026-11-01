@@ -1,14 +1,22 @@
 # Model router decision contract
 
-Status: Draft v2 design baseline. Contract version: 3. Date: October 31, 2026.
+Status: Implemented v2 contract with November 1, 2026 ownership revision. Contract version: 3 (stored shape retained).
 
-This contract defines how the redesigned router chooses a model and effort for a bounded assignment. It covers override precedence, eligibility, fallback, and the result passed to the orchestrator. It proposes future behavior; it does not change the current plugin, settings, or model approvals.
+This contract defines how the redesigned router chooses a model and effort for a bounded assignment. It covers override precedence, eligibility, fallback, and the result passed to the orchestrator. It describes implemented routing and acceptance behavior. Historical approval-oriented examples below apply to evidence-only admission; configured native admission is defined separately here. This text grants no model approvals or spending authority.
 
 The router uses a small, deterministic policy. Jev supplies task observations. Versioned policy rules select among qualified configurations. Claude is the initial soft provider preference. Local evaluation must establish which configurations qualify for each workload.
 
 The [product spec](product.md) describes user behavior, the [architecture spec](architecture.md) defines component boundaries and logical schemas, and the [validation plan](validation.md) tracks the evidence needed before implementation. This contract governs detailed routing semantics.
 
 The [official v2 design brief](design-brief.md) selects delivery architecture and controls while preserving this contract. It chooses one plugin and an initial artifact-acceptance gate; those choices do not weaken the four outcomes or eligibility requirements.
+
+## Admission profiles and host ownership
+
+The shipped native adapter uses `admission=configured`: it checks enabled model identities, configured verified availability/harness compatibility, required tools, declared native effort, explicit restrictions and required family independence. In-memory configurations are request declarations, not observations or workload approvals. Its `qualification=configured` must never be labeled scientifically verified. A failed automatic preference normally preserves an unchanged inherited request unless pins, mandatory requirements or known hard failures prevent it. Preservation is not a substitute dispatch.
+
+`admission=evidence` (also the pure selector's unspecified-mode default) retains exact timed/scoped compatibility and workload approvals. The stricter approval/freshness matrix and approval-oriented acceptance examples below describe that profile. Native controls use router-owned pins; ordinary incoming native values are inherited, not inferred manual pins. An adapter explicitly reporting an unknown origin fixes that field.
+
+Neither profile owns context fitting, compaction or input/output reserves. Historical schema fields remain diagnostic, not active fit checks. Ordinary author-request caps, provider substitutions and server-tool handling belong to the host. Explicit hard resource restrictions/reservations, router-chosen fallback authorization and finite review permissions remain enforced. A later observed model mismatch cannot prove prevention of a provider substitution.
 
 ## 1. Scope and authority
 
@@ -35,7 +43,7 @@ Each decision receives one immutable snapshot. No network lookup occurs inside s
 | Controls | Permission to change the main model, main effort, subagent model, or subagent effort; active policy and evaluation mode |
 | Overrides | Model and effort pins, their source, scope and purpose, and any explicit experimental selection |
 | Task observations | Specification uncertainty, verification strength, execution span, failure consequence, role, and confidence for each inferred field |
-| Requirements | Required tools, image input, context capacity, and any workload or independence constraints; distinguish known facts from inference |
+| Requirements | Required tools, image input, and any workload or independence constraints; context estimates are diagnostic only; distinguish known facts from inference |
 | Catalog and admission records | Availability observations, compatibility evidence, workload approvals, restrictions, exact identities, and tested harness/proxy versions |
 | Resource state | Provider restrictions, configured budgets and reserves, observed use and its scope, timestamps, and unknown values |
 | Fallback authorization | Ordered alternative configurations, applicable roles, allowed failure reasons, scope, and attempt limit |
@@ -69,7 +77,7 @@ Turning model routing off preserves the model. Effort routing may still operate 
 
 If a pin differs from a fixed outgoing field, return `unavailable` with `routing_fixed`. The adapter must reconcile the pin and control before dispatch. When both fields are fixed and already agree with the pins, preserve the request after checking known hard constraints and mandatory requirements; automatic workload approval is not a condition for leaving an inherited request unchanged.
 
-Manual selections must pass compatibility, capability, availability, and hard resource checks. They do not need automatic workload approval. A manual selection of a compatible configuration without workload evidence must be explicit experimental use and must appear as such in the decision record. Experimental use cannot bypass required review or other acceptance controls.
+Manual selections must pass compatibility, capability, availability, and hard resource checks. They do not need automatic workload approval. In evidence-only admission a compatible unapproved manual configuration requires explicit experimental use; configured admission records configured qualification instead. Experimental use cannot bypass required review or other acceptance controls.
 
 ## 4. Eligibility checks
 
@@ -81,13 +89,12 @@ Evaluate every proposed automatic configuration through the same checks, includi
 | Availability | Successful availability verification meets the policy's freshness rule, and no later applicable failure contradicts it | Reject automatic selection; manual use requires at least advertised availability under the policy's freshness rule |
 | Harness and proxy compatibility | Evidence covers the installed versions and required request path | Reject selection, including experimental use |
 | Tools and modality | Evidence supports every required tool and input modality | Reject selection |
-| Context fit | A conservative input and output estimate fits the verified limit and configured margin | Reject selection when fit cannot be established |
 | Effort | Evidence supports the exact requested effort or the documented inherited/default behavior through this request path | Reject the pair; never assume levels are equivalent across models |
 | Workload admission | The configuration has approval for the role and operating conditions | Reject automatic selection; explicit experimental use is permitted after the other checks pass |
 | Resources | Provider restrictions and locally enforceable hard limits permit the attempt, including any protected reserve | Reject when required accounting cannot establish permission |
 | Review independence | A required independent reviewer has the required distinct family and a known identity | Reject that reviewer; never report independence as verified from an alias alone |
 
-Policy must state freshness durations, context margins, and supported version ranges. An absent required limit makes that check unknown. Published specifications can support a capacity record, but local compatibility still needs evidence for the configured request path.
+Evidence-only policy must state freshness durations and supported version ranges; context fit is host-owned. An absent required limit makes that check unknown. Published specifications can support a capacity record, but local compatibility still needs evidence for the configured request path.
 
 Unknown live provider quota does not block an otherwise eligible configuration under a static provider policy. A hard local budget requires reliable accounting for its declared scope. If reliable accounting is absent, the router cannot claim to enforce that budget or spend against it. Local accounting covers tracked work only.
 
@@ -116,7 +123,7 @@ Jev reports observations with per-field confidence. The policy derives the confi
 | Execution span | Bounded, several dependent steps, cross-component or extended, unknown |
 | Failure consequence | Reversible local effect, consequential effect, unknown |
 
-Keep required tools, modality, and context fit as eligibility constraints. Keep role as a workload lookup key. Do not sum these observations into a universal difficulty score.
+Keep required tools and modality as eligibility constraints; delegate context fit to the host. Keep role as a workload lookup key. Do not sum these observations into a universal difficulty score.
 
 Policy rules must name the observations they use and their confidence thresholds. For the first replay, use `0.8` as a provisional threshold for every inferred field needed to authorize a change, require clarification, or add a review requirement. Missing confidence does not pass. Trusted structured requirements do not need classifier confidence. Calibration may change thresholds through a policy revision. Rules must have an explicit priority; conflicting rules at the same priority make the policy invalid.
 
@@ -129,7 +136,7 @@ Apply these rules in order:
 5. If no rule applies, classification times out, output is invalid, or the classification cannot be tied to this assignment, return `preserve` unless an existing hard constraint requires `unavailable`.
 6. Resolve one primary configuration using override precedence before eligibility filtering. Validate the complete pair after respecting fixed fields. Do not select one half of an ineligible pair.
 7. If the primary passes, return `preserve` when it equals the current request. Otherwise return `select` with the permitted changes. Include the successful checks in either result.
-8. If the preferred candidate fails, evaluate only authorized fallback alternatives. If none qualifies, return `unavailable`. Retaining an otherwise eligible current configuration is allowed only when the workload rule lists it as an alternative.
+8. If the preferred candidate fails, evaluate only authorized fallback alternatives. Evidence-only admission returns `unavailable` if none qualifies. Configured automatic routing may instead preserve the unchanged inherited request when no explicit pin, mandatory requirement or known hard failure prevents it; it never silently selects another primary.
 
 A workload rule must distinguish its permitted primary configurations from authorized failure alternatives. Membership in the primary set does not grant fallback permission. A default preference outside that set or absent from the catalog is a configuration failure, not permission to use an unrelated tier policy.
 
@@ -150,7 +157,7 @@ Every result includes the assignment identity, input snapshot fingerprint, versi
 
 `select` is permission to request a configuration, not proof of what served it. Record the requested identity and effort separately from the upstream resolved identity and effective effort. Unknown upstream values remain unknown.
 
-Primary reason codes include `rule_selected`, `already_selected`, `routing_fixed`, `override_origin_unknown`, `configuration_invalid`, `classification_timeout`, `classification_invalid`, `classification_unmatched`, `classification_uncertain`, `no_matching_rule`, `requirement_unresolved`, `override_conflict`, `model_disabled`, `availability_unknown`, `model_unavailable`, `compatibility_unknown`, `capability_missing`, `context_fit_unknown`, `effort_unsupported`, `workload_unapproved`, `budget_denied`, `accounting_unknown`, `independence_unverified`, and `fallback_exhausted`.
+Primary reason codes include `rule_selected`, `already_selected`, `routing_fixed`, `override_origin_unknown`, `configuration_invalid`, `classification_timeout`, `classification_invalid`, `classification_unmatched`, `classification_uncertain`, `no_matching_rule`, `requirement_unresolved`, `override_conflict`, `model_disabled`, `availability_unknown`, `model_unavailable`, `compatibility_unknown`, `capability_missing`, `effort_unsupported`, `workload_unapproved`, `budget_denied`, `accounting_unknown`, `independence_unverified`, and `fallback_exhausted`.
 
 Adapters may add detailed diagnostics without changing these meanings. Logs must distinguish the proposed result, the applied request, and the observed transport result. They must exclude credentials and raw prompt content by default.
 
@@ -189,7 +196,7 @@ Transport failures do not trigger an unannounced switch inside a tool loop. The 
 
 No retry or substitution may silently broaden provider permissions, consume a protected reserve, or mark an unfinished review complete. Quality failure is not a transport failure and cannot trigger fallback unless an explicit escalation rule permits it.
 
-Configured engine and proxy fallback must follow the same authorization. Resolve any substitution path that runs beneath the Mod's interception before enabling enforced pins or resource restrictions. Observing a different model later is a diagnostic, not proof that the first substitute request was prevented. Check actual outgoing targets without reclassifying every tool step.
+Router-chosen fallback follows the authorization above. Host/proxy/provider retries and substitutions are delegated; they are not a blanket native-routing lock. Observing a different model later is a diagnostic, not proof the first substitute request was prevented. Check outgoing targets without reclassifying tool results, and stop unexpected continuation rather than certifying a mismatch.
 
 ## 8. Review disposition
 
@@ -272,13 +279,13 @@ These examples define future decision tests. They assume fresh evidence and suff
 This draft proposes pins over soft preferences, no default substitution, a provisional `0.8` confidence threshold, and separate execution and review decisions. The following details still need concrete values or local verification:
 
 - Initial workload rules, approved configurations, and review triggers that are required rather than recommended.
-- Availability freshness durations, context margins, and version ranges for compatibility evidence.
+- Evidence-only availability freshness durations and version ranges for compatibility evidence.
 - Live behavior of documented model-switch origins, effort control paths, assignment identity, and short-circuit outcomes across supported surfaces.
 - Which resource limits can be enforced with available non-consuming telemetry, and which reserves to protect.
 - The exact fallback alternatives, eligible failure reasons, and finite transport retry policy.
 
 Resolve these through policy data and adapter checks before enabling application. Offline replay can begin with explicit test values. This contract requires no live model experiment to review its precedence and failure behavior.
 
-## Offline implementation status — October 31, 2026
+## Current implementation — November 1, 2026
 
-Phases 1–7 now have implementation and offline checks. This does not enable production v2: legacy remains the default, real environments/approvals remain empty, native origin/context/token-cap/fallback qualification and governed-check terminal success remain unavailable, and no live quality experiment was run. Review mode alone grants no spend; unsupported author/reviewer/repair/verification paths hold. See the [final offline checkpoint and remaining live gates](validation.md#phases-57-offline-checkpoint), [runtime integration](runtime-contracts.md#phases-57-native-integration) and [usage/rollback](../usage/router-controls.md#v2-controls-and-pins) for the implemented boundary.
+Configured native routing and bounded native review are implemented and functionally tested on Claude Code **2.1.316**. Legacy remains the default. The November 1 ownership revision delegates context fitting and ordinary execution/provider behavior to the host; switches, router pins, explicit restrictions/fallback grants and bounded review/acceptance remain router responsibilities. Configured routing reports `qualification=configured` without inventing workload approvals or environment observations. Evidence-only evaluation remains separate. See [current validation](validation.md#configured-native-integration--november-1-2026), [runtime integration](runtime-contracts.md#phases-57-native-integration) and [usage](../usage/router-controls.md#v2-controls-and-pins). Functional tests are not a held-out workload-quality certification.

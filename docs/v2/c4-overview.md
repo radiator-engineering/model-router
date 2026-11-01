@@ -1,6 +1,6 @@
 # Model router v2: C4 overview
 
-Status: Proposed v2 architecture. October 31, 2026. These diagrams describe the design, not the current implementation.
+Status: Implemented component boundaries, revised November 1, 2026. The cross-family sequence is illustrative, not recorded live evidence; default workers are fresh bounded native completions.
 
 Read this as two zoom levels: the surrounding systems, then the components inside the Mod. The sequence diagram follows one concrete request through those components. [C4](https://c4model.com/) separates system context, containers, components, and code. Here, the router runs inside the Claude Code process; its modules are not separately deployed services. The component view is the useful next zoom after context.
 
@@ -19,7 +19,7 @@ flowchart LR
     host <-->|Governed tools / results| workspace
 ```
 
-Jev describes the work. The router's deterministic policy chooses a configuration or returns a blocking outcome. Claude Code owns execution and tool permissions. The provider path must honor pins and authorized fallback; the router cannot assume an unseen proxy substitution is safe.
+Jev describes the work. The router's deterministic policy chooses a configuration or returns a blocking outcome. Claude Code owns execution and tool permissions. The router enforces its requested pins and router-selected alternatives; provider substitutions and ordinary execution/context limits are host-owned. Observed mismatches remain visible, not certified as safely prevented.
 
 ## Router component view
 
@@ -41,9 +41,9 @@ flowchart TB
             gate -->|Review disposition| review
             review <-->|Revision-bound evidence| records
         end
-        runtime["Claude Code agent runtime<br/>Author and fresh reviewer agents"]
+        runtime["Claude Code runtime<br/>Author loop and fresh bounded completions"]
         gate -->|Allowed request| runtime
-        review <-->|Authorized spawn / completion| runtime
+        review <-->|Authorized bounded request / result| runtime
     end
     jev <-->|Classification only| intake
     providers["Model providers<br/>Direct or qualified proxy path"]
@@ -56,7 +56,7 @@ The optional coordinator enrolls an explicit candidate and waits for a user revi
 
 ## End-to-end request: pinned author and independent review
 
-This example assumes qualified Sonnet and Astra configurations, a verified cross-family request path, trusted check definitions, and explicit operating allowances. `C1` is shorthand for the generated candidate ID.
+This illustrative example assumes eligible Sonnet/Astra configurations, separately verified cross-family behavior, trusted check definitions, and explicit finite allowances. Configure reviewer/family requirements through trusted `reviewPolicyJson` and enroll an explicit manifest with `/router candidate register`; prose below grants none of that authority. `C1` is shorthand for the resulting candidate ID. This is not a claim that the default Opus reviewer is cross-family.
 
 First, pin the author for the next user assignment:
 
@@ -95,16 +95,18 @@ sequenceDiagram
 
     Coord->>Router: Request independent reviewer assignment
     Router->>Router: Check capability, family, path and allowance
-    Router->>Reviewer: Start fresh agent with scoped tools
+    Router->>Reviewer: Start fresh capped tool-less completion
     Coord->>Reviewer: Requirements, diff, context and executed checks
     Reviewer-->>Coord: Keyboard submission bypasses guard,<br/>reproduction produces two saves
 
+    You->>Coord: /router repair C1
     Coord->>Author: Authorized repair of confirmed finding
     Author->>Repo: Guard shared submit handler, add reproduction test
     Coord->>Coord: Revision B makes prior evidence stale
     Coord->>Repo: Rerun required checks for revision B
     Repo-->>Coord: Pass, repeated submission makes one API call
 
+    You->>Coord: Inspect repair; /router verify C1 --confirm-scope
     Coord->>Router: Request authorized targeted verification
     Router->>Router: Recheck verifier eligibility and allowance
     Router->>Reviewer: Dispatch independent targeted verification
@@ -132,6 +134,6 @@ If the pinned configuration is ineligible, stop without silent substitution. If 
 | Review coordinator | Authorized review lifecycle, bounded follow-up, explicit acceptance |
 | Catalog and records | Model evidence/approvals separately from artifact/check/review evidence |
 
-The initial policy engine remains `legacy`. Enable v2 application, subagent effort changes, and automatic review only after their individual validation gates pass.
+Legacy remains the default; configured v2 routing and separately permitted subagent effort are available. Automatic review additionally requires exact candidate/stage grants, not mode alone. Context/caps/provider behavior belong to the host. See current validation for tested paths and unmeasured quality claims.
 
 For detail, see the [design brief](design-brief.md), [decision contract](decision-contract.md), [runtime contracts](runtime-contracts.md), and [validation plan](validation.md).

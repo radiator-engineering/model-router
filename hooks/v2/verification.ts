@@ -1,4 +1,4 @@
-/** Governed, revision-bound checks. This build's Bash schema cannot attest a successful exit. */
+/** Governed, revision-bound checks with a nonce-bound shell completion protocol, never model PASS prose. */
 import {isId, isObject} from './contract.ts'
 import {artifactRoot, captureCandidate, freezeArtifact, relativeArtifactPath, resolveArtifactPath, sha256} from './artifacts.ts'
 import type {ArtifactConfiguration, ArtifactFailure, ArtifactHost, EnrolledCandidate, FrozenSnapshot} from './artifacts.ts'
@@ -17,7 +17,7 @@ export interface VerificationDefinitions extends TrustedCheckDefinitions {
   /** Current trusted configuration, not the old frozen configuration. */
   configuration: ArtifactConfiguration
 }
-export type CheckStatus = 'failed' | 'denied' | 'timeout' | 'interrupted' | 'unavailable' | 'stale'
+export type CheckStatus = 'failed' | 'denied' | 'timeout' | 'interrupted' | 'unavailable' | 'stale' | 'passed'
 export interface ExecutedCheck {
   checkId: string
   configurationHash: string
@@ -32,14 +32,14 @@ export interface ExecutedCheck {
     interrupted: boolean | null
     backgroundTaskId: string | null
     timedOutAfterMs: number | null
-    /** Deliberately unknown: exitCode is not in the generated Bash result schema. */
-    exitCode: null
+    /** Captured only from our matching terminal receipt; raw result.exitCode is never trusted. */
+    exitCode: number | null
     stdout: string | null
     stderr: string | null
   }
 }
 export interface VerificationOutcome {
-  outcome: 'not-required' | 'failed' | 'unavailable' | 'stale'
+  outcome: 'passed' | 'not-required' | 'failed' | 'unavailable' | 'stale'
   candidateId: string
   revision: string
   checks: readonly ExecutedCheck[]
@@ -64,7 +64,7 @@ export function quoteCheckDirectory(path: string): string { return `'${path.repl
 function sameSnapshot(current: FrozenSnapshot, frozen: FrozenSnapshot): boolean {
   return current.candidateId === frozen.candidateId && current.revision === frozen.revision && JSON.stringify(current.manifest) === JSON.stringify(frozen.manifest)
 }
-function completionOf(raw: unknown): {status: CheckStatus; completion: ExecutedCheck['completion']} {
+function completionOf(raw: unknown, marker: string): {status: CheckStatus; completion: ExecutedCheck['completion']} {
   const result = isObject(raw) && isObject(raw.result) ? raw.result : {}
   const completion: ExecutedCheck['completion'] = {
     isError: isObject(raw) && typeof raw.isError === 'boolean' ? raw.isError : null,
@@ -80,8 +80,13 @@ function completionOf(raw: unknown): {status: CheckStatus; completion: ExecutedC
   if (completion.interrupted === true) return {status: 'interrupted', completion}
   if (completion.backgroundTaskId !== null || result.backgroundedByUser === true || result.backgroundedByTurnAbort === true || result.backgroundedToDeliverMessage === true) return {status: 'unavailable', completion}
   if (completion.isError === true) return {status: 'failed', completion}
-  // No exitCode or terminal-success field exists in this build's generated Bash schema.
-  // Neither stdout, an absent isError, nor an extra property supplied by a hook can mint success.
+  // The generated wrapper, not the check's prose or an extra result.exitCode, supplies this nonce.
+  const last=completion.stdout?.trimEnd().split('\n').at(-1)
+  const prefix=marker+':'
+  if(last?.startsWith(prefix)&&/^\d{1,3}$/.test(last.slice(prefix.length))&&completion.interrupted===false){
+    const code=Number(last.slice(prefix.length))
+    if(code<=255){completion.exitCode=code;return {status:code===0?'passed':'failed',completion}}
+  }
   return {status: 'unavailable', completion}
 }
 
@@ -113,10 +118,13 @@ export async function runVerification($: VerificationHost, candidate: EnrolledCa
       const cwd = await resolveArtifactPath($, root, definition.cwd)
       if (!cwd.exists || cwd.kind !== 'dir' || command !== `cd ${quoteCheckDirectory(cwd.absolute)} && ${definition.command}`) return freezeArtifact({...base, outcome: 'stale', diagnostic: 'check working directory changed'})
       const startedAt = new Date().toISOString()
+      const marker=`__JEV_CHECK_${crypto.randomUUID()}__`
+      // A child shell cannot replace the wrapper's status variable or skip its final receipt.
+      const wrapped=`cd ${quoteCheckDirectory(cwd.absolute)} && /bin/sh -c ${quoteCheckDirectory(definition.command)}; __jev_status=$?; printf '\\n${marker}:%s\\n' "$__jev_status"; exit "$__jev_status"`
       let raw: unknown
-      try { raw = await $.tool.call({tool: 'Bash', command, timeout: definition.timeoutMs}) }
+      try { raw = await $.tool.call({tool: 'Bash', command:wrapped, timeout: definition.timeoutMs}) }
       catch (error) { raw = {result: {}, context: error instanceof Error ? error.message : 'governed check did not return'} }
-      const result = completionOf(raw)
+      const result = completionOf(raw,marker)
       const check: ExecutedCheck = {checkId: definition.id, configurationHash: normalized.configurationHash, candidateId: candidate.id,
         revision: frozenSnapshot.revision, command, startedAt, endedAt: new Date().toISOString(), ...result}
       checks.push(check)
@@ -126,10 +134,9 @@ export async function runVerification($: VerificationHost, candidate: EnrolledCa
         return freezeArtifact({...base, outcome: 'stale', diagnostic: 'covered artifact, context or configuration changed during checking'})
       }
       // Stop on the first unsuccessful/unknown required check; no repair or review is authorized here.
-      return freezeArtifact({...base, outcome: result.status === 'failed' ? 'failed' : 'unavailable', diagnostic:
-        result.status === 'unavailable' ? 'Bash completion status is unavailable; this host does not expose a reliable successful exit' : `required check ${result.status}`})
+      if(result.status!=='passed')return freezeArtifact({...base, outcome: result.status === 'failed' ? 'failed' : 'unavailable', diagnostic: result.status==='unavailable'?'Matching terminal shell receipt unavailable':`required check ${result.status}`})
     }
-    return freezeArtifact({...base, outcome: 'unavailable', diagnostic: 'no reliable check completion'})
+    return freezeArtifact({...base, outcome: 'passed', diagnostic: 'all required checks have matching terminal shell receipts'})
   } catch (error) {
     return freezeArtifact({...base, outcome: 'unavailable', diagnostic: error instanceof Error ? error.message : 'verification unavailable'})
   }

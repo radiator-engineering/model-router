@@ -24,15 +24,23 @@ import {registerWithAdapters} from './jev-model-router.ts'
 import data from './native-data.ts'
 import type {HarnessState} from './v2/harness.ts'
 import {workflowCheckpoint} from './v2/review-harness.ts'
+import production from '../catalog/model-data.ts'
+import {parseCatalogV2} from './model-catalog.ts'
+import {configuredPolicy,runtimeCatalog} from './v2/policy-data.ts'
 export const register:Register=(on,options)=>{
  let runtime:HarnessState
  const sample=data.cases[0].snapshot
  const reviewer=data.synthetic.catalog.configurations.find(c=>c.modelId==='syn-astra')!.id
  registerWithAdapters(on,{...options,provider:'typesafe',typesafeApiKey:'synthetic-not-a-key',typesafeBaseUrl:'https://invalid.example',policyEngine:'v2',reviewMode:'automatic',routeMainModel:true}, {
   ...data.synthetic,onRuntimeReady:state=>{runtime=state},
-  facts:async(request,native)=>({...native,applicationQualified:request.model!=='unqualified',limitsEnforced:request.model!=='unqualified',modelOrigin:'inherited',effortOrigin:'inherited',requirements:sample.requirements,environment:sample.environment,resources:sample.resources}),
+  facts:async(request,native)=>({...native,routingAvailable:request.model!=='unsupported',modelOrigin:'inherited',effortOrigin:'inherited',requirements:sample.requirements,environment:sample.environment,resources:sample.resources}),
   workflow:{repairConfiguration:async()=>data.synthetic.catalog.configurations.find(c=>c.modelId==='syn-sonnet'&&c.effort.kind==='level'&&c.effort.value==='medium')!.id,configuration:async()=>({reviewerConfigurationId:reviewer,requireReview:false,requiredCheckIds:[],distinctFamily:true,authorFamily:'claude'}),
    authorize:async r=>({...r,origin:r.source==='user-command'?'composer':'trusted-coordinator',standing:true,allowedTools:['Read','Grep','Glob'],modelAllowance:{maxCalls:1,maxTokens:1000,timeoutMs:1000}})}
+ })
+ on('command.run',{command:'native-default-workflow'},async()=>{
+  runtime.config.catalog=runtimeCatalog(parseCatalogV2(production));runtime.config.policy=configuredPolicy({},runtime.config.catalog)
+  if(runtime.config.adapters){delete runtime.config.adapters.workflow;delete runtime.config.adapters.facts}
+  return {text:'native default workflow active'}
  })
  on('command.run',{command:'native-checkpoint'},async($,e)=>{
   const [candidateId,stage]=e.args.split(' ')

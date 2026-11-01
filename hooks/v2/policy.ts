@@ -11,7 +11,7 @@ import {resolvePinFields} from './pins.ts'
 
 type Candidate = {id: string | null; model: string | null; effort: EffortToken}
 type Mode = {automatic: boolean; experimental: boolean; ruleId: string | null}
-const CHECK_ORDER: CheckName[] = ['identity', 'resources', 'availability', 'compatibility', 'capability', 'effort', 'workload', 'context', 'independence']
+const CHECK_ORDER: CheckName[] = ['identity', 'resources', 'availability', 'compatibility', 'capability', 'effort', 'workload', 'independence']
 /** Known failures that block even an unchanged inherited request. */
 const HARD: ReasonCode[] = ['model_disabled', 'model_unavailable', 'capability_missing', 'budget_denied', 'accounting_unknown']
 
@@ -24,6 +24,7 @@ export function validatePolicy(input: unknown, catalog: CatalogV2): string[] {
   const whenOk = (w: unknown) => isObject(w) && Object.entries(w).every(([k, v]) =>
     DIMENSION_KEYS.includes(k as Dimension) && ids(v) && v.length > 0 && v.every(x => x !== 'unknown' && (DIMENSIONS[k as Dimension] as readonly string[]).includes(x)))
   need(isId(input.policyRevision), 'policyRevision is required')
+  need(input.admission===undefined||['configured','evidence'].includes(input.admission as string),'admission must be configured or evidence')
   need(input.contractVersion === CONTRACT_VERSION, `contractVersion must be ${CONTRACT_VERSION}`)
   need(typeof input.confidenceThreshold === 'number' && input.confidenceThreshold > 0 && input.confidenceThreshold <= 1, 'confidenceThreshold must be in (0,1]')
   need(ids(input.providerPreference), 'providerPreference must list unique providers')
@@ -65,6 +66,7 @@ const at = (t: string) => Date.parse(t)
 
 /** Run every eligibility check on one complete model/effort pair. */
 function evaluate(c: Candidate, role: CandidateCheck['role'], mode: Mode, s: PolicySnapshot, policy: PolicyData, catalog: CatalogV2, taskRole: TaskRole | null): CandidateCheck & {experimental: boolean} {
+  if(policy.admission==='configured')return evaluateConfigured(c,role,s,catalog)
   const failed: CandidateCheck['failed'] = []
   const fail = (check: CheckName, reason: ReasonCode, detail: string) => failed.push({check, reason, detail})
   const now = at(s.now)
@@ -141,17 +143,7 @@ function evaluate(c: Candidate, role: CandidateCheck['role'], mode: Mode, s: Pol
     if (!mode.automatic && mode.experimental) experimental = true
     else fail('workload', 'workload_unapproved', mode.ruleId ? `no current approval for rule ${mode.ruleId}` : 'no current approval for this role')
   }
-  // Context fit: conservative estimate within the verified window, margin and reserve
-  const limits = approval ? approval.limits : mode.automatic ? null : policy.manualLimits
-  const window = compatible.length > 0 && compatible.every(x => x.contextWindowTokens !== null)
-    ? Math.min(...compatible.map(x => x.contextWindowTokens!)) : null
-  const input = s.requirements.inputTokens
-  if (input !== null && window !== null && input >= window)
-    fail('context', 'capability_missing', 'input alone exhausts the verified context window')
-  else if (input === null || window === null || !limits || limits.contextMarginFraction === null || limits.outputReserveTokens === null)
-    fail('context', 'context_fit_unknown', 'input estimate, verified window or margin/reserve is unknown')
-  else if (input + limits.outputReserveTokens > Math.floor(window * (1 - limits.contextMarginFraction)) || (approval && input > approval.limits.maxInputTokens))
-    fail('context', 'capability_missing', 'estimated input does not fit')
+  // Context fitting, compaction and provider token ceilings belong to the execution host.
   // Independent review
   if (s.assignment.purpose === 'review' && s.requirements.distinctFamily) {
     const family = model?.family ?? null
@@ -159,6 +151,32 @@ function evaluate(c: Candidate, role: CandidateCheck['role'], mode: Mode, s: Pol
     else if (family === s.assignment.authorFamily) fail('independence', 'independence_unverified', 'reviewer shares the author family')
   }
   return result(CHECK_ORDER)
+}
+
+/** Configured routing uses declared compatibility, not invented scoped benchmark approvals. */
+function evaluateConfigured(c:Candidate, role:CandidateCheck['role'],s:PolicySnapshot,catalog:CatalogV2):CandidateCheck & {experimental:boolean} {
+  const failed:CandidateCheck['failed']=[]
+  const fail=(check:CheckName,reason:ReasonCode,detail:string)=>failed.push({check,reason,detail})
+  const model=catalog.models.find(m=>m.id===c.model),profile=catalog.legacy.models.find(m=>m.id===c.model)
+  if(!model||!profile)fail('identity','compatibility_unknown','model has no configured profile')
+  else if(!model.enabled||!profile.enabled)fail('identity','model_disabled','model is disabled')
+  if(model&&s.resources.restrictedProviders.includes(model.provider))fail('resources','budget_denied','provider is restricted')
+  if(s.resources.hardBudget?.accounting==='unavailable')fail('resources','accounting_unknown','explicit hard budget has no accounting')
+  else if(s.resources.hardBudget&&!s.resources.hardBudget.permits)fail('resources','budget_denied','explicit hard budget denies attempt')
+  const timed=catalog.availability.filter(a=>a.modelId===c.model&&a.observedAt!==null&&at(a.observedAt)<=at(s.now))
+  const latest=Math.max(...timed.map(a=>at(a.observedAt!)))
+  const unavailable=timed.some(a=>at(a.observedAt!)===latest&&a.status==='unavailable')
+  if(s.resources.exhaustedModels.includes(c.model??'')||unavailable)fail('availability','model_unavailable','model is unavailable')
+  else if(profile?.availability!=='verified')fail('availability','availability_unknown','model is not configured as available')
+  if(profile?.claudeCodeCompatibility!=='verified')fail('compatibility','compatibility_unknown','harness compatibility is not configured')
+  if(s.requirements.tools&&profile?.capabilities.toolCalling!==true)fail('capability',profile?.capabilities.toolCalling===false?'capability_missing':'compatibility_unknown','configured model does not declare tool calling')
+  // An untouched effort is owned by the host; never invent a level for it.
+  const hostEffort=!s.controls.changeEffort&&c.effort.kind==='unknown'
+  if(!hostEffort&&(c.effort.kind!=='level'||!['low','medium','high','xhigh','max'].includes(c.effort.value)))fail('effort','effort_unsupported','requested effort is not declared in the model profile')
+  if(s.assignment.purpose==='review'&&s.requirements.distinctFamily&&(!model?.family||!s.assignment.authorFamily||model.family===s.assignment.authorFamily))fail('independence','independence_unverified','independent model family is not established')
+  const checked:CheckName[]=['identity','resources','availability','compatibility','capability','effort']
+  if(s.assignment.purpose==='review'&&s.requirements.distinctFamily)checked.push('independence')
+  return {configurationId:c.id,model:c.model,effort:canonicalEffort(c.effort),role,approvalId:null,limits:null,passed:checked.filter(k=>!failed.some(f=>f.check===k)),failed,experimental:false}
 }
 
 /** The catalog configuration for a pair, preferring the snapshot's request path. */
@@ -256,11 +274,11 @@ export function decide(snapshot: PolicySnapshot, policy: PolicyData, catalog: Ca
     const mandatory = s.requirements.mandatory
     const blocking = check.failed.filter(f => HARD.includes(f.reason) ||
       (s.assignment.purpose === 'review' && s.requirements.distinctFamily && f.check === 'independence') ||
-      (mandatory && (f.check === 'compatibility' || f.check === 'capability' || f.check === 'context' || f.check === 'effort' || current.id === null)))
+      (mandatory && (f.check === 'compatibility' || f.check === 'capability' || f.check === 'effort' || current.id === null)))
     if (blocking.length)
       return unavailable([...reasons, ...blocking.map(f => f.reason)], `Current request: ${blocking[0]!.detail}.`, 'Choose an eligible configuration or satisfy the requirement.', {candidates: [check]})
     return {...base, outcome: 'preserve', reasons: [...new Set([...reasons, ...originReasons])], candidates: [check],
-      configuration: {id: current.id, model: s.current.model, effort: currentEffort}, qualification: check.failed.length ? 'unverified' : 'verified',
+      configuration: {id: current.id, model: s.current.model, effort: currentEffort}, qualification: check.failed.length?'unverified':policy.admission==='configured'?'configured':'verified',
       reservation: {required: s.resources.hardBudget?.accounting === 'reliable'}}
   }
 
@@ -325,20 +343,26 @@ export function decide(snapshot: PolicySnapshot, policy: PolicyData, catalog: Ca
     const all = [...candidates, clean]
     const shared = {...base, candidates: all, experimental: exp, configuration: {id: c.id, model: c.model, effort: {...c.effort}},
       fallback: {authorized: base.fallback.authorized, substitution}, reservation: {required: s.resources.hardBudget?.accounting === 'reliable'}}
-    if (isCurrent(c)) return {...shared, outcome: 'preserve', reasons: ['already_selected', ...originReasons], qualification: 'verified'}
+    if (isCurrent(c)) return {...shared, outcome: 'preserve', reasons: ['already_selected', ...originReasons], qualification: policy.admission==='configured'?'configured':'verified'}
     const changes: PolicyDecision['changes'] = {}
     if (c.model !== s.current.model && c.model !== null) changes.model = c.model
     if (canonicalEffort(c.effort) !== canonicalEffort(currentEffort)) changes.effort = {...c.effort}
-    return {...shared, outcome: 'select', reasons: [selected, ...originReasons], changes}
+    return {...shared, outcome: 'select', reasons: [selected, ...originReasons], changes,
+      qualification: policy.admission==='configured'?'configured':base.qualification}
   }
 
   // 7. Eligible primary: select, or preserve when it is already the request.
   const primaryCheck = evaluate(primary, 'primary', mode, s, policy, catalog, taskRole)
   if (!primaryCheck.failed.length) return accept(primary, primaryCheck, [], false)
+  if(policy.admission==='configured'&&isCurrent(primary)&&!hardFailures(primaryCheck).length)return preserve([selected])
   const {experimental: _, ...primaryClean} = primaryCheck
   const failureReasons = primaryCheck.failed.map(f => f.reason)
 
   // 8. Only explicitly authorized alternatives, in order, within the substitution limit.
+  if(policy.admission==='configured'&&!pinsAnything&&!s.requirements.mandatory&&!s.fallback){
+    const preserved=preserve(failureReasons)
+    return {...preserved,candidates:[primaryClean,...preserved.candidates]}
+  }
   const f = s.fallback
   const covered = !!f && f.lineageId === s.assignment.lineageId && f.policyRevision === policy.policyRevision &&
     f.purpose === s.assignment.purpose && taskRole !== null && f.roles.includes(taskRole) &&

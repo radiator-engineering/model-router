@@ -11,6 +11,16 @@ test('v2 questions ask the five dimensions as choices and name no models or perm
  for(const k of OBSERVATION_KEYS){expect(q[k].type).toBe('choice');for(const v of Object.keys(q[k].criteria))expect(allowedValues(k).includes(v)).toBe(true)}
  expect(/claude|gpt|haiku|sonnet|opus|astra|fallback|budget/i.test(JSON.stringify(q))).toBe(false)
 })
+test('lightweight communication reuses simple-answer without treating approvals or continuations as chat',()=>{
+ const q=v2Questions() as any
+ expect(q.role.criteria['simple-answer']).toContain('standalone social reply')
+ expect(q.role.instructions).toContain('greeting or thanks is simple-answer')
+ expect(q.role.instructions).toContain('Approvals, confirmations and requests to continue prior work are not social replies')
+ expect(q.role.instructions).toContain('otherwise unknown')
+ expect(q.executionSpan.instructions).toContain('greeting or thanks is bounded')
+ expect(q.executionSpan.instructions).toContain('unspecified prior work is unknown')
+ expect(norm(full({role:answer('unknown',1)}))!.role).toEqual({value:'unknown',confidence:null})
+})
 test('request bodies follow each backend shape and keep context optional',()=>{
  const t=JSON.parse(v2RequestBody('typesafe',{prompt:'p'},'jev-latest'))
  expect(t.model).toBe('jev-latest');expect(t.state).toEqual({prompt:'p'})

@@ -1,10 +1,10 @@
 # Development guide
 
-Use this guide to run and check a checkout of the current plugin. See [router controls](usage/router-controls.md) and [task routing](usage/task-routing.md) for its behavior. The [v2 specs](v2/product.md) describe the implemented offline v2 contract and the still-closed production promotion gates.
+Use this guide to run and check a checkout of the current plugin. See [router controls](usage/router-controls.md) and [task routing](usage/task-routing.md) for its behavior. The [v2 specs](v2/product.md) describe the configured native integration and separate empirical quality-evaluation gates.
 
 ## Requirements and checkout
 
-Use a Claude Code version with function-hook Mods support. Compatibility evidence in this repository records Claude Code 2.1.314. Node 23.6+ runs the offline tests and catalog generator. Python 3 is needed for optional proxy model-picker synchronization. No package installation is required.
+Use a Claude Code version with function-hook Mods support. Compatibility evidence in this repository records Claude Code 2.1.316. Node 23.6+ runs the offline tests and catalog generator. Python 3 is needed for optional proxy model-picker synchronization. No package installation is required.
 
 From the repository root, set a checkout path for the examples below:
 
@@ -96,7 +96,7 @@ claude plugin validate .
 git diff --check
 ```
 
-The native runner copies the actual registration/modules into a new temporary plugin with clearly synthetic qualification data, stubs external operations, saves private logs under ignored `test-results/` and removes its temporary directory. It installs nothing and performs no inference. Do not load the fixture as an interactive plugin or copy its approvals into production.
+The native runner copies actual modules into an isolated temporary plugin. Adapter tests use clearly synthetic qualification data; default-workflow tests use production configured routing. External operations are stubbed. It saves private logs under ignored `test-results/` and removes its temporary directory. It installs nothing and performs no inference. Do not load the fixture as an interactive plugin or copy its approvals into production.
 
 Runtime-only strict typecheck (use the actual declaration path emitted by the installed plugin-authoring skill):
 
@@ -107,4 +107,20 @@ tsc --ignoreConfig --noEmit --strict --noUncheckedIndexedAccess \
   "$AUTHORING_TYPES/claude-code.d.ts" hooks/*.ts hooks/v2/*.ts
 ```
 
-The root generated-config/test declaration limitations remain; this narrower check does not clear `tsc -p . --noEmit`. No new dependency is needed. Real provider tests, settings changes or consuming usage queries are not part of these commands. Before production v2 promotion, establish exact origin/context/cap/fallback and independent-review compatibility, reliable executable-check evidence, then the declared quality/resource gates in [validation](v2/validation.md#phases-57-offline-checkpoint). Keep `policyEngine=legacy` until admission exists; rollback instructions are in [controls](usage/router-controls.md#rollback).
+The root generated-config/test declaration limitations remain; this narrower check does not clear `tsc -p . --noEmit`. No new dependency is needed. Real provider tests, settings changes or consuming usage queries are not part of these commands. Configured v2 is available without workload approvals or router-owned context/cap qualification. Pins, explicit restrictions and bounded review remain enforced. See [functional live evidence and remaining quality research](v2/validation.md#configured-native-integration--november-1-2026); legacy remains the default/rollback selection.
+
+## Explicit live CLI and manual verification
+
+These probes launch this checkout with existing credentials, spend real classifier/model allowance, and never install packages or write saved defaults. Run only with authorization:
+
+```sh
+node scripts/test-v2-live.mjs --confirm-live
+node scripts/test-v2-live.mjs --confirm-live --tool-loop
+node scripts/test-v2-live.mjs --confirm-live --subagent
+node scripts/test-v2-live.mjs --confirm-live --subagent --subagent-effort
+node scripts/test-v2-live.mjs --confirm-live --greeting
+```
+
+Each probe has a $1 CLI budget and 90-second process deadline, with only its required tools allowed. The effort probe begins its child at high and requires routed low-effort evidence for its simple answer. The greeting probe sends `Yo` from GPT/high and requires a Haiku/low request, reported Haiku usage and a nonempty reply. A tool-loop preservation can be valid; it must not be reported as a model switch. Summaries and private raw/debug logs stay under ignored `test-results/`.
+
+For interactive verification, launch `claude --plugin-dir "$MODEL_ROUTER_DIR"`, select v2 and enable main routing, stage a next model pin, run one harmless `printf` tool loop, then check status for consumed intent. Enroll a toy manifest and exercise review/status, bounded repair if needed, user-inspected scope confirmation, independent verification and explicit acceptance. Never have the repair model self-attest scope. Exit the owned session normally; do not change credentials or proxy settings.

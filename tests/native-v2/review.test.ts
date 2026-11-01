@@ -78,3 +78,31 @@ test('trusted explicit repair checkpoint uses an execution definition; unknown s
  expect(result.text!.includes('blocked')).toBe(true);expect(f.calls.spawn).toBe(2)
  expect((await $.command.run(command('accept '+id))).text!.includes('accepted:')).toBe(false)
 })
+test('default native reviewer uses a fresh explicitly capped completion and permits only explicit current acceptance',async($,on)=>{
+ const f=await setup($,on);let request:any
+ on('model.complete',(_,e)=>{request=e;return {value:{isAnswered:true,text:'{"findings":[]}',usage:{input_tokens:10,output_tokens:4,cache_read_input_tokens:0,cache_creation_input_tokens:0}}}})
+ await f.initialize();await $.command.run({...command(''),command:'native-default-workflow'})
+ const id=await enroll($);await $.command.run(command('review '+id));await f.clock.settle()
+ expect(request.model).toBe('claude-opus-5-5');expect(request.effort).toBe('medium');expect(request.maxTokens).toBe(8192);expect(request.timeoutMs).toBe(120000)
+ expect(request.system.includes('no author conversation')).toBe(true);expect(request.prompt.includes('Preserve invariant')).toBe(true)
+ const payload=JSON.parse(request.prompt);expect(payload.checks).toEqual([]);expect(payload.originalSnapshot).toBe(null)
+ expect((await $.command.run(command('candidate status '+id))).text!.includes('ready')).toBe(true)
+ const result=await $.command.run(command('accept '+id));expect(result.text!.includes('accepted:')).toBe(true);expect(f.calls.spawn).toBe(0)
+})
+test('model checkpoint cannot authorize its own automatic reviewer budget',async($,on)=>{
+ const f=await setup($,on);let requests=0
+ on('model.complete',()=>{requests++;throw Error('unauthorized model request')})
+ await f.initialize();await $.command.run({...command(''),command:'native-default-workflow'})
+ const id=await enroll($)
+ const result=await $.command.run({...command(id+' full'),command:'native-checkpoint'})
+ expect(result.text!.includes('blocked')).toBe(true);expect(requests).toBe(0)
+})
+test('completion-backed repair cannot write outside original material finding paths',async($,on)=>{
+ const f=await setup($,on);let count=0
+ const finding={id:'F',requirementId:'R',invariant:'I',path:'artifact',location:'line 1',consequence:'Wrong content',evidenceStatus:'confirmed-defect',verificationStep:'Read artifact'}
+ on('model.complete',()=>({value:{isAnswered:true,text:JSON.stringify(++count===1?{findings:[finding]}:{patches:[{path:'../outside',content:'bad',findingIds:['F']}]}),usage:{input_tokens:1,output_tokens:4,cache_read_input_tokens:0,cache_creation_input_tokens:0}}}))
+ await f.initialize();await $.command.run({...command(''),command:'native-default-workflow'});const id=await enroll($)
+ await $.command.run(command('review '+id));await f.clock.settle();await $.command.run(command('repair '+id));await f.clock.settle()
+ expect(count).toBe(2);expect(f.calls.tools).toBe(0);expect(f.files.get('/repo/artifact')).toBe('abc')
+ expect((await $.command.run(command('accept '+id))).text!.includes('accepted:')).toBe(false)
+})

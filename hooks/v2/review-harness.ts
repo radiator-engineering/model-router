@@ -9,6 +9,7 @@ import type {TrustedCheckDefinitions} from './verification.ts'
 import {restoreCoordinator,ReviewError} from './review.ts'
 import type {AuthorizationRequest,ReviewAuthorization,ReviewCoordinator,ReviewCoordinatorState,ReviewPorts,CandidateSnapshot,LaunchIntent,ReviewCompletion,RepairScope} from './review.ts'
 import {decide} from './policy.ts'
+import {DEFAULT_REVIEW_POLICY_JSON,parseReviewPolicy,boundedReview} from './native-review.ts'
 import {fingerprint,isObject} from './contract.ts'
 import {normalizeUsage} from './records.ts'
 import type {UsageRecord,ConsumptionStage} from './records.ts'
@@ -21,11 +22,12 @@ export interface WorkflowAdapters {
  repairConfiguration?(intent:LaunchIntent):Promise<string|null>
  assessRepair?(input:Parameters<ReviewPorts['assessRepair']>[0]):Promise<RepairScope>
 }
-interface Job {intentId:string;revision:string;type:string;model:string;agentId:string|null;turnId:string|null;completion:ReviewCompletion|null;deadlineAt:number;toolCalls:number;maxToolCalls:number;tools:string[];purpose:'execution'|'review';gateUsed:boolean;configurationId:string;consumptionStage:ConsumptionStage;usage:UsageRecord|null;observedModel:string|null;sourceRevision:string|null;sourceFingerprint:string|null}
-interface Enrollment {candidate:EnrolledCandidate;engine:string;mixedPolicy:boolean;manifestPath:string}
+interface Job {kind?:'completion';intentId:string;revision:string;type:string;model:string;agentId:string|null;turnId:string|null;completion:ReviewCompletion|null;deadlineAt:number;toolCalls:number;maxToolCalls:number;tools:string[];purpose:'execution'|'review';gateUsed:boolean;configurationId:string;consumptionStage:ConsumptionStage;usage:UsageRecord|null;observedModel:string|null;sourceRevision:string|null;sourceFingerprint:string|null}
+interface Enrollment {candidate:EnrolledCandidate;engine:string;mixedPolicy:boolean;manifestPath:string;authorFamily?:string|null}
 export interface WorkflowState {
  conversationId:string;activation:string;generation:number;coordinator:ReviewCoordinator|null;coordinatorState:ReviewCoordinatorState|undefined
  enrollments:Record<string,Enrollment>;jobs:Record<string,Job>;captures:Record<string,FrozenSnapshot>
+ controllers:Map<string,AbortController>;scopeAttestations:Record<string,{originalRevision:string;repairedRevision:string;authorizationRef:string}>
  initializing?:Promise<void>;writes:Promise<unknown>;poisoned:boolean
 }
 const KEY=(id:string)=>`model-router.workflow.v1/${encodeURIComponent(id)}`
@@ -34,12 +36,17 @@ async function active($:EngineInterface,r:HarnessState,w:WorkflowState) {
  if(w.poisoned||w.activation!==r.activation||w.generation!==r.generation||await activeConversation($,r)!==w.conversationId)throw Error('workflow owner or conversation unavailable')
 }
 async function persist($:EngineInterface,r:HarnessState,w:WorkflowState) {
- const write=w.writes.then(async()=>{await active($,r,w);await $.store.set(KEY(w.conversationId),{schemaVersion:1,conversationId:w.conversationId,enrollments:w.enrollments,jobs:w.jobs,coordinator:w.coordinatorState})})
+ const write=w.writes.then(async()=>{await active($,r,w);await $.store.set(KEY(w.conversationId),{schemaVersion:1,conversationId:w.conversationId,enrollments:w.enrollments,jobs:w.jobs,scopeAttestations:w.scopeAttestations,coordinator:w.coordinatorState})})
  w.writes=write.catch(()=>{w.poisoned=true});await write
 }
-async function configuration($:EngineInterface,r:HarnessState) {
+async function configuration($:EngineInterface,r:HarnessState,candidateId?:string) {
  if(r.controls.pins.authorityError)throw Error('trusted settings provenance unavailable')
- const standing=r.config.adapters?.workflow?await r.config.adapters.workflow.configuration():{reviewerConfigurationId:'unknown',requiredCheckIds:[],requireReview:false,distinctFamily:false,authorFamily:null}
+ const nativePolicy=parseReviewPolicy(r.controls.pins.reviewPolicyJson??DEFAULT_REVIEW_POLICY_JSON)
+ const cfg=r.config.catalog.configurations.find(c=>c.modelId===nativePolicy.reviewer.model&&c.effort.kind==='level'&&c.effort.value===nativePolicy.reviewer.effort)
+ const author=r.currentMain?r.assignments[r.currentMain]:null
+ const authorModel=author?.record?.observed.model??author?.record?.applied?.model??null
+ const authorFamily=r.config.catalog.models.find(m=>m.id===authorModel)?.family??null
+ const standing=r.config.adapters?.workflow?await r.config.adapters.workflow.configuration():{reviewerConfigurationId:cfg?.id??'unknown',requiredCheckIds:nativePolicy.requiredCheckIds,requireReview:nativePolicy.requireReview,distinctFamily:nativePolicy.distinctFamily,authorFamily}
  const source=r.controls.pins.checksSource
  let definitions:TrustedCheckDefinitions|null=null,hash:string
  if(source){
@@ -49,17 +56,18 @@ async function configuration($:EngineInterface,r:HarnessState) {
   if(n.outcome!=='valid')throw Error(n.diagnostic)
   definitions=n.definitions;hash=n.configurationHash
  }else hash=await sha256(new TextEncoder().encode(JSON.stringify({schemaVersion:1,source:null,checks:[]})))
+ if(candidateId)standing.authorFamily=r.workflow?.enrollments[candidateId]?.authorFamily??null
  const root=await $.session.cwd()
  const current=r.currentMain?r.assignments[r.currentMain]:null
- const config:ArtifactConfiguration={repositoryRoot:root,policyRevision:`${r.config.policy.policyRevision}/${r.controls.currentV2().policyEngine}/${fingerprint(r.config.catalog)}`,
+ const config:ArtifactConfiguration={repositoryRoot:root,policyRevision:`${r.config.policy.policyRevision}/${r.controls.currentV2().policyEngine}/${fingerprint(r.config.catalog)}/${fingerprint({distinctFamily:standing.distinctFamily,authorFamily:standing.authorFamily})}`,
   reviewerConfigurationId:standing.reviewerConfigurationId,checkConfigurationHash:hash,requiredCheckIds:standing.requiredCheckIds,
   requireReview:standing.requireReview||current?.snapshot?.requirements.requireReview===true,trustedCheckIds:definitions?.checks.map(c=>c.id)??[]}
- return {config,definitions,standing}
+ return {config,definitions,standing,nativePolicy}
 }
 async function capture($:EngineInterface,r:HarnessState,w:WorkflowState,id:string):Promise<CandidateSnapshot|null> {
  await active($,r,w)
  const entry=w.enrollments[id];if(!entry)return null
- const {config}=await configuration($,r)
+ const {config}=await configuration($,r,id)
  if(entry.engine!==r.controls.currentV2().policyEngine)entry.mixedPolicy=true
  const out=await captureCandidate($,entry.candidate,config)
  if(out.outcome!=='captured')return null
@@ -74,8 +82,9 @@ async function qualify($:EngineInterface,r:HarnessState,w:WorkflowState,s:Candid
  if(!cfg||!['level','budget'].includes(cfg.effort.kind))return null
  const effort=cfg.effort as {kind:'level'|'budget';value:string|number}
  const f=await nativeRequestFacts($,r,{model:cfg.modelId,effort:effort.value,agentId:`review:${s.id}:${stage??'repair'}`})
- if(!f.applicationQualified||!f.limitsEnforced)return null
- const {standing}=await configuration($,r)
+ if(!f.routingAvailable)return null
+ const {standing}=await configuration($,r,s.id)
+ if(stage==='targeted'){const repair=w.coordinator!.state().intents.find(i=>i.candidateId===s.id&&i.stage==='repair'&&i.status==='completed');const job=repair?w.jobs[repair.id]:null;standing.authorFamily=job?r.config.catalog.models.find(m=>m.id===(job.observedModel??job.model))?.family??null:null}
  const snapshot:PolicySnapshot={schemaVersion:1,assignment:{id:`review:${s.id}:${s.revision}:${stage??'repair'}`,parentId:null,lineageId:s.id,boundary:purpose==='review'?'review':'subagent',purpose,reviewStage:stage,requestedRole:purpose==='review'?'review':'implementation',authorFamily:standing.authorFamily},
   current:{model:cfg.modelId,effort:effort.value,modelOrigin:'router',effortOrigin:'router'},
   // A trusted, explicitly selected fresh definition, not inherited execution pins or automatic mutation.
@@ -84,13 +93,35 @@ async function qualify($:EngineInterface,r:HarnessState,w:WorkflowState,s:Candid
   environment:f.environment,resources:f.resources,fallback:null,now:new Date(await $.clock.now()).toISOString()}
  const d=decide(snapshot,r.config.policy,r.config.catalog)
  const candidate=d.candidates.find(c=>c.configurationId===configurationId),limits=candidate?.limits
- if(!['select','preserve'].includes(d.outcome)||d.qualification!=='verified'||d.configuration?.id!==configurationId||candidate?.failed.length||!limits||d.reservation.required)return null
- if(a.modelAllowance.maxTokens>limits.maxGeneratedTokens||a.modelAllowance.timeoutMs>limits.maxWallTimeMs)return null
+ if(!['select','preserve'].includes(d.outcome)||!['verified','configured'].includes(d.qualification??'')||d.configuration?.id!==configurationId||candidate?.failed.length||d.reservation.required)return null
+ if(limits&&(a.modelAllowance.maxTokens>limits.maxGeneratedTokens||a.modelAllowance.timeoutMs>limits.maxWallTimeMs))return null
  return d
+}
+async function spawnCompletion($:EngineInterface,r:HarnessState,w:WorkflowState,i:LaunchIntent):Promise<{jobId:string}> {
+ const {nativePolicy}=await configuration($,r,i.candidateId)
+ const profile=i.stage==='repair'?nativePolicy.repair:nativePolicy.reviewer
+ const cfg=r.config.catalog.configurations.find(c=>c.modelId===profile.model&&c.effort.kind==='level'&&c.effort.value===profile.effort)
+ const d=cfg?await qualify($,r,w,i.snapshot,i.authorization,cfg.id,i.purpose,i.stage==='repair'?null:i.stage):null
+ if(!d?.configuration||!cfg)throw Error('configured bounded worker unavailable')
+ const fresh=await capture($,r,w,i.candidateId),frozen=w.captures[i.candidateId],entry=w.enrollments[i.candidateId]
+ if(fresh?.revision!==i.revision||!frozen||!entry)throw Error('candidate changed before bounded request')
+ const jobId=`completion:${i.id}`,stop=new AbortController()
+ const job:Job={kind:'completion',intentId:i.id,revision:i.revision,type:'bounded-completion',model:profile.model,agentId:jobId,turnId:null,completion:null,deadlineAt:(await $.clock.now())+i.authorization.modelAllowance.timeoutMs,toolCalls:0,maxToolCalls:32,tools:i.authorization.allowedTools,purpose:i.purpose,gateUsed:true,configurationId:cfg.id,consumptionStage:i.stage==='repair'?'repair':i.stage==='targeted'?'targeted':'reviewer',usage:null,observedModel:null,sourceRevision:r.config.sourceRevision,sourceFingerprint:r.config.sourceFingerprint??null}
+ w.jobs[i.id]=job;w.controllers.set(jobId,stop);await persist($,r,w)
+ $.clock.after(i.authorization.modelAllowance.timeoutMs,()=>{if(!job.completion)stop.abort()})
+ // Core persists the intent first. A callback may finish before acknowledgment and is buffered there.
+ void boundedReview($,entry.candidate,frozen,i,profile.model,profile.effort,stop.signal).then(async result=>{
+  await active($,r,w);if((await $.clock.now())>=job.deadlineAt)result.completion={intentId:i.id,jobId,revision:i.revision,status:'timeout'};job.usage=result.usage;job.completion=result.completion;w.controllers.delete(jobId)
+  await persist($,r,w);await w.coordinator!.complete(result.completion)
+  $.ui.log(`[router] ${i.stage} worker returned for ${i.candidateId}; inspect /router candidate status ${i.candidateId}.`) }).catch(async()=>{
+  try{await active($,r,w);job.completion={intentId:i.id,jobId,revision:i.revision,status:'error'};w.controllers.delete(jobId);await persist($,r,w);await w.coordinator!.complete(job.completion)}catch{/* Failed ownership/durability cannot certify completion. */}
+ })
+ return {jobId}
 }
 async function spawn($:EngineInterface,r:HarnessState,w:WorkflowState,i:LaunchIntent):Promise<{jobId:string}> {
  await active($,r,w)
  if(r.controls.currentV2().policyEngine==='v2-shadow')throw Error('shadow cannot launch workflows')
+ if(!r.config.adapters?.workflow)return spawnCompletion($,r,w,i)
  const cid=i.stage==='repair'?await r.config.adapters?.workflow?.repairConfiguration?.(i):i.snapshot.reviewerConfigurationId
  if(!cid)throw Error('qualified repair configuration unavailable')
  const d=await qualify($,r,w,i.snapshot,i.authorization,cid,i.purpose,i.stage==='repair'?null:i.stage)
@@ -127,6 +158,7 @@ async function observe($:EngineInterface,r:HarnessState,w:WorkflowState,i:Launch
  await active($,r,w);const job=w.jobs[i.id]
  if(!job)return {status:'unknown'}
  if(job.completion)return {status:'terminal',completion:job.completion}
+ if(job.kind==='completion')return job.agentId&&w.controllers.has(job.agentId)?{status:'running',jobId:job.agentId}:{status:'unknown'}
  const matches=(await $.agent.list()).filter(a=>a.type===job.type&&a.spawnedBy?.split('@')[0]===$.plugin.name&&(!job.agentId||a.id===job.agentId))
  if(matches.length!==1||!['running','idle'].includes(matches[0]!.status))return {status:'unknown'}
  job.agentId=matches[0]!.id;await persist($,r,w);return {status:'running',jobId:job.agentId}
@@ -138,52 +170,58 @@ function ports($:EngineInterface,r:HarnessState,w:WorkflowState):ReviewPorts {
    if(r.controls.currentV2().policyEngine==='v2-shadow')return null
    if(request.source==='workflow-checkpoint'&&r.controls.currentV2().reviewMode!=='automatic')return null
    if(request.stage==='enroll'||request.stage==='accept')return {...request,origin:request.source==='user-command'?'composer':'trusted-coordinator',standing:false,allowedTools:[],modelAllowance:{maxCalls:0,maxTokens:0,timeoutMs:0}}
-   return r.config.adapters?.workflow?.authorize(request)??null
+   if(r.config.adapters?.workflow)return r.config.adapters.workflow.authorize(request)
+   const {nativePolicy}=await configuration($,r)
+   const standing=nativePolicy.automatic.some(g=>g.candidateId===request.candidateId&&g.stages.includes(request.stage as 'full'|'repair'|'targeted'))
+   if(request.source==='workflow-checkpoint'&&!standing)return null
+   return {...request,origin:request.source==='user-command'?'composer':'trusted-coordinator',standing,allowedTools:request.stage==='repair'?['Write']:[],modelAllowance:{maxCalls:1,maxTokens:nativePolicy.maxTokens,timeoutMs:nativePolicy.timeoutMs}}
   },
   runChecks:async s=>{
-   const {config,definitions}=await configuration($,r),entry=w.enrollments[s.id],frozen=w.captures[s.id]
+   const {config,definitions}=await configuration($,r,s.id),entry=w.enrollments[s.id],frozen=w.captures[s.id]
    if(!entry||!frozen||frozen.revision!==s.revision)throw Error('matching artifact/check snapshot unavailable')
    if(!definitions){if(s.checkIds.length)throw Error('trusted checks unavailable');return []}
    const result=await runVerification($,entry.candidate,frozen,{...definitions,configuration:config})
-   return result.checks.map(c=>({id:c.checkId,candidateId:c.candidateId,revision:c.revision,configurationDigest:c.configurationHash,status:c.status==='failed'?'failed':'unknown',evidenceRef:`native-check:${c.checkId}:${c.revision}`}))
+   return result.checks.map(c=>({id:c.checkId,candidateId:c.candidateId,revision:c.revision,configurationDigest:c.configurationHash,status:c.status==='passed'?'passed':c.status==='failed'?'failed':'unknown',evidenceRef:`native-check:${c.checkId}:${c.revision}`}))
   },
   selectReviewer:async({snapshot,authorization,reviewStage})=>{
    const d=await qualify($,r,w,snapshot,authorization,snapshot.reviewerConfigurationId,'review',reviewStage)
    return d?{id:d.configuration!.model!,configurationId:snapshot.reviewerConfigurationId,qualified:true,independent:true,fresh:true,fork:false}:null
   },spawn:i=>spawn($,r,w,i),
-  cancel:async({intentId})=>{await active($,r,w);const j=w.jobs[intentId];if(j?.turnId)await $.turn.abort({turnId:j.turnId,})},
+  cancel:async({intentId})=>{await active($,r,w);const j=w.jobs[intentId];if(j?.kind==='completion'&&j.agentId){w.controllers.get(j.agentId)?.abort();return}if(j?.turnId)await $.turn.abort({turnId:j.turnId,})},
   assessRepair:async request=>{
    await active($,r,w)
-   return r.config.adapters?.workflow?.assessRepair? r.config.adapters.workflow.assessRepair(request):{originalRevision:request.original.revision,repairedRevision:request.repaired.revision,withinScope:false,findingIds:[],invariantIds:[]}
+   if(r.config.adapters?.workflow?.assessRepair)return r.config.adapters.workflow.assessRepair(request)
+   const proof=w.scopeAttestations[request.original.id],material=request.findings.filter(f=>f.evidenceStatus!=='preference')
+   return {originalRevision:request.original.revision,repairedRevision:request.repaired.revision,withinScope:!!proof&&proof.originalRevision===request.original.revision&&proof.repairedRevision===request.repaired.revision,findingIds:material.map(f=>f.id),invariantIds:[...new Set(material.map(f=>f.invariant))]}
   },observe:i=>observe($,r,w,i)}
 }
 export async function workflow($:EngineInterface,r:HarnessState):Promise<WorkflowState> {
  await initializeHarness($,r)
- if(!r.workflow||r.workflow.conversationId!==r.conversationId||r.workflow.generation!==r.generation)r.workflow={conversationId:r.conversationId!,activation:r.activation,generation:r.generation,coordinator:null,coordinatorState:undefined,enrollments:{},jobs:{},captures:{},writes:Promise.resolve(),poisoned:false}
+ if(!r.workflow||r.workflow.conversationId!==r.conversationId||r.workflow.generation!==r.generation)r.workflow={conversationId:r.conversationId!,activation:r.activation,generation:r.generation,coordinator:null,coordinatorState:undefined,enrollments:{},jobs:{},captures:{},controllers:new Map(),scopeAttestations:{},writes:Promise.resolve(),poisoned:false}
  const w=r.workflow;await active($,r,w)
  if(!w.coordinator&&!w.initializing)w.initializing=(async()=>{
   const saved=await $.store.get(KEY(w.conversationId))
   if(saved!==undefined){
    if(!isObject(saved)||saved.schemaVersion!==1||saved.conversationId!==w.conversationId||!isObject(saved.enrollments)||!isObject(saved.jobs))throw Error('invalid workflow state')
-   w.enrollments=structuredClone(saved.enrollments) as WorkflowState['enrollments'];w.jobs=structuredClone(saved.jobs) as WorkflowState['jobs'];w.coordinatorState=saved.coordinator as ReviewCoordinatorState
+   w.enrollments=structuredClone(saved.enrollments) as WorkflowState['enrollments'];w.jobs=structuredClone(saved.jobs) as WorkflowState['jobs'];w.coordinatorState=saved.coordinator as ReviewCoordinatorState;w.scopeAttestations=isObject(saved.scopeAttestations)?structuredClone(saved.scopeAttestations) as WorkflowState['scopeAttestations']:{}
   }
   w.coordinator=await restoreCoordinator(w.conversationId,ports($,r,w),r.controls.currentV2().reviewMode)
  })()
  if(w.initializing)await w.initializing
  return w
 }
-export async function workflowCommand($:EngineInterface,r:HarnessState,action:{kind:'candidate';manifest:string}|{kind:'review';candidateId:string|null}|{kind:'accept';candidateId:string}):Promise<string> {
+export async function workflowCommand($:EngineInterface,r:HarnessState,action:{kind:'candidate';manifest:string}|{kind:'review';candidateId:string|null}|{kind:'accept';candidateId:string}|{kind:'repair';candidateId:string}|{kind:'verify';candidateId:string;confirmScope:boolean}|{kind:'candidate-status';candidateId:string}):Promise<string> {
  if(r.controls.currentV2().policyEngine==='v2-shadow')return 'unavailable: shadow cannot enroll, check, review or accept candidates.'
  const w=await workflow($,r),authorizationRef=`composer:${crypto.randomUUID()}`
  if(action.kind==='candidate'){
   if(Object.keys(w.enrollments).length>=64)return 'unavailable: candidate retention limit reached; existing counters were not evicted.'
-  const {config}=await configuration($,r),id=r.currentMain??authorizationRef
+  const {config,standing}=await configuration($,r),id=r.currentMain??authorizationRef
   const manifestPath=(await resolveArtifactPath($,config.repositoryRoot,action.manifest)).path
   const prior=Object.values(w.enrollments).find(e=>e.manifestPath===manifestPath)
   if(prior){await w.coordinator!.refresh(prior.candidate.id);return `Candidate enrolled: ${prior.candidate.id}. Existing scope and attempt counters retained; edits do not enroll a new candidate.`}
   const result=await enrollCandidate($,action.manifest,{source:'composer',verified:true,authorizationRef,assignmentId:id,lineageId:r.assignments[id]?.input.lineageId??id},config)
   if(result.outcome!=='enrolled')return `${result.outcome}: ${result.diagnostic}`
-  const entry:Enrollment={candidate:result.candidate,engine:r.controls.currentV2().policyEngine,mixedPolicy:false,manifestPath}
+  const entry:Enrollment={candidate:result.candidate,engine:r.controls.currentV2().policyEngine,mixedPolicy:false,manifestPath,authorFamily:standing.authorFamily}
   w.enrollments[result.candidate.id]=entry;await persist($,r,w)
   await w.coordinator!.enroll({candidateId:result.candidate.id,source:'user-command',authorizationRef})
   return `Candidate enrolled: ${result.candidate.id}. Awaiting an explicit checkpoint; no review was launched.`
@@ -191,10 +229,16 @@ export async function workflowCommand($:EngineInterface,r:HarnessState,action:{k
  let id=action.candidateId
  const candidates=w.coordinator!.state().candidates
  if(!id){if(candidates.length!==1)return `clarify: choose one candidate ID: ${candidates.map(c=>c.enrollment.id).join(', ')||'none enrolled'}`;id=candidates[0]!.enrollment.id}
+ if(action.kind==='candidate-status'){const current=await w.coordinator!.refresh(id);return JSON.stringify({candidateId:id,status:current.status,reason:current.reason,attempts:current.attempts,findings:current.findings,unresolvedMaterialFindings:current.verifiedRevision===current.current.revision?[]:current.findings.filter(f=>f.evidenceStatus!=='preference'),reviewedRevision:current.reviewedRevision,verifiedRevision:current.verifiedRevision,revision:current.current.revision},null,2)}
  const request={candidateId:id,source:'user-command' as const,authorizationRef}
  // An explicit repeated checkpoint may reconcile an observable uncertain start, never respawn it.
  if(action.kind==='review')for(const intent of w.coordinator!.state().intents.filter(i=>i.candidateId===id&&i.status==='uncertain'))await w.coordinator!.reconcile(intent.id)
- const c=action.kind==='accept'?await w.coordinator!.accept(request):await w.coordinator!.checkpoint({...request,stage:'full'})
+ if(action.kind==='verify'&&action.confirmScope){
+  const candidate=w.coordinator!.state().candidates.find(c=>c.enrollment.id===id),current=await capture($,r,w,id)
+  if(!candidate?.reviewedRevision||!candidate.repairedRevision||current?.revision!==candidate.repairedRevision)throw Error('exact completed repair required for scope attestation')
+  w.scopeAttestations[id]={originalRevision:candidate.reviewedRevision,repairedRevision:current.revision,authorizationRef};await persist($,r,w)
+ }
+ const c=action.kind==='accept'?await w.coordinator!.accept(request):await w.coordinator!.checkpoint({...request,stage:action.kind==='repair'?'repair':action.kind==='verify'?'targeted':'full'})
  return `${c.status}: ${id}; ${c.reason??'explicit artifact decision'}. ${c.status==='accepted'?'No commit or publication occurred.':''}`
 }
 /** A typed trusted workflow checkpoint, never an ordinary author turn completion. */

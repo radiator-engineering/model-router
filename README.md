@@ -4,18 +4,26 @@ A Claude Code mod that uses [TypeSafe’s Jev](https://typesafe.ai/) to choose m
 
 This project started from the Jev model router in [Daniel (San) Ávila’s claude-code-templates](https://github.com/davila7/claude-code-templates/tree/8f1f608e9396ba7e70d73372cabc85c028c2f79d/cli-tool/components/mods/productivity/jev-model-router). It retains the original MIT license. See [Credits](#credits).
 
-The [documentation index](docs/README.md) links current usage, contributor setup, and research. The [v2 design brief](docs/v2/design-brief.md) defines the v2 contract; this README separates the default legacy path from the implemented, qualification-gated v2 path.
+The [documentation index](docs/README.md) links current usage, contributor setup, and research. The [v2 design brief](docs/v2/design-brief.md) defines the v2 contract.
 
-## V2 implementation and release gates
+## V2 routing and bounded review
 
-Offline implementation covers phases 1–7. **Legacy remains the default; real v2 dispatch and reviewer paths are not qualified or enabled.** The production catalog has no v2 environments or workload approvals. Offline synthetic success is not production admission.
+**V2 works on the native Claude Code path; legacy remains the default.** Enable it for new assignments:
 
-- `/router engine legacy|v2-shadow|v2` selects the engine for **new** assignments. Shadow keeps legacy execution and makes proposals only. Its extra dimension-classifier call is off unless `v2ShadowClassifier=true` is explicitly present in observable user/managed-policy settings.
-- Execution pins support next, session and persistent scope. They do not select reviewers or override fixed fields/eligibility.
-- Candidate registration and explicit acceptance bind to exact artifact/configuration hashes. Review requires separate finite authorization and an independently qualified fresh reviewer. Ordinary edits and “done” messages never launch review or accept work.
-- This native build cannot attest successful Bash completion or enforce a per-request generated-token ceiling through the exposed rewrite API. Required executable checks therefore remain unavailable, not passed; unqualified model paths hold before dispatch.
+```text
+/router engine v2
+/router main-model on
+/router main-effort on
+```
 
-See [controls, candidates and rollback](docs/usage/router-controls.md#v2-controls-and-pins), [validation evidence and remaining live gates](docs/v2/validation.md#phases-57-offline-checkpoint), and [runtime boundaries](docs/v2/runtime-contracts.md#phases-57-native-integration).
+- V2 classifies role, specification, verification, execution span and consequence, then applies configured preferences subject to switches, pins and known compatibility. `qualification=configured` is not empirical workload certification; the catalog still has no fabricated environments or workload approvals.
+- Context fitting, compaction and ordinary execution limits/provider behavior are owned by Claude Code/proxy/provider, not router admission gates. Router-owned explicit fallback grants, pins, hard restrictions and review permissions remain enforced.
+- Execution pins support next, session and persistent scope. Subagent effort has its own switch, off by default, applied at the child's first request rather than spawn.
+- Candidate review, bounded repair, independent targeted verification and explicit acceptance bind to exact artifact/configuration hashes. Default fresh native completions enforce finite output-token/time allowances; repair uses governed Write. Review mode alone never grants automatic spend.
+- Required executable checks use governed Bash with nonce-bound terminal exit receipts. Prose saying PASS is not evidence. Ordinary edits and “done” messages neither launch review nor accept work.
+- `v2-shadow` retains legacy execution without v2 workflow effects; extra classification requires explicit user/managed-policy opt-in.
+
+See [controls, candidates and rollback](docs/usage/router-controls.md#v2-controls-and-pins), [functional live evidence and remaining research](docs/v2/validation.md#configured-native-integration--november-1-2026), and [runtime boundaries](docs/v2/runtime-contracts.md#phases-57-native-integration).
 
 ## How it works
 
@@ -29,9 +37,9 @@ Your prompt → Jev classification → routing policy → Claude Code request
 
 Claude Code supplies the agent loop and tools. The router can change the model and reasoning effort on the first request of a main turn, or the model when Claude Code spawns a subagent. VibeProxy is optional; it lets the harness reach models from several providers through one local endpoint.
 
-Jev answers tier, effort, risk, task type, and implementation category questions in one classification request. The router reuses the main turn’s decision through that turn’s tool loop. It does not reclassify every tool call.
+Legacy asks tier, effort, risk, task type and implementation category in one classification request. V2 uses its separate role/specification/verification/span/consequence questions. The router reuses the main turn’s decision through that turn’s tool loop. It does not reclassify every tool call.
 
-## Routing modes
+## Legacy routing modes
 
 | Mode | What runs |
 |---|---|
@@ -54,11 +62,11 @@ Custom preferences:
 | Simple answers: spelling, small counts, straightforward stable facts | Haiku 5.5 |
 | Investigation, review, substantive explanation | Basic tier and effort policy |
 
-These are editable preferences, not benchmark rankings or a measured cost optimizer. The router applies a preference only when confidence, risk, availability, and tool compatibility checks permit it. An unverified preferred model or low-confidence preference retains the current request; consequential tasks use the original risk policy. This router does not currently apply subagent effort preferences; the [v2 harness research](docs/r-and-d/03-claude-code-mods-harness-validation.md) distinguishes available effort controls from that implementation limit.
+These are editable preferences, not benchmark rankings or a measured cost optimizer. The router applies a preference only when confidence, risk, availability, and tool compatibility checks permit it. An unverified preferred model or low-confidence preference retains the current request; consequential tasks use the original risk policy. Legacy does not apply subagent effort preferences; v2 supports them with the separate `routeSubagentEffort` permission.
 
 ## Setup
 
-Use a Claude Code version with function-hook Mods support. This copy has been validated with **Claude Code 2.1.314**. Python 3 is needed only for model-menu synchronization. Node 23.6+ runs the tests and catalog generator. No package installation is required for this repository.
+Use a Claude Code version with function-hook Mods support. This copy has been validated with **Claude Code 2.1.316**. Python 3 is needed only for model-menu synchronization. Node 23.6+ runs the tests and catalog generator. No package installation is required for this repository.
 
 ```sh
 git clone https://github.com/radiator-engineering/model-router.git

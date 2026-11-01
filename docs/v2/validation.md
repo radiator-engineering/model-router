@@ -1,12 +1,12 @@
 # Model router v2 validation plan
 
-Status: Offline implementation phases 1–7 complete; live compatibility, enforcement and workload-quality promotion gates remain closed. Date: October 31, 2026.
+Status: Configured native routing and bounded review functionally verified, November 1, 2026. Empirical workload-quality certification remains separate.
 
-Validate the v2 design against the installed harness and proxy before implementing application behavior. Keep capability checks separate from model-quality experiments. This plan records the questions to answer; it does not claim the answers or authorize live model spending.
+Keep capability/integration checks separate from model-quality experiments. The current checkpoint below records actual script and interactive evidence; historical sections preserve prior offline-only results. This document grants no additional model spending.
 
 The [official design brief](design-brief.md) selects the implementation architecture, controls, artifact acceptance boundary, and delivery sequence. Remaining items here qualify those paths; they do not leave the plugin/component choice open.
 
-## Initial findings
+## Initial findings (historical, October 31)
 
 The [Mods validation report](../r-and-d/03-claude-code-mods-harness-validation.md) combines official documentation, generated contracts, primary community tests/experiments, and native offline probes. On Claude Code 2.1.316, all 10 [contract probes](../../experiments/harness-contracts/README.md) and both upstream fable-pin tests passed. These results use downstream stubs, without live model calls.
 
@@ -39,7 +39,7 @@ Record exact harness, plugin, proxy, model, and effort configurations. Check off
 
 The decision contract proposes a `0.8` inference-confidence threshold for replay, no substitution by default, and one substitution when explicitly authorized. These are starting choices, not calibrated results.
 
-Set evidence-backed availability freshness durations, context margins, compatibility version ranges, transport retry limits, and approved fallback alternatives. Review triggers recommend by default; explicit user requirements or approved standing policy can require review. Define accounting units and protected reserves before enabling hard resource budgets. The brief defines router-owned pin commands; mapping native controls to them still needs the origin checks above.
+For evidence-only admission, set evidence-backed availability freshness durations and compatibility version ranges. Router fallback grants remain explicit; context and ordinary transport/provider limits are host-owned. Review triggers recommend by default; explicit user requirements or approved standing policy can require review. Define accounting units and protected reserves before enabling hard resource budgets. The brief defines router-owned pin commands; mapping native controls to them still needs the origin checks above.
 
 ## Offline implementation evidence (October 31, 2026)
 
@@ -118,4 +118,78 @@ October 31, 2026, Node **23.11.0**, installed authoring API/native host **2.1.31
 
 Smoke reports include suite counts, fixture/code hashes and version/source provenance. Native validation/test logs stay in ignored `test-results/`; temporary plugin directories are removed. The old 10-probe suite is supporting evidence, not a substitute for the actual registration tests.
 
-**Still closed:** real UI/headless/SDK association and origins; effective effort and context accounting; proxy/provider feature translation; first-substitution and generated-token/tool/time enforcement; reliable governed-check terminal success; observable independent reviewer identity/lifecycle/recovery; empirical classifier, execution and review quality. No live compatibility or quality trial was run, no approvals/environments were fabricated, and no credentials/proxy settings/default engine were changed. The native default therefore holds real v2 model/reviewer paths. Enabling an affected production path requires these exact compatibility/enforcement gates and the predeclared held-out quality/resource criteria above; offline implementation completion is not rollout approval.
+**Historical boundary at that checkpoint:** the native default held real v2/reviewer paths and required checks could not pass. No live trial had run. November 1 explicitly delegated ordinary host responsibilities, implemented configured admission and actually bounded native completions, and established terminal check receipts. The current section below supersedes that disabled-path status. Offline implementation alone still grants no empirical workload approval.
+
+## Configured native integration — November 1, 2026
+
+### Revised ownership
+
+The owner rejected router-owned context fitting and explicitly approved delegation of ordinary request token/tool/time caps, provider substitutions and server-tool behavior to Claude Code/proxy/provider. These are no longer blanket gates on chat. Pins/switches, explicit hard restrictions/reservations, router-selected fallback grants and finite review/check/acceptance permissions remain enforced. Review token allowances were **not** relaxed: the default uses native `model.complete`, which actually accepts maxTokens/timeout.
+
+Configured routing reuses existing model preferences and known model-profile compatibility, reporting `qualification=configured`. Evidence-only selection retains scoped timed compatibility/approvals. No workload approvals, environments, freshness observations or context facts were fabricated. Context-null/oversized regressions establish that diagnostic estimates never affect selection or preservation. Rule conditions are canonical in policy-data; configured options remap preferences, not a parallel selector. The 0.8 per-required-dimension threshold remains unchanged.
+
+### Final script checks
+
+Environment: Node **23.11.0**, Claude Code/native authoring API **2.1.316**, TypeScript **7.0.2**, plugin **0.7.3**, policy `v2-configured-2026-11-01.1`. Source changes are local after `7f4a69f`.
+
+| Check | Result and scope |
+|---|---|
+| `node scripts/smoke.mjs` | **309/309** across 12 explicitly registered suites: policy 42, catalog 23, task-routing 17, controls 42, legacy-regression 4, classifier 12, v2-policy 84, pins 15, harness 18, artifacts 10, verification 17, review 25. No inference. |
+| `node scripts/build-catalog.mjs --check` | Passed; editable/generated equality, unchanged legacy snapshot and no new approvals/environments. |
+| `node scripts/replay-v2.mjs` | **48/48** fixed outcomes: 45 synthetic evidence cases and three production configured cases (two select, one preserve). Decision replay, not completed-work comparisons. |
+| `node scripts/test-v2-native.mjs` | **21/21** native actual-registration tests, two files. External operations stubbed; default-workflow cases exercise production configured policy and completion-backed review, while agent-backed adapter cases remain explicitly synthetic. No inference. |
+| Strict runtime TypeScript | Passed for all `hooks/*.ts`/`hooks/v2/*.ts` against the installed API, strict/no-unchecked-index, ES2023/DOM, bundler resolution and `.ts` imports. Root generated-config/test typing limitations remain separate. |
+| `claude plugin validate .` | Passed structural validation, including new native model calls. Existing missing-icon and ignored `.DS_Store` listing warnings remain; this is not directory submission approval. |
+
+Final offline report is `test-results/2026-11-01T08-14-49-791Z-offline-69870-offline.json`; native log is `test-results/2026-11-01T08-14-50.205Z-native.log`. Private reports/debug logs remain ignored, not published. Governed-check tests include real local execution of the exact generated wrapper and reject forged/nonterminal/interrupted receipts. Runtime status tests reject unapplied proposals and another conversation's records.
+
+### Live scripted CLI checks
+
+Each probe explicitly loads this checkout, uses existing credentials, runs in `dontAsk` with narrow allowed tools and has a $1 CLI budget plus 90-second process deadline. No saved settings, credentials or proxy configuration are changed. These runs were authorized by the owner and consume real classifier/model allowance.
+
+| Case | Observed result |
+|---|---|
+| Literal, 08:06:49 UTC | Exact red→blue response; CLI reported Haiku, one turn; passed. |
+| Governed Bash tool loop, 08:06:52 UTC | Exact `ROUTER_TOOL_OK`, two turns, one stable reported Opus model; passed. This run preserved Opus, not a claimed Haiku switch. |
+| Subagent model, 08:06:59 UTC | One real child, answer `3`, reported Opus + Haiku; passed. |
+| Separate subagent effort, 08:07:06 UTC | One child defined at high; debug request evidence shows routed Haiku **medium**, answer `3`; passed. Observed serving effort remains unavailable. |
+
+These four final probes reported about **$0.314** combined CLI model cost, excluding classifier costs; API list-price accounting is not subscription consumption or a savings claim. Reproduce with the four explicitly live commands in the [development guide](../development.md#explicit-live-cli-and-manual-verification).
+
+### Actual interactive Claude Code session
+
+A separate tmux-controlled Claude Code 2.1.316 session loaded this checkout with debug logs, without bypassing permissions:
+
+1. Reproduced the original v2 prompt-drop failure, then confirmed ordinary v2 selected Haiku medium and returned exact `blue` after the fix.
+2. Staged an explicit next Haiku model pin, ran one actual Bash `printf ROUTER_PIN_TOOL_OK`, received the exact marker under v2 Haiku medium, then confirmed `Next execution assignment: none`. The changed-model tool loop completed without an unexpected-target hold.
+3. Enrolled a healthy one-file candidate; one fresh capped full reviewer returned zero findings, status became ready, and explicit acceptance succeeded.
+4. Enrolled a defective one-file candidate requiring exactly `blue` plus newline. Full review reported a confirmed defect; bounded Sonnet repair used governed Write. Actual bytes were inspected as `62 6c 75 65 0a`. The owner explicitly approved **that candidate's** scope attestation. Independent targeted verification closed it, and explicit acceptance succeeded with full/repair/targeted counters each one.
+
+The scope approval was not standing authorization for other candidates. No model self-attestation, automatic commit, publication or additional candidate budget was inferred. These are evidence of their recorded exact revisions; later configuration/source changes require current recapture, not reuse of stale approval. Historical findings remain distinct from current unresolved findings. Captures stay under ignored `test-results/manual-*`.
+
+### What this does and does not establish
+
+Configured v2 is usable on these tested native interactive/headless paths; bounded default review/repair/targeted acceptance works. Legacy defaults and classifier regression fixtures remain preserved. No new dependencies or global configuration changes were needed.
+
+This is **functional integration evidence**, not a held-out routing/classification/reviewer-quality benchmark, universal proxy-feature certification or proof of pre-dispatch provider substitution prevention. Native picker/default/fast-mode/SDK origin mapping, image paths and other providers/surfaces remain unmeasured. Native completion metadata has no actual-serving-model field; it remains null, and configured family checks are not proof of upstream identity. Full cross-process accounting and universal publication guards remain out of scope. The paired quality/resource evaluation above is required before numerical benefit or broad workload-approval claims, not a blocker on ordinary configured routing.
+
+## Clear and simple-answer regression — November 1, 2026
+
+Policy revision **v2-configured-2026-11-01.2** supersedes the earlier `.1` checkpoint above. A native interactive session launched on GPT-6.1 Sol/high reproduced both reported symptoms before the fix:
+
+- `/clear` followed by `Spell Strawberry` held before dispatch. The debug cause was `pin/settings authority unavailable`. The host contract explicitly states that clear changes conversation identity without `session.start`; the router had invalidated its cached controls but only restored them on startup or a control command. Assignment pin reads now restore the current identity through the existing serialized/provenance-checked loader. No old session/next intent is copied to the new conversation.
+- After restoring context, the same prompt classified role `simple-answer` at 1.00, bounded span 0.97 and specification 0.68. The irrelevant specification gate caused preservation. The simple-answer rule now requires confident role/span only; the 0.8 threshold, known hard constraints and higher-priority consequential-work rule are unchanged.
+
+New tests were run **before** the fix: the pure spelling test failed (`preserve` versus `select`), and the native clear test forwarded zero requests instead of two. After the fix, **311/311** offline, **22/22** native and **48/48** replay pass, with catalog equality, strict runtime types and plugin validation. The native clear regression changes identity without startup and verifies two subsequent turns and isolation of old session/next pins.
+
+Live retest without restart or an intervening status command: `/clear` → `Spell Strawberry` selected **Haiku medium**, returned `S-T-R-A-W-B-E-R-R-Y`, and no association hold occurred. The next C4 explanation preserved **GPT/high** with an explicit `unchanged (no_matching_rule)` line. Explanations still have no v2 rule; no new explanation policy or lowered confidence threshold was inferred from this fix. A setup failure is now labeled setup-incomplete rather than falsely reported as a missing classification association.
+
+Evidence remains private under `test-results/clear-*`, `test-results/manual-clear-debug.log` and `test-results/manual-clear-fixed.txt`. The owned interactive session exited normally. Saved defaults, credentials, proxy settings and unrelated reports were not changed; the fixes remain local/uncommitted.
+
+## Lightweight communication — November 1, 2026
+
+Policy **v2-configured-2026-11-01.3** broadens v2 `simple-answer` to standalone greetings and thanks, not arbitrary short inputs. The existing `simpleAnswerModel` preference is exposed as **Simple answers & chat model**; no new role/model option or default scope is introduced. Native configured routing prefers a declared low configuration, otherwise medium. Fixed effort and pins remain literal. Legacy question payload/defaults are unchanged; unknown/low-confidence classifications still preserve.
+
+The first live `Yo` probe recognized the role at 0.99 but left span unknown and correctly preserved GPT/high. Execution-span guidance was then clarified: a standalone social reply is bounded even without a coding task; unspecified continuations/approvals remain unknown. No observation was synthesized and the 0.8 threshold was not lowered. A subsequent live `Yo` request starting on GPT/high selected **Haiku/low**, returned a social reply and reported Haiku usage. Separate live probes confirmed `Thanks!` → **Haiku/low**, but `Continue.` → unchanged **GPT/high**. These are development regressions, not held-out quality or savings measurements.
+
+Offline coverage includes classifier instructions, grouped greeting/thanks/continuation/approval fixtures, low-effort preference selection, model-option overrides, absent-low fallback, disabled effort routing, effort pins, unknown/low-confidence preservation and native-menu visibility. Final checks: **314/314** offline, **22/22** native, **48/48** replay, catalog equality, runtime strict types and plugin validation. The repeatable `test-v2-live.mjs --confirm-live --greeting` probe requires actual Haiku usage plus outgoing low-effort evidence; the separate subagent-effort probe now expects low for its simple answer. Private evidence is under `test-results/chat-*` and timestamped live logs.

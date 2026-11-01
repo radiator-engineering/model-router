@@ -74,7 +74,9 @@ test('governed Bash uses exact trusted literal command, finite timeout and shell
   const f = await fixture(root)
   const result = await runVerification(f.host, f.candidate, f.snapshot, f.definitions)
   expect(result.outcome).toBe('unavailable')
-  expect(f.calls).toEqual([{tool: 'Bash', command: `cd ${quoteCheckDirectory(root)} && ${CHECK.command}`, timeout: CHECK.timeoutMs}])
+  expect(f.calls.length).toBe(1);expect(f.calls[0]!.tool).toBe('Bash');expect(f.calls[0]!.timeout).toBe(CHECK.timeoutMs)
+  ok(f.calls[0]!.command.startsWith(`cd ${quoteCheckDirectory(root)} && /bin/sh -c ${quoteCheckDirectory(CHECK.command)};`))
+  ok(f.calls[0]!.command.includes('__jev_status=$?')&&f.calls[0]!.command.includes('exit \"$__jev_status\"'))
   expect(execFileSync('/bin/sh', ['-c', `printf '%s' ${quoteCheckDirectory(root)}`], {encoding: 'utf8'})).toBe(root)
   expect(f.processes.every(argv => argv[0] === 'git')).toBe(true)
   const check = result.checks[0]
@@ -209,4 +211,39 @@ test('pre-existing content changes and unresolvable covered paths cannot dispatc
   f.files.delete(`${f.root}/context`)
   expect((await runVerification(f.host, f.candidate, f.snapshot, f.definitions)).outcome).toBe('stale')
   expect(f.calls.length).toBe(0)
+})
+
+test('only the matching terminal wrapper receipt can pass; all selected checks must complete',async()=>{
+ const f=await fixture()
+ f.host.tool.call=async input=>{
+  f.calls.push(input)
+  const marker=input.command.match(/__JEV_CHECK_[a-f0-9-]+__/)?.[0];ok(marker)
+  return {result:{stdout:`check output\n${marker}:0\n`,stderr:'',interrupted:false},isError:false}
+ }
+ const result=await runVerification(f.host,f.candidate,f.snapshot,f.definitions)
+ expect(result.outcome).toBe('passed');expect(result.checks[0]!.completion.exitCode).toBe(0)
+})
+test('wrong, nonterminal, interrupted and failed receipts cannot fabricate a pass',async()=>{
+ for(const variant of ['wrong','not-last','failed','interrupted']){
+  const f=await fixture()
+  f.host.tool.call=async input=>{const marker=input.command.match(/__JEV_CHECK_[a-f0-9-]+__/)![0];return {result:{stdout:variant==='wrong'?'__JEV_CHECK_fake__:0':`${marker}:${variant==='failed'?1:0}\n${variant==='not-last'?'still running':''}`,stderr:'',interrupted:variant==='interrupted'},isError:false}}
+  const result=await runVerification(f.host,f.candidate,f.snapshot,f.definitions)
+  expect(result.outcome==='passed').toBe(false)
+ }
+})
+test('real local shell execution preserves quoted literal commands and reports its own exit',async()=>{
+ const f=await fixture('/tmp')
+ f.host.tool.call=async input=>({result:{stdout:execFileSync('/bin/sh',['-c',input.command],{encoding:'utf8'}),stderr:'',interrupted:false},isError:false})
+ const result=await runVerification(f.host,f.candidate,f.snapshot,f.definitions)
+ expect(result.outcome).toBe('passed');expect(result.checks[0]!.completion.stdout!.includes('literal command')).toBe(true)
+})
+test('all selected required checks must pass before verification succeeds',async()=>{
+ const f=await fixture('/repo',[CHECK,{...CHECK,id:'second'}])
+ const configuration={...f.definitions.configuration,requiredCheckIds:['check','second'],trustedCheckIds:['check','second']}
+ const candidate={...f.candidate,checkIds:['check','second'],configuration}
+ const cap=await captureCandidate(f.host,candidate,configuration);ok(cap.outcome==='captured')
+ let count=0
+ f.host.tool.call=async input=>{count++;const marker=input.command.match(/__JEV_CHECK_[a-f0-9-]+__/)![0];return {result:{stdout:`${marker}:${count===2?1:0}\n`,stderr:'',interrupted:false},isError:false}}
+ const result=await runVerification(f.host,candidate,cap.snapshot,{...f.definitions,configuration})
+ expect(count).toBe(2);expect(result.outcome).toBe('failed');expect(result.checks.map(c=>c.status)).toEqual(['passed','failed'])
 })

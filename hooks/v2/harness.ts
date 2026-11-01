@@ -2,7 +2,7 @@
 import type {EngineInterface, TurnStartInput, TurnStepInput, TurnStepResult, TurnStepChunk, TurnCompleteInput, AgentSpawnInput, AgentSpawnResult, PromptSubmitInput} from 'claude-code'
 import type {CatalogV2} from '../model-catalog.ts'
 import type {RouterSettings, V2Settings, RouterPinStatus} from '../router-controls.ts'
-import {PIN_STORE_KEY, serializePinOperation} from '../router-controls.ts'
+import {PIN_STORE_KEY, serializePinOperation, ensureRouterConversation} from '../router-controls.ts'
 import type {createRouterControls} from '../router-controls.ts'
 import {requestHeaders} from '../policy.ts'
 import type {Provider} from '../policy.ts'
@@ -23,8 +23,7 @@ export interface RuntimeControls {
 }
 export interface RequestFacts {
   /** These are trusted adapter facts, NOT classifier output or prompt fields. */
-  applicationQualified:boolean
-  limitsEnforced:boolean
+  routingAvailable:boolean
   modelOrigin:PolicySnapshot['current']['modelOrigin']
   effortOrigin:PolicySnapshot['current']['effortOrigin']
   requirements:PolicySnapshot['requirements']
@@ -52,7 +51,7 @@ export interface AssignmentState {
   legacyStats?:{elapsedMs:number|null;usage:unknown}
   controlSnapshot:PolicySnapshot['controls']
   snapshot:PolicySnapshot|null; decision:PolicyDecision|null; record:DecisionRecord|null
-  originalPins:PinState|null; boundPins:PinState|null; pinBindingId:string
+  originalPins:PinState|null; boundPins:PinState|null; pinBindingId:string;stepEffortPermission:boolean
   startedAt:number; generation:number; cancelled:boolean; complete:boolean;prepared:boolean
   applied:{model:string;effort:EffortToken}|null
   dispatched:number[]; allowedToolIds:string[]; toolCalls:number
@@ -81,6 +80,7 @@ export interface HarnessAdapters {
 export interface HarnessConfig {
   catalog:CatalogV2;policy:PolicyData;legacyCatalog?:CatalogV2['legacy']
   classifier:{provider:Provider|null;url:string;model:string;apiKey:string;deadlineMs:number}
+  logDecisions?:boolean
   pluginVersion:string|null; sourceRevision:string|null; sourceFingerprint?:string|null; adapters?:HarnessAdapters
 }
 export interface HarnessState {
@@ -108,7 +108,7 @@ export function boundEngine(state:HarnessState,id?:string):Engine {
   return id&&state.assignments[id]?state.assignments[id]!.engine:state.controls.currentV2().policyEngine
 }
 export function holdMessage(a:AssignmentState|null):string {
-  return a?.decision?`${a.decision.outcome}: ${a.decision.reasons.join(', ')}; no model request dispatched.`:'unavailable: assignment association or qualified request path is missing.'
+  return a?.decision?`${a.decision.outcome}: ${a.decision.question??a.decision.blocker??a.decision.reasons.join(', ')}; no model request dispatched.`:'unavailable: assignment association or qualified request path is missing.'
 }
 export function intake(state:HarnessState,e:Pick<PromptSubmitInput,'text'|'origin'>):void {
   if(/^\/router(?:\s|$)/.test(e.text.trim()))return
@@ -117,6 +117,7 @@ export function intake(state:HarnessState,e:Pick<PromptSubmitInput,'text'|'origi
   if(state.pending.length>8)state.pending=state.pending.slice(-8).map(p=>({...p,origin:'unclassified'}))
 }
 export function invalidateHarness(state:HarnessState):void {
+  for(const controller of state.workflow?.controllers.values()??[])controller.abort()
   state.generation++
   for(const a of Object.values(state.assignments))if(!a.complete)a.cancelled=true
   state.pending=[]
@@ -132,7 +133,7 @@ export async function beginAssignment(state:HarnessState,input:AssignmentInput,p
   const a:AssignmentState={id:input.id,agentId:input.agentId??null,engine,legacyMode:legacy.mode,input:identity,
     controlSnapshot:{changeModel:input.agentId?legacy.subagents:legacy.mainModel,changeEffort:input.agentId?v2.routeSubagentEffort:legacy.mainEffort,reviewMode:v2.reviewMode},
     classification:{status:input.matched?'invalid':'unmatched',output:null,elapsedMs:null},snapshot:null,decision:null,record:null,
-    originalPins:null,boundPins:null,pinBindingId:input.id,startedAt,generation,cancelled:false,complete:false,prepared:false,applied:null,dispatched:[],allowedToolIds:[],toolCalls:0,
+    originalPins:null,boundPins:null,pinBindingId:input.id,stepEffortPermission:!!input.agentId&&v2.routeSubagentEffort,startedAt,generation,cancelled:false,complete:false,prepared:false,applied:null,dispatched:[],allowedToolIds:[],toolCalls:0,
     reservationAcquired:false,substitutionDispatched:false}
   state.assignments[a.id]=a
   a.startedAt=await ports.now()
@@ -144,7 +145,7 @@ export async function beginAssignment(state:HarnessState,input:AssignmentInput,p
   if(generation!==state.generation||state.conversationId!==await ports.conversationId()){a.cancelled=true;return a}
   // Whether a live shadow classifier is authorized is supplied by the trusted facts adapter, not merged options.
   const facts=await ports.facts({model:'',...(input.agentId?{agentId:input.agentId}:{})})
-  const allowed=input.matched&&(engine==='v2'?facts.applicationQualified&&facts.limitsEnforced:facts.shadowClassifierOptIn)
+  const allowed=input.matched&&(engine==='v2'?facts.routingAvailable:facts.shadowClassifierOptIn)
   if(allowed){
     const timeout:ClassificationResult={status:'timeout',output:null,elapsedMs:state.config.classifier.deadlineMs}
     a.classification=await Promise.race([ports.classify(text).catch(()=>({status:'invalid' as const,output:null,elapsedMs:null})),ports.sleep(state.config.classifier.deadlineMs).then(()=>timeout)])
@@ -160,7 +161,7 @@ function samePair(a:{model:string;effort:EffortToken},b:{model:string|null;effor
   return a.model===b.model&&fingerprint(a.effort)===fingerprint(b.effort)
 }
 /** Recheck mandatory facts without reclassifying tool results or changing the stored assignment controls/pins. */
-export async function evaluateStep(state:HarnessState,a:AssignmentState,request:{model:string;effort?:string|number;agentId?:string},ports:HarnessPorts):Promise<PolicyDecision> {
+export async function evaluateStep(state:HarnessState,a:AssignmentState,request:{model:string;effort?:string|number;agentId?:string;index?:number},ports:HarnessPorts):Promise<PolicyDecision> {
   const facts=await ports.facts(request), now=await ports.now()
   const initial=a.snapshot
   const binding=a.boundPins?.assignments.find(b=>b.id===a.pinBindingId)
@@ -172,6 +173,11 @@ export async function evaluateStep(state:HarnessState,a:AssignmentState,request:
     pins:binding?.pins??[],classification:{status:a.classification.status,output:a.classification.output},
     requirements:structuredClone(facts.requirements),environment:{...facts.environment},resources:structuredClone(facts.resources),fallback:facts.fallback?structuredClone(facts.fallback):null,now:new Date(now).toISOString(),
   }
+  const firstChildStep=!!a.agentId&&a.id!==a.pinBindingId&&request.index===0&&!a.dispatched.includes(0)
+  if(firstChildStep&&a.stepEffortPermission){
+    s.current={model:a.applied?.model??request.model,effort:request.effort??null,modelOrigin:facts.modelOrigin,effortOrigin:facts.effortOrigin}
+    s.controls={...s.controls,changeModel:false,changeEffort:true};s.pins=binding?.pins??s.pins
+  }else if(a.id.startsWith('spawn:')&&a.stepEffortPermission)s.pins=s.pins.filter(p=>p.field!=='effort')
   s.now=new Date(now).toISOString();s.environment={...facts.environment};s.resources=structuredClone(facts.resources)
   // Trusted requirements may tighten during a loop, never silently loosen the enrolled assignment.
   for(const f of ['tools','imageInput','streaming','continuation','interruptions','mandatory','requireReview','distinctFamily'] as const)s.requirements[f] ||= facts.requirements[f]
@@ -179,11 +185,16 @@ export async function evaluateStep(state:HarnessState,a:AssignmentState,request:
   if(binding?.unknownOrigins.includes('model'))s.current.modelOrigin='unknown'
   if(binding?.unknownOrigins.includes('effort'))s.current.effortOrigin='unknown'
   if(s.fallback)s.fallback.used=Math.max(s.fallback.used,state.lineageSubstitutions[s.assignment.lineageId]??0)
+  if(!facts.routingAvailable){s.current.modelOrigin='unknown';s.current.effortOrigin='unknown'}
   let d=decide(s,state.config.policy,state.config.catalog)
   if(a.cancelled||a.generation!==state.generation||state.conversationId!==await ports.conversationId())d=blocked(d,'assignment cancelled or conversation changed')
-  else if(a.engine==='v2'&&(!facts.applicationQualified||!facts.limitsEnforced))d=blocked(d,'native origin/context/cap/fallback enforcement path is unqualified')
-  else if(a.applied&&(!samePair(a.applied,{model:request.model,effort:effortTokenOf(request.effort??null,s.current.effortOrigin)})||!d.configuration||!samePair(a.applied,d.configuration)))
-    d=blocked(d,'unexpected target or changed eligibility; an explicit authorized retry boundary is required')
+  else if(a.applied){
+    if(firstChildStep&&a.stepEffortPermission&&a.applied.effort.kind==='unknown'&&d.configuration?.model===a.applied.model&&d.configuration.effort.kind!=='unknown')a.applied.effort=structuredClone(d.configuration.effort)
+    const incoming={model:request.model,effort:effortTokenOf(request.effort??null,s.current.effortOrigin)}
+    const original={model:s.current.model??'',effort:effortTokenOf(s.current.effort,s.current.effortOrigin)}
+    const expected=a.applied.model===incoming.model&&(a.applied.effort.kind==='unknown'||fingerprint(a.applied.effort)===fingerprint(incoming.effort))
+    if((!expected&&!samePair(original,incoming))||!d.configuration||!samePair(a.applied,d.configuration))d=blocked(d,'unexpected target or changed eligibility; an explicit authorized retry boundary is required')
+  }
   a.snapshot=s;a.decision=d
   const previous=a.record
   a.record=decisionRecord(s,d,{appliedEngine:previous?.appliedEngine??(a.engine==='v2-shadow'?'legacy':null),proposedEngine:a.engine,legacyMode:a.engine==='v2'?null:a.legacyMode,
@@ -198,7 +209,7 @@ export async function evaluateStep(state:HarnessState,a:AssignmentState,request:
 export async function prepareDispatch(state:HarnessState,a:AssignmentState,index:number,ports:HarnessPorts):Promise<boolean> {
   const d=a.decision
   try {
-  if(a.engine!=='v2'||!a.prepared||!d||!['select','preserve'].includes(d.outcome)||!d.configuration||!d.configuration.model||d.configuration.effort.kind==='unknown')return false
+  if(a.engine!=='v2'||!a.prepared||!d||!['select','preserve'].includes(d.outcome)||!d.configuration||!d.configuration.model)return false
   if(a.cancelled||a.complete||a.dispatched.includes(index)){a.decision=blocked(d,'ended, cancelled or duplicate request event');return false}
   if(a.generation!==state.generation||state.conversationId!==await ports.conversationId())return false
   const limits=d.candidates.find(c=>c.configurationId===d.configuration!.id)?.limits
@@ -226,7 +237,7 @@ export async function prepareDispatch(state:HarnessState,a:AssignmentState,index
 export function requestChanges(a:AssignmentState):{model:string;effort?:TurnStepInput['effort']}|null {
   if(!a.applied)return null
   const t=a.applied.effort
-  if(t.kind==='unknown')return null
+  if(t.kind==='unknown')return {model:a.applied.model}
   if(t.kind==='level'&&!['low','medium','high','xhigh','max'].includes(t.value))return null
   return {model:a.applied.model,...(t.kind==='budget'?{effort:t.value}:t.kind==='level'?{effort:t.value as TurnStepInput['effort']}: {})}
 }
@@ -236,12 +247,9 @@ export function observeResponse(state:HarnessState,a:AssignmentState,response:Tu
     r.observed={model:response.usage?.model??null,effort:null};a.record=r;state.records=appendRecord(state.records,r)
     if(a.applied&&response.usage?.model&&response.usage.model!==a.applied.model){a.cancelled=true;if(a.decision)a.decision=blocked(a.decision,'observed unexpected substitution; continuation held')}
   }
-  if(response.serverToolUses?.length){a.cancelled=true;if(a.decision)a.decision=blocked(a.decision,'unguarded server tool use invalidated the qualified path')}
 }
 
-// Native adapter: absent observations stay unknown. This build exposes neither
-// per-request token ceilings nor trustworthy native-origin mapping, so it does
-// not manufacture an application qualification from a user boolean.
+// Native routing owns permitted rewrites; the execution host owns ordinary caps and server tools.
 export async function nativeRequestFacts($:EngineInterface,state:HarnessState,request:{model:string;effort?:string|number;agentId?:string}):Promise<RequestFacts> {
   let version:string|null=null,shadowClassifierOptIn=false
   try{version=(await $.session.version()).version}catch{}
@@ -261,8 +269,8 @@ export async function nativeRequestFacts($:EngineInterface,state:HarnessState,re
     }
     shadowClassifierOptIn=read(policy)??read(user)??false
   }catch{}
-  const native:RequestFacts={applicationQualified:false,limitsEnforced:false,modelOrigin:'unknown',effortOrigin:'unknown',
-    requirements:{tools:true,imageInput:true,streaming:true,continuation:false,interruptions:false,inputTokens:null,mandatory:true,unresolved:[],requireReview:false,distinctFamily:false},
+  const native:RequestFacts={routingAvailable:true,modelOrigin:'inherited',effortOrigin:'inherited',
+    requirements:{tools:true,imageInput:false,streaming:true,continuation:false,interruptions:false,inputTokens:null,mandatory:false,unresolved:[],requireReview:false,distinctFamily:false},
     environment:{id:null,harnessVersion:version,proxyVersion:null,requestPath:null},resources:{restrictedProviders:[],exhaustedModels:[],hardBudget:null},fallback:null,shadowClassifierOptIn}
   return state.config.adapters?.facts?state.config.adapters.facts(request,native):native
 }
@@ -308,7 +316,7 @@ export async function initializeHarness($:EngineInterface,state:HarnessState):Pr
     const metadata=JSON.parse(await $.fs.read(`${$.plugin.root}/.claude-plugin/plugin.json`))
     if(typeof metadata.version==='string')state.config.pluginVersion=metadata.version
     const sources=[]
-    for(const path of ['.claude-plugin/plugin.json','hooks/jev-model-router.ts','hooks/router-controls.ts','hooks/policy.ts','hooks/task-routing.ts','hooks/model-catalog.ts','hooks/v2/harness.ts','hooks/v2/records.ts','hooks/v2/pins.ts','hooks/v2/policy.ts','hooks/v2/policy-data.ts','hooks/v2/contract.ts','hooks/v2/classifier.ts','hooks/v2/artifacts.ts','hooks/v2/verification.ts','hooks/v2/review.ts','hooks/v2/review-harness.ts','catalog/models.json','catalog/model-data.ts'])sources.push([path,await $.fs.read(`${$.plugin.root}/${path}`)])
+    for(const path of ['.claude-plugin/plugin.json','hooks/jev-model-router.ts','hooks/router-controls.ts','hooks/policy.ts','hooks/task-routing.ts','hooks/model-catalog.ts','hooks/v2/harness.ts','hooks/v2/records.ts','hooks/v2/pins.ts','hooks/v2/policy.ts','hooks/v2/policy-data.ts','hooks/v2/contract.ts','hooks/v2/classifier.ts','hooks/v2/artifacts.ts','hooks/v2/verification.ts','hooks/v2/review.ts','hooks/v2/review-harness.ts','hooks/v2/native-review.ts','catalog/models.json','catalog/model-data.ts'])sources.push([path,await $.fs.read(`${$.plugin.root}/${path}`)])
     state.config.sourceFingerprint=await sha256(new TextEncoder().encode(JSON.stringify(sources)))
     const revision=await $.process.run(['git','rev-parse','HEAD'],{cwd:$.plugin.root,timeoutMs:10000,env:{GIT_NO_LAZY_FETCH:'1',GIT_OPTIONAL_LOCKS:'0'}})
     if(revision.exitCode===0&&/^[a-f0-9]{40,64}$/.test(revision.stdout.trim()))state.config.sourceRevision=revision.stdout.trim()
@@ -325,7 +333,7 @@ export function nativePorts($:EngineInterface,state:HarnessState,commit:(expecte
 
 export function portsFor($:EngineInterface,state:HarnessState,controls:ReturnType<typeof createRouterControls>):HarnessPorts {
   const generation=state.generation
-  return nativePorts($,state,async(expected,next)=>serializePinOperation(controls,async()=>{
+  const ports=nativePorts($,state,async(expected,next)=>serializePinOperation(controls,async()=>{
     const id=await activeConversation($,state)
     if(!id||id!==expected.conversationId||generation!==state.generation)return false
     const raw=await $.store.get(PIN_STORE_KEY(id))
@@ -336,17 +344,14 @@ export function portsFor($:EngineInterface,state:HarnessState,controls:ReturnTyp
     controls.pins.pins=structuredClone(next)
     return true
   }))
+  return {...ports,pinState:async()=>{await ensureRouterConversation($,controls);return ports.pinState()}}
 }
 export async function nativeIntake($:EngineInterface,state:HarnessState,e:PromptSubmitInput):Promise<string|null> {
   if(/^\/router(?:\s|$)/.test(e.text.trim()))return null
   if(state.controls.engineError)return state.controls.engineError
   try{await initializeHarness($,state)}catch{if(state.controls.currentV2().policyEngine==='v2')return 'unavailable: runtime identity or storage is unknown.'}
   intake(state,e)
-  if(state.controls.currentV2().policyEngine!=='v2')return null
-  try{
-    const facts=await nativeRequestFacts($,state,{model:await $.session.model()})
-    return facts.applicationQualified&&facts.limitsEnforced?null:'unavailable: native origin, current context, caps and first-substitution enforcement are not qualified on this path.'
-  }catch{return 'unavailable: native assignment facts or runtime persistence cannot be established.'}
+  return null
 }
 export async function nativeTurnStart($:EngineInterface,state:HarnessState,controls:ReturnType<typeof createRouterControls>,e:TurnStartInput):Promise<void> {
   await initializeHarness($,state)
@@ -385,9 +390,11 @@ export async function nativeStepPlan($:EngineInterface,state:HarnessState,contro
   try {
     await initializeHarness($,state)
     const a=state.assignments[e.turnId]
-    if(!a||a.agentId!==(e.agentId??null)||a.complete||!a.prepared)return {owned:engine==='v2',message:'unavailable: classification_unmatched; missing, ended or ambiguous turn association.',assignment:null}
+    if(!a||a.agentId!==(e.agentId??null)||a.complete)return {owned:engine==='v2',message:'unavailable: classification_unmatched; missing, ended or ambiguous turn association.',assignment:null}
+    if(!a.prepared)return {owned:engine==='v2',message:'unavailable: assignment setup incomplete; inspect the router debug log.',assignment:null}
     const ports=portsFor($,state,controls)
     await evaluateStep(state,a,e,ports)
+    if(state.config.logDecisions&&e.index===0)$.ui.log(`[router:v2] ${JSON.stringify({boundary:a.snapshot?.assignment.boundary,controls:a.snapshot?.controls,reasons:a.decision?.reasons,classification:{status:a.classification.status,output:a.classification.output,elapsedMs:a.classification.elapsedMs,usage:normalizeUsage(a.classification.usage)}})}`,{to:'debug'})
     if(engine==='v2-shadow')return {owned:false,message:null,assignment:a}
     if(!await prepareDispatch(state,a,e.index,ports))return {owned:true,message:holdMessage(a),assignment:a}
     return {owned:true,message:null,assignment:a}
@@ -404,6 +411,7 @@ export async function* nativeV2Step($:EngineInterface,state:HarnessState,e:TurnS
     return {turnId:e.turnId,index:e.index,answer:text,toolUses:[],stopReason:'end_turn',usage:null}
   }
   if(a.record){a.record.applied=structuredClone(a.applied);a.record.appliedEngine='v2';state.records=appendRecord(state.records,a.record)}
+  if(e.index===0&&state.config.logDecisions){$.ui.status(`Router v2 · ${changes.model} · effort ${changes.effort??e.effort??'host default'}`);$.ui.log(`[router] ${a.classification.output?.role.value??'unclassified'} · ${changes.model} · effort ${changes.effort??e.effort??'host default'} · v2${a.decision?.outcome==='preserve'?` · unchanged (${a.decision.reasons.join(', ')})`:''}`)}
   const stream=next({...e,...changes})
   for(;;){
     const part=await stream.next()
@@ -491,6 +499,6 @@ export async function nativeToolGuard($:EngineInterface,state:HarnessState,e:{to
   if(a.cancelled||!a.allowedToolIds.includes(e.tool_use_id))return 'unavailable: model tool association is unverified.'
   const limits=a.decision?.candidates.find(c=>c.configurationId===a.decision?.configuration?.id)?.limits
   const now=await $.clock.now()
-  if(!limits||a.toolCalls>=limits.maxToolCalls||now-a.startedAt>=limits.maxWallTimeMs)return 'unavailable: assignment tool/time allowance exhausted.'
+  if(limits&&(a.toolCalls>=limits.maxToolCalls||now-a.startedAt>=limits.maxWallTimeMs))return 'unavailable: assignment tool/time allowance exhausted.'
   a.toolCalls++;await saveRuntime($,state);return null
 }

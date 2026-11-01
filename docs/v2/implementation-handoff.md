@@ -1,6 +1,10 @@
 # Model router v2 implementation handoff
 
-Status: Offline phases 1–7 implemented, October 31, 2026. Real production v2 paths remain unqualified/disabled. Historical checkpoints below are superseded by the final implementation result; nothing here authorizes live inference or rollout.
+Status: Configured native integration complete, November 1, 2026. Historical October 31 checkpoints below record earlier disabled/offline-only states, not current routing instructions. This document grants no additional experiment spending or workload approvals.
+
+## Current result
+
+Configured native v2 routing and bounded completion-backed review/repair/targeted verification are implemented and tested live. Context and ordinary execution/provider limits are host-owned, not blanket chat gates. Router pins/switches, explicit restrictions/fallback grants, finite review permissions and exact-revision acceptance remain enforced. No empirical approvals or environment observations were fabricated. See [current validation](validation.md#configured-native-integration--november-1-2026) and [usage](../usage/router-controls.md). The October 31 implementation was committed as `7f4a69f`; the November 1 follow-up remains local until separately authorized to commit/push.
 
 ## Read first
 
@@ -45,7 +49,7 @@ Decision/trial records identify applied and proposed engine, effective legacy mo
 
 For completion comparisons, use a preselected assignment and identical starting repository/context in isolated sessions or worktrees. Record a trial ID and the starting revision in the evaluation record. Hold permissions, budgets, review treatment and check definitions constant when comparing routing. Compare review treatment in a separate experiment. Explicit pins constrain an experiment and must be reported. Engine changes do not reset candidate counters or transfer review evidence; mark mixed-policy candidates and exclude them from single-policy results.
 
-## First coding milestone
+## First coding milestone (historical)
 
 Start with phases 1–3 of the brief: normalized classifier contract, deterministic catalog migration/projection, and pure policy/replay. Finish the registered offline checks for each phase before moving to pins, harness application and review coordination in phases 4–7.
 
@@ -76,7 +80,7 @@ Use clearly synthetic catalog approvals and policy values only in fixtures. The 
 - Legacy Basic/Custom/Observe retain their behavior and default controls; shadow changes neither the legacy request nor its workflow side effects.
 - Every pure suite actually runs. Record its case count; a passing runner that never imported the new suite is not verification.
 
-## Live validation boundary
+## Historical live validation boundary (October 31)
 
 Offline coding is not blocked by missing provider calibration. Keep unqualified application paths disabled or in explicitly opted-in shadow evaluation. Native event origins, effective effort, proxy forwarding/fallback, real reviewer restrictions and reliable tool completion still need the recorded live checks before promotion. A passing stubbed probe is not evidence that a provider path enforces a pin or budget.
 
@@ -122,6 +126,8 @@ This uses standard globals such as `structuredClone`; it does not qualify a harn
 
 ## Phase-4 implementation result
 
+**Historical October 31 checkpoint; current integration is described above.**
+
 Phase 4 adds the declared conservative options and composer-only controls, scoped execution pin/unpin commands, conversation-bound version-2 pin persistence/migration, and a shared pure purpose/field/scope resolver. Pure assignment snapshots preserve next-assignment consumption and tool-loop stability without reimplementing eligibility. Execution pins do not choose full or targeted reviewers; unknown native origins remain unknown.
 
 Persistent commands use the governed native configuration path and verify the exact effective trusted user/policy value. Session/next commands serialize writes and reject identity changes or storage errors rather than overwriting unread intent. Session end invalidates cached context; same-identity reload/resume restores persisted intent, while a new identity reads a different record. The self-contained host contract and top-level typed host adapters pass the current Mods loader's restrictions.
@@ -152,4 +158,4 @@ No inference, dependency installation, account/credential/proxy changes, native 
 
 October 31, 2026: the assignment kernel/native adapter, bounded records, artifact enrollment/check bridge, pure review/repair/targeted coordinator, native lifecycle/recovery/acceptance bridge and usage/rollback documentation are implemented. The actual registration passes the offline/native checks recorded in [validation](validation.md#phases-57-offline-checkpoint): **299/299** offline, **18/18** isolated native, **48/48** replay, catalog equality, strict runtime types and structural validation. The phase-4 result above is historical, not the current implementation boundary.
 
-No live inference, new runtime dependency, production approval/environment, credential/proxy change or default-engine promotion was made. Legacy Basic/Custom/Observe and the legacy classifier payload remain covered. Real v2 dispatch/review stay unavailable on the shipped facts/authorization adapter; required executable checks cannot pass on this build's Bash schema. Missing semantic repair scope cannot authorize targeted renewal. `automatic` alone buys no work. Live compatibility/enforcement and held-out quality/resource gates remain prerequisites to enabling affected paths. Repository-wide generated-config/test typing and listing readiness are not cleared by runtime checks. Work after commit `8e19c72` remains local until separately authorized for publication.
+At that October 31 checkpoint (`7f4a69f`), no live inference, dependency, production approval/environment, credential/proxy change or default-engine promotion occurred. Native v2/review/check success was then unavailable. The November 1 follow-up supersedes those availability limits with configured routing, actually capped native completions and nonce-bound check receipts. Semantic scope and finite authorization remain mandatory. Repository-wide generated-config/test typing and listing warnings are not cleared by runtime checks; empirical quality certification remains separate.

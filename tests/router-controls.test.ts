@@ -45,6 +45,10 @@ test('native config describes router rows and hides unrelated settings',async()=
  expect(other.isHidden).toBe(true)
  const row=await h.handlers['config.describe'](h.$,{key:'jev-model-router.routeMainModel',provider:{plugin:'jev-model-router@inline'}},async(e:any)=>e)
  expect(row.label).toBe('Router · Main model routing');expect(row.description).toContain('main conversation')
+ const chat=await h.handlers['config.describe'](h.$,{key:'jev-model-router.simpleAnswerModel',provider:{plugin:'jev-model-router@inline'}},async(e:any)=>e)
+ expect(chat.isHidden).toBe(false);expect(chat.label).toBe('Router · Simple answers & chat model');expect(chat.description).toContain('save defaults, not session-only overrides')
+ const foreign=await h.handlers['config.describe'](h.$,{key:'other.simpleAnswerModel',provider:{plugin:'other'}},async(e:any)=>e)
+ expect(foreign.isHidden).toBe(true)
 })
 test('successful native writes update runtime and persist immediately',async()=>{
  const h=setup();await h.handlers['config.set'](h.$,{key:'jev-model-router.routeSubagentModel',provider:{plugin:'jev-model-router@inline'}},async()=>({value:false}))
@@ -151,7 +155,7 @@ function v2Setup(options:any={},store=new Map<string,unknown>(),settings:any={us
   command:{register:async()=>({command:'router'}),run:async()=>({})},clock:{after:()=>{},now:async()=>0,sleep:()=>new Promise(()=>{})},
   ui:{log:(s:string)=>{logs.push(s)},invalidate:()=>{},status:()=>{}},
   http:{fetch:async()=>{calls.http++;throw Error('unexpected classifier')}},model:{classify:async()=>{calls.model++;throw Error('unexpected classifier')}},
-  agent:{spawn:async()=>{calls.spawn++;throw Error('unexpected reviewer')}},fs:{read:async()=>{calls.files++;throw Error('unexpected file access')}},
+  tool:{register:async()=>({tool:'mcp__jev-model-router__candidate_checkpoint'})},agent:{spawn:async()=>{calls.spawn++;throw Error('unexpected reviewer')}},fs:{read:async()=>{calls.files++;throw Error('unexpected file access')}},
  }
  const run=(args:string,origin='composer')=>handlers['command.run']($,{command:'router',args,origin:{kind:origin}},async()=>({}))
  const start=()=>handlers['session.start']($,{cwd:'/repo',surface:'terminal',isInteractive:true},async()=>({cwd:'/repo'}))
@@ -181,6 +185,13 @@ test('session/next commands persist execution intent without consuming it or mak
  const status=(await h.run('status')).text
  expect(status).toContain('staged, not applied by legacy');expect(status).toContain('not applied by legacy');expect(status).toContain('effort=medium')
  expect(h.calls.writes).toBe(writes);expect(h.calls.http+h.calls.model+h.calls.spawn+h.calls.files).toBe(0)
+})
+test('v2 status reports forwarded records, never an unapplied proposal or another conversation',async()=>{
+ const h=v2Setup();await h.start();h.controls.v2.policyEngine='v2'
+ h.controls.runtime={conversationId:'conversation-a',records:[{assignmentId:'forwarded',appliedEngine:'v2',applied:{model:'claude-haiku-5-5',effort:{kind:'level',value:'medium'}},observed:{model:null}},{assignmentId:'proposal',appliedEngine:'v2',applied:null}]} as any
+ expect((await h.run('status')).text).toContain('v2 claude-haiku-5-5/medium for forwarded; serving identity unknown')
+ h.controls.runtime!.conversationId='conversation-b'
+ expect((await h.run('status')).text).toContain('Last router-applied request: unknown')
 })
 test('unpin removes only the chosen execution field and scope',async()=>{
  const h=v2Setup();await h.run('pin model session');await h.run('pin model next --scope next');await h.run('pin effort medium')
@@ -279,8 +290,8 @@ test('candidate/review/accept commands remain unavailable without file access, c
  for(const cmd of ['candidate register manifest.json','review','review cand_x','accept cand_x'])expect((await h.run(cmd)).text).toContain('unavailable')
  expect(h.calls.writes+h.calls.files+h.calls.http+h.calls.model+h.calls.spawn).toBe(0)
 })
-test('enforced or invalid engines hold unqualified prompt, request and spawn instead of silently applying Basic',async()=>{
- for(const policyEngine of ['v2','invalid']){
+test('invalid engines hold prompt, request and spawn instead of silently applying Basic',async()=>{
+ for(const policyEngine of ['invalid']){
   const h=v2Setup({policyEngine},undefined,undefined,true)
   let downstream=0
   expect((await h.handlers['prompt.submit'](h.$,{text:'Implement a feature'},async()=>{downstream++;return {}})).drop!==undefined).toBe(true)
@@ -337,4 +348,21 @@ test('status records the last legacy router request but does not claim an observ
  const status=(await h.run('status')).text
  expect(status).toContain('legacy Exact-Request/high for legacy-turn');expect(status).toContain('serving identity unknown')
  expect(h.calls.http+h.calls.model).toBe(0)
+})
+test('explicit launch flags override the legacy save cache but never managed routing permissions',async()=>{
+ const h=v2Setup({},undefined,{user:{},policy:{},flag:userOptions({routeMainModel:true})})
+ h.store.set('model-router.defaults.v1',{...initial,mainModel:false});await h.start();expect(h.controls.current().mainModel).toBe(true)
+ const managed=v2Setup({},undefined,{user:{},policy:userOptions({routeMainModel:false}),flag:userOptions({routeMainModel:true})})
+ await managed.start();expect(managed.controls.current().mainModel).toBe(false)
+})
+test('legacy namespace conflicts cannot invalidate unrelated pin and workflow authority',async()=>{
+ const settings={user:{pluginConfigs:{'jev-model-router':{options:{routeMainModel:true}},'jev-model-router@inline':{options:{routeMainModel:false}}}},policy:{}}
+ const h=v2Setup({},undefined,settings);await h.start();expect(h.controls.pins.authorityError).toBeNull()
+ expect((await h.run('pin model exact')).text).toContain('Execution intent saved')
+})
+test('repair and scope-confirmed verification require exact composer command syntax',()=>{
+ expect(parseRouterCommand('repair cand_x')).toEqual({kind:'repair',candidateId:'cand_x'})
+ expect(parseRouterCommand('verify cand_x --confirm-scope')).toEqual({kind:'verify',candidateId:'cand_x',confirmScope:true})
+ expect(parseRouterCommand('verify cand_x --unknown')).toEqual({kind:'error'})
+ expect(parseRouterCommand('candidate status cand_x')).toEqual({kind:'candidate-status',candidateId:'cand_x'})
 })

@@ -1,6 +1,6 @@
 # Model router v2 architecture spec
 
-Status: Draft design baseline. Date: October 31, 2026.
+Status: Implemented native integration, revised November 1, 2026.
 
 The [official v2 design brief](design-brief.md) selects the architecture and file-level implementation plan. This document describes its component responsibilities and logical interfaces.
 
@@ -19,7 +19,7 @@ The [Mods validation report](../r-and-d/03-claude-code-mods-harness-validation.m
 | Policy engine | Resolve pins, select a workload rule, evaluate eligibility and authorized alternatives, and return one decision without I/O |
 | Catalog and policy data | Store model identities, availability, compatibility, evidence, workload approvals, preferences, and resource rules as distinct records |
 | Orchestrator | Dispatch requests, acquire resource reservations when needed, run tools and checks, create authorized reviewer assignments, and manage acceptance |
-| Proxy | Carry out the authorized model request, handle bounded transport retries, and expose observable outcomes without choosing a different model implicitly |
+| Host/proxy/provider | Context fitting, compaction, ordinary execution caps, transport retries/provider substitutions and server-tool behavior; expose observable outcomes |
 | Decision recorder | Distinguish classifier observations, proposed decisions, applied requests, and observed upstream results |
 
 ```mermaid
@@ -41,7 +41,7 @@ flowchart TD
     H2 --> C
 ```
 
-Review execution in this flow requires the coordinator. Mods expose agent registration, spawning, and completion events for that workflow. A hook that only selects models remains one part of it.
+Review execution in this flow requires the coordinator. The default uses fresh history-free `model.complete` calls with actual maxTokens/timeout enforcement. Registered-agent lifecycle support remains available for trusted typed embeddings. A hook that only selects models remains one part of it.
 
 ## Classifier interface
 
@@ -96,7 +96,7 @@ type OutcomePayload =
   | { outcome: 'select'; configuration: Configuration;
       changes: { model?: string; effort?: string } }
   | { outcome: 'preserve'; configuration: Configuration;
-      qualification: 'verified' | 'unverified' }
+      qualification: 'verified' | 'configured' | 'unverified' }
   | { outcome: 'clarify'; question: string }
   | { outcome: 'unavailable'; blocker: string; remedy: string }
 
@@ -131,9 +131,9 @@ An automatic selection made earlier is not a manual pin. If origin is unknown, p
 
 1. Reject known intake failures at `prompt.submit`. Use `turn.start`'s `turnId` for canonical assignment state and tie classifier output to it; discard ambiguous or late output. A queued-prompt implementation still needs a live check.
 2. Evaluate the decision before dispatch at `turn.step`. For selection, acquire any required resource reservation. For clarification or unavailability, use the event's supported short-circuit shape: a prompt drop, a spawn denial, or a synthetic streamed policy response with no tool calls. Preserve the policy outcome separately from the stream's stop reason.
-3. Keep selection stable across the tool loop while checking actual outgoing targets for authorized fallback. Record requested values separately from observable upstream identity and effective effort. Native/provider fallback must conform to the contract before application; a later step observation cannot prove the first substitute request was authorized.
+3. Keep selection stable across the tool loop while checking actual outgoing targets for authorized fallback. Record requested values separately from observable upstream identity and effective effort. Router-selected substitutions require explicit grants. Provider behavior is host-owned; observed mismatches are recorded and stop continuation, not retroactively prevented.
 4. Run available deterministic verification. A reproducible failure normally returns to the author for bounded repair.
-5. When authorized, create a fresh, non-fork reviewer assignment using the same policy. Set effort, tool permissions, and run limits on its registered type. `$.agent.spawn` returns after startup; collect the answer through the matching completion event, with bounded lifecycle handling. Supply requirements, artifact/diff, context manifest, and executed test evidence tied to the artifact revision.
+5. At an authorized checkpoint, start one fresh native `model.complete` with exact model/effort, finite output tokens and timeout, frozen enrolled contents and requirements. It inherits no tools/history. Validate strict structured findings; repair data is applied only by the controller through governed Write. Typed agent-backed embeddings use separate registration/spawn/completion handling.
 6. Verify material findings and perform any bounded repair. Recheck changed artifacts. Acceptance depends on required checks and completed required review.
 
 Each substantive review finding contains its requirement or invariant, artifact location, consequence, evidence status, and smallest useful reproduction or verification step. Distinguish suggested tests from executed results. Record actual reviewer identity where observable; unknown identity cannot establish required family independence.
@@ -160,7 +160,7 @@ Classifier failure usually preserves the request, subject to mandatory checks. I
 
 ## Integration and rollout
 
-The existing code has main-turn and subagent hooks, task preferences, a catalog, and separate mutation controls. It does not yet implement these logical interfaces or the review workflow. The current router skips subagent `turn.step` events and does not apply subagent effort preferences. The harness does expose definition/registration effort, the Agent tool's invocation effort, and subagent step effort. The narrower `$.agent.spawn` interface has no effort argument in the inspected declarations. Validate the chosen path's timing, environment caps, and proxy translation.
+The code implements these interfaces and the bounded native review workflow. Legacy skips subagent step effort; v2 captures the separate permission at spawn and applies it at the canonical child first request. The harness does expose definition/registration effort, the Agent tool's invocation effort, and subagent step effort. The narrower `$.agent.spawn` interface has no effort argument in the inspected declarations. Validate the chosen path's timing, environment caps, and proxy translation.
 
 Hooks active when an agent is spawned can be skipped on its loop. Put reviewer restrictions on the definition and validate current re-entry behavior; do not depend solely on the spawning Mod observing every child request. Keep long-lived coordinator state outside an arbitrary pending promise in a blocking hook. Headless operation, cancellation, later Mods, and managed policy also need explicit handling.
 
@@ -168,6 +168,6 @@ First evaluate v2 in shadow mode alongside the active policy. The proposed `poli
 
 The [validation plan](validation.md) covers hook support, pin origins, identity and effort translation, review orchestration, telemetry, and quality comparisons. Those findings can change the integration design while preserving explicit control and observable failure behavior.
 
-## Offline implementation status — October 31, 2026
+## Current implementation — November 1, 2026
 
-Phases 1–7 now have implementation and offline checks. This does not enable production v2: legacy remains the default, real environments/approvals remain empty, native origin/context/token-cap/fallback qualification and governed-check terminal success remain unavailable, and no live quality experiment was run. Review mode alone grants no spend; unsupported author/reviewer/repair/verification paths hold. See the [final offline checkpoint and remaining live gates](validation.md#phases-57-offline-checkpoint), [runtime integration](runtime-contracts.md#phases-57-native-integration) and [usage/rollback](../usage/router-controls.md#v2-controls-and-pins) for the implemented boundary.
+Configured native routing and bounded native review are implemented and functionally tested on Claude Code **2.1.316**. Legacy remains the default. The November 1 ownership revision delegates context fitting and ordinary execution/provider behavior to the host; switches, router pins, explicit restrictions/fallback grants and bounded review/acceptance remain router responsibilities. Configured routing reports `qualification=configured` without inventing workload approvals or environment observations. Evidence-only evaluation remains separate. See [current validation](validation.md#configured-native-integration--november-1-2026), [runtime integration](runtime-contracts.md#phases-57-native-integration) and [usage](../usage/router-controls.md#v2-controls-and-pins). Functional tests are not a held-out workload-quality certification.

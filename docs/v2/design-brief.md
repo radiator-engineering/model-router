@@ -1,9 +1,12 @@
 # Model router v2 design brief
 
-- **Author:** Codex, consolidating owner direction and project research
-- **Status:** Proposed v2 design baseline; implementation and rollout are not approved by this document
-- **Date:** 2026-10-31
+- **Status:** Implemented baseline with November 1 native ownership/integration revision; functional evidence is separate from quality approval
+- **Date:** 2026-11-01
 - **Scope:** Claude Code Mod, deterministic routing, explicit controls, and optional independent review
+
+## November 1 implementation revision
+
+Configured native routing is usable without scientific workload approvals. Context fitting, ordinary execution caps, provider substitutions and server-tool handling belong to the host; switches, pins, explicit router fallback grants and finite review authority remain enforced. Native default review/repair/targeted verification use actual capped fresh completions. [Current validation](validation.md#configured-native-integration--november-1-2026) records functional evidence. October 31 phase plans below retain historical sequencing, not current disabled-path instructions.
 
 ## Overview
 
@@ -47,9 +50,9 @@ The architecture below is selected. The following are release evidence gates, no
 |---|---|
 | Native selection mapping | Live picker, default, fast-mode, SDK, clear/resume, and effort-origin behavior on each supported surface |
 | Model and effort forwarding | Exact outgoing payload, relevant caps, tool/image round trips, and observable resolved identity through the installed proxy |
-| Fallback enforcement | Prevention or explicit authorization of the first substitute request, including failures beneath `next` |
-| Review lifecycle | Real registered reviewer restrictions, re-entry, early completion, cancellation, timeout, and stale-artifact handling |
-| Catalog admission | Workload approvals, verified context limits, freshness bounds, output reserves, and environment versions for the initial candidate set |
+| Router fallback | Exact grants and lineage limit for router-selected alternatives; host/provider substitutions are delegated, not a routing admission lock |
+| Review lifecycle | Fresh token/time-capped native completions, governed scoped repair, cancellation/timeout/stale handling; typed agent-backed path tested separately |
+| Catalog admission | Configured profiles for native routing; timed scoped workload approvals/versions only for evidence-only admission. Context fit/reserves belong to the host |
 | Quality and resources | Paired completion/repair outcomes and reliable units before numerical quality or budget claims |
 
 If a mandatory gate fails, preserve an inherited request only where the contract permits it; otherwise return `unavailable`. Keep unsupported enforcement in shadow evaluation. A missing fact never becomes a passing check.
@@ -106,7 +109,7 @@ flowchart TD
     H --> X[Configured proxy and provider]
     X --> V[Executed verification and artifact candidate]
     V --> R[Optional review coordinator]
-    R --> F[Fresh registered reviewer]
+    R --> F[Fresh bounded native completion]
     F --> R
     R --> G[Revision-bound acceptance gate]
 ```
@@ -125,7 +128,7 @@ Carry numeric inherited effort literally; do not map it onto a named scale. An u
 
 Keep distinct catalog records for identity/availability, compatibility, evaluation evidence, and workload approval. A configuration identifies model, effort, request path, environment bounds, and operating conditions. Preferences and resource policy remain separate inputs. Upgrade the editable catalog and its generated TypeScript representation together; no JSON import is introduced into the Mods runtime.
 
-Every approval must name freshness bounds, context margin/output reserve, and compatible versions where those are required. Missing values fail the relevant eligibility check. Populate actual capacity and approval facts through the validation plan; do not seed them from model names or convert existing smoke tests into broad workload approval.
+Evidence-only approval names freshness bounds and compatible versions. Historical context fields are diagnostic, never router fit gates. Native configured admission uses declared profiles without inventing approvals or environments; smoke checks do not become broad workload certification.
 
 ### Selection and override rules
 
@@ -143,7 +146,7 @@ At `turn.step`, apply the stored selection without reclassifying tool results. R
 
 Block before calling `next`: return a prompt drop, spawn denial, or synthetic streamed policy response with no tool calls. Keep `clarify`/`unavailable` in coordinator state even if the response uses a normal stream stop marker. Give enforced guards fail-closed error handlers. If dispatch already occurred, report what happened; a later error handler cannot undo it.
 
-Unsupported engine/proxy fallback must be disabled or explicitly reconciled before v2 application on that path. Do not rewrite local proxy settings automatically. Transport retries preserve identity and effort, use a finite configured count/deadline, and never replay external tools. A continuation on a different model requires authorization and demonstrated context/tool-state compatibility.
+Ordinary engine/proxy/provider behavior is delegated to the host, not a blanket application gate. Router-selected alternatives still require explicit grants. Do not rewrite local proxy settings automatically. Transport retries preserve identity and effort, use a finite configured count/deadline, and never replay external tools. A continuation on a different model requires authorization and demonstrated context/tool-state compatibility.
 
 ### Controls and pins
 
@@ -156,10 +159,11 @@ Add the following controls while retaining existing legacy settings and permissi
 | `reviewMode` | `recommend`; `off` suppresses automatic recommendations, while `automatic` permits the approved standing workflow |
 | `persistentModelPin`, `persistentEffortPin` | Empty/unset; user-managed defaults for future assignments |
 | `verificationChecksJson` | `{"schemaVersion":1,"checks":[]}`; provenance-verified user or managed-policy check definitions, as specified in the [runtime contracts](runtime-contracts.md#trusted-checks) |
+| `reviewPolicyJson` | Finite native worker configuration and exact candidate/stage automatic grants; code-owned conservative default, user/managed-policy overrides only |
 
 Router-owned pin commands are the initial reliable interface. Extend `/router` with `pin model <id>` and `pin effort <level>`, each accepting `--scope next|session|persistent`; omitted scope means session. `unpin model|effort` removes that field at the named scope. `next` means the next eligible user assignment, not the control command itself or an unrelated background notification. Trusted coordinator metadata can address an existing assignment directly. Mutations still respect routing switches; a pin conflicting with a fixed outgoing field returns `routing_fixed`.
 
-`status` shows effective pins and their sources, fixed fields, policy engine, review mode, and the last applied decision. These commands and fields are new v2 interface decisions, not existing supported syntax. Router-owned pins initially target execution work; independent review and targeted verification use review-purpose assignments and separately resolved pins, as defined in the [runtime contracts](runtime-contracts.md#assignment-and-pin-purpose).
+`status` shows effective pins and their sources, fixed fields, policy engine, review mode, and the last applied decision. These commands and fields are implemented v2 interfaces. Router-owned pins initially target execution work; independent review and targeted verification use review-purpose assignments and separately resolved pins, as defined in the [runtime contracts](runtime-contracts.md#assignment-and-pin-purpose).
 
 Scope session pins to the harness conversation identity; preserve them across Mod reload and restore them only when resuming that identity. A clear or branch with a new identity receives no copied session pins. Handle lifecycle events explicitly rather than treating `session.start` as the only reset signal. Persist only pin values and metadata in the plugin store; credentials stay in the existing user stores.
 
@@ -171,7 +175,7 @@ Keep the coordinator in this plugin, as a separate module. Automatic review star
 
 Enroll candidates through `/router candidate register <manifest-path>` using the runtime-contract input and trusted-origin checks. `/router review <candidate-id>` selects that candidate; the no-argument form is valid only when exactly one current candidate exists. Missing or ambiguous enrollment returns `clarify`, and invalid scope or unavailable required checks returns `unavailable`. Candidate data cannot supply commands or waive policy. Trusted check definitions come from provenance-verified user or managed-policy configuration.
 
-Register fresh non-fork reviewer types with model, effort, a relevant tool allowlist, and finite run limits. Supply requirements, artifact/diff, relevant caller/context manifest, and executed checks. Initially withhold persuasive author rationale and self-assessment. Put restrictions on the definition, because hooks active during spawning can be skipped. An unknown effective identity cannot satisfy required cross-family independence. Cross-family execution uses a qualified existing proxy path; external CLI workers are deferred.
+Default to a fresh tool-less `model.complete` with exact model/effort, finite maxTokens/timeout and an abort signal. Apply repair data only through governed Write. Typed agent-backed embeddings may register fresh non-fork reviewer types with explicit tools/run limits. Supply requirements, artifact/diff, relevant caller/context manifest, and executed checks. Initially withhold persuasive author rationale and self-assessment. Put restrictions on the definition, because hooks active during spawning can be skipped. An unknown effective identity cannot satisfy required cross-family independence. Cross-family execution uses a qualified existing proxy path; external CLI workers are deferred.
 
 Track `candidate`, `checking`, `reviewing`, `repairing`, `ready`, `accepted`, `blocked`, `cancelled`, and `stale` states. Spawn returns an agent ID, not the completed answer. Handle completion that arrives early, denial, error, interruption, and timeout without accepting the artifact or starting recursive reviews. Do not hold a blocking hook open on an unbounded coordinator promise.
 
@@ -197,7 +201,7 @@ Run required checks before review, deduplicate launch intent by candidate/revisi
 
 `legacy` preserves existing Basic/Custom/Observe behavior. `v2-shadow` leaves that active policy and its classifier request unchanged and records a separate v2 result. A live shadow evaluation may require an additional classifier request; opt-in and reporting must make that overhead explicit. Offline replay uses saved snapshots without inference. Never add v2 questions to a legacy classifier call and claim an unchanged experimental baseline.
 
-`v2` applies only the v2 contract on validated paths. Switching policy engines takes effect at the next assignment boundary. Existing in-flight review records remain explicit until cancelled or completed; a rollback does not magically approve them. Release in stages: offline replay and probes; opt-in shadow; one qualified execution path; qualified subagent effort; authorized review coordination. Default application and automatic review remain disabled until their gates pass.
+`v2` applies only the v2 contract on validated paths. Switching policy engines takes effect at the next assignment boundary. Existing in-flight review records remain explicit until cancelled or completed; a rollback does not magically approve them. Release in stages: offline replay and probes; opt-in shadow; one qualified execution path; qualified subagent effort; authorized review coordination. Legacy remains the default. Configured native application and separately enabled subagent effort are available; automatic review still requires exact standing candidate/stage grants and a checkpoint.
 
 ### Comparison configurations
 
@@ -212,7 +216,7 @@ Tag records with applied/proposed engine, legacy mode where relevant, policy/cat
 | Keep role-to-model mappings as the complete selector | Few rules, easy to explain, low implementation cost | Role alone misses missing requirements, consequence, and capability fit; existing paths can bypass shared checks | Retain roles as lookup keys, with dimension-based rules and shared eligibility |
 | Always use a strong model, or learn a universal routing score | A strong default reduces classification mistakes; a learned score could adapt after enough trials | Wastes scarce capacity or hides poorly measured trade-offs; neither guarantees requirements or review quality | Keep always-Sonnet/Opus as evaluation baselines; defer learned selection |
 | Put review orchestration in a service or separate Mod now | Independent lifecycle and deployment can simplify isolation | Adds credentials, transport, installation, and recovery responsibilities before they are needed | Use modules in the existing plugin; revisit separation if deployment or isolation requires it |
-| Review with a conversation fork or text completion only | Cheap context reuse or a small isolated call | A fork carries the author's narrative and session model; a text-only completion cannot run verification tools | Use fresh registered tool-capable reviewers for the initial coordinator |
+| Conversation fork or fresh bounded completion | Fork reuses context; completion gives actual native token/time caps | Fork carries author narrative; a completion cannot execute verification tools | Use fresh bounded completion plus separately governed checks and controller-applied repair; retain agent-backed embedding |
 | Buffer every final answer or guard all publication commands | Can enforce review before a defined release when implemented completely | Adds latency, stream/tool complexity, and incomplete command recognition; cannot govern actions outside the harness | Start with explicit artifact acceptance; defer buffering and universal publication guards |
 
 These choices do not establish that the selected policy outperforms the baselines. That requires completion trials at the operating budgets actually used.
@@ -233,7 +237,7 @@ Implement in the order below. This is a file-level plan, not authorization to ch
 
 The [runtime contracts document](runtime-contracts.md) defines the catalog version, migration/projection APIs, candidate enrollment, and trusted-check inputs. Implement those representations as specified; pending workload measurements do not authorize the implementer to invent a different storage or authority model. The document is part of the implementation input, not a future research placeholder.
 
-Offline implementation note (October 31, 2026): phases 1–7 are implemented and checked offline; live compatibility/enforcement and quality promotion remain pending. See validation.md for the final checkpoint and disabled paths. The file plan includes the frozen legacy regression fixture/suite and one shared replay helper added for this milestone. The helper only loads fixtures and compares outcomes; `hooks/v2/policy.ts` remains the sole v2 selector.
+Historical offline note (October 31, 2026): phases 1–7 were implemented and checked offline with live paths held. The November 1 native integration supersedes that disabled-path status; validation.md records current functional evidence and remaining empirical quality work. The file plan includes the frozen legacy regression fixture/suite and one shared replay helper added for this milestone. The helper only loads fixtures and compares outcomes; `hooks/v2/policy.ts` remains the sole v2 selector.
 
 | Step | File | Change and rationale |
 |---|---|---|
@@ -279,7 +283,7 @@ Offline implementation note (October 31, 2026): phases 1–7 are implemented and
 | 6 | `hooks/v2/artifacts.ts` — create | Validate trusted enrollment inputs; resolve base commit, explicit artifact/context paths, requirements, and candidate IDs per the runtime contract. Preserve counters across repairs; invalidate evidence on revision/configuration changes. Include selected untracked files and deletions; reject traversal and out-of-root symlinks. |
 | 6 | `hooks/v2/verification.ts` — create | Resolve policy/manifest check IDs from provenance-verified configuration. Run only trusted literal commands through governed `$.tool.call` Bash with bounded timeout and safe directory quoting. Capture actual completion and mark covered content changed during checks stale; never treat model prose as executed evidence. |
 | 6 | `hooks/v2/review.ts` — create | Pure coordinator for authorized startup, completion, cancellation, findings, bounded repair, independent targeted closure, and explicit candidate acceptance. Apply decision-contract §8 to renew review only for the exact repaired revision. Enforce explicit checkpoints, deduplicated launch intent, durable attempt counters, and uncertain-start recovery. |
-| 6 | `hooks/v2/review-harness.ts` — create | Connect composer candidate/review/accept commands to byte-bound artifacts, governed checks, durable coordinator state, restricted fresh agent definitions, correlated native completion, and conservative recovery. Trust finite authorization, path enforcement and semantic repair scope only through explicit typed external-fact ports; absent native facts remain unavailable. |
+| 6 | `hooks/v2/review-harness.ts` — create | Connect composer candidate/review/accept commands to byte-bound artifacts, governed checks, durable coordinator state, restricted fresh agent definitions, correlated native completion, and conservative recovery. Default native completions enforce finite allowances; semantic scope uses exact composer attestation, never model claims. Retain trusted typed ports for agent-backed embeddings. |
 | 6 | `tests/v2-review.test.ts` — create | Test early/missing completion, denied spawn, false finding classes, exhausted passes, and unavailable required review. Cover authorized targeted closure, checks-only non-renewal, out-of-scope repair, new findings, stale context, and exhausted verification allowance. Test multi-turn accumulation without review, explicit checkpoints, duplicate startup/completion, and uncertain reload recovery. |
 | 6 | `tests/v2-artifacts.test.ts` — create | Test trusted/untrusted origins, ambiguous candidate selection, untracked/deleted paths, stable counters, traversal, symlink rejection, and configuration/revision invalidation. |
 | 6 | `tests/v2-verification.test.ts` — create | Test missing check IDs, unavailable provenance, denied/interrupted/timed-out/indeterminate completion, directory quoting, and covered content changed during checks. |
@@ -309,7 +313,7 @@ No production file deletion is required. `hooks/hooks.json` remains the existing
 | 6 | Both runners include review, verification, stale-artifact, and acceptance tests; no incomplete reviewer can become accepted. |
 | 7 | All prior checkpoints pass; documentation links, configuration descriptions, and rollout defaults match the implemented interfaces. |
 
-Every phase must leave current legacy behavior testable; no placeholder import may reference a module not yet introduced. Phases 1–7 now have runnable offline checkpoints, including the actual native adapter and review commands; see the [final handoff result](implementation-handoff.md#phases-57-implementation-result). Production compatibility/enforcement and quality gates remain closed.
+Every phase must leave current legacy behavior testable; no placeholder import may reference a module not yet introduced. Phases 1–7 now have runnable offline checkpoints, including the actual native adapter and review commands; see the [final handoff result](implementation-handoff.md#phases-57-implementation-result). Configured native integration is now available; held-out quality/resource certification remains separate.
 
 ### Verification and release gates
 
@@ -338,7 +342,7 @@ The predecessor product, architecture, decision contract, and harness report wer
 | Candidate enrollment and trusted-check inputs remain open | Use explicit manifest enrollment, candidate IDs, and provenance-verified user/managed-policy check definitions |
 | Targeted verification after repair has no renewal rule | Require authorized independent targeted closure for the exact repaired revision; checks alone cannot renew review |
 
-Availability durations, context bounds, environment compatibility, workload approvals, and resource units remain evidence-bearing policy data. The implementation validates them and rejects unknown mandatory values; it does not choose those facts from this brief. The supporting documents retain their narrower ownership, so future semantic changes must update the decision contract rather than hide in a UI or adapter patch.
+Evidence-only availability durations, environment compatibility, workload approvals and resource units remain evidence-bearing policy data. Context bounds belong to the host. The implementation validates them and rejects unknown mandatory values; it does not choose those facts from this brief. The supporting documents retain their narrower ownership, so future semantic changes must update the decision contract rather than hide in a UI or adapter patch.
 
 ## Additional Resources
 
@@ -355,4 +359,6 @@ Availability durations, context bounds, environment compatibility, workload appr
 
 After the initial paths qualify, consider independently deployable review adapters, verified native effort-origin mapping, response buffering, or an atomic accounting service. Each needs a named benefit and evaluation against the simpler current design. Learned selection and live quota-aware routing remain separate proposals rather than implicit extensions of v2.
 
-*Drafted with EGM.*
+### Native completion-backed workflow follow-up
+
+Implemented `hooks/v2/native-review.ts` for provenance-checked default review policy and fresh tool-less native model completions with real `maxTokens`/timeout enforcement. Keep the existing agent-backed typed embedding path. Default repair responses are data-only patches applied through governed Write on enrolled finding paths; targeted semantic scope still requires trusted attestation, never the repair model's claim. Native/pure tests and manual session evidence are recorded in validation. This replaces no numeric review allowance guard: native completions can enforce the existing finite allowance directly.

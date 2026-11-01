@@ -4893,8 +4893,8 @@
       }
     },
     {
-      "id": "production-mechanical-unqualified",
-      "example": "Migrated catalog cannot qualify automatic selection",
+      "id": "production-mechanical-configured",
+      "example": "Configured mechanical preference; no workload certification claimed",
       "catalog": "production",
       "snapshot": {
         "schemaVersion": 1,
@@ -4972,13 +4972,12 @@
         "now": "2026-10-31T12:00:00Z"
       },
       "expected": {
-        "outcome": "unavailable",
-        "reasonsInclude": [
-          "availability_unknown",
-          "compatibility_unknown",
-          "workload_unapproved"
+        "outcome": "select",
+        "reasons": [
+          "rule_selected"
         ],
-        "ruleId": "mechanical-exact"
+        "ruleId": "mechanical-exact",
+        "configurationId": "configuration/claude-haiku-5-5/level-medium/unknown"
       },
       "legacy": {
         "tier": "fast",
@@ -5051,13 +5050,13 @@
         "reasons": [
           "classification_timeout"
         ],
-        "qualification": "unverified"
+        "qualification": "configured"
       },
       "legacy": null
     },
     {
-      "id": "production-pin-unqualified",
-      "example": "Explicit pin cannot pass without evidence",
+      "id": "production-pin-configured",
+      "example": "Explicit pin to configured compatible model",
       "catalog": "production",
       "snapshot": {
         "schemaVersion": 1,
@@ -5144,10 +5143,11 @@
         "now": "2026-10-31T12:00:00Z"
       },
       "expected": {
-        "outcome": "unavailable",
-        "reasonsInclude": [
-          "availability_unknown"
-        ]
+        "outcome": "select",
+        "reasons": [
+          "pin_selected"
+        ],
+        "configurationId": "configuration/claude-sonnet-5-5/level-medium/unknown"
       }
     }
   ]

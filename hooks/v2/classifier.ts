@@ -17,7 +17,7 @@ const CRITERIA: Record<ObservationKey, Record<string, string>> = {
     implementation: 'Create a plan, design or architecture, or change code.',
     investigation: 'Determine an unknown cause or understand interacting systems.',
     review: 'Independently evaluate work for defects or verify its behavior.',
-    'simple-answer': 'Give a short literal answer from supplied or stable facts.',
+    'simple-answer': 'Give a short literal answer from supplied or stable facts, or a brief standalone social reply to a greeting or thanks. No teaching, investigation or task execution; short messages alone are not simple answers.',
     explanation: 'Teach or explain concepts, causes, comparisons or tradeoffs, or summarize.',
     unknown: UNKNOWN,
   },
@@ -46,10 +46,10 @@ const CRITERIA: Record<ObservationKey, Record<string, string>> = {
   },
 }
 const INSTRUCTIONS: Record<ObservationKey, string> = {
-  role: 'What kind of assignment is this? Classify the assignment itself, not its subject vocabulary.',
+  role: 'What kind of assignment is this? Classify the assignment itself, not its subject vocabulary. A standalone greeting or thanks is simple-answer. Approvals, confirmations and requests to continue prior work are not social replies; classify the underlying work when supplied, otherwise unknown. Do not infer simplicity from brevity.',
   specification: 'How completely is the required behavior specified?',
   verification: 'How strongly can a correct result be verified?',
-  executionSpan: 'How long and interdependent is the work?',
+  executionSpan: 'How long and interdependent is the work needed to respond? A brief standalone social reply to a greeting or thanks is bounded even when no coding task is requested. A continuation or approval with unspecified prior work is unknown, not bounded just because its text is short.',
   consequence: 'What is the effect of carrying out this task incorrectly?',
 }
 

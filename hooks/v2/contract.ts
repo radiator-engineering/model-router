@@ -127,11 +127,11 @@ export interface PolicySnapshot {
   requirements: {
     tools: boolean; imageInput: boolean
     streaming: boolean; continuation: boolean; interruptions: boolean
-    /** Conservative input estimate; null means fit cannot be established. */
+    /** Optional diagnostic estimate only; the harness/provider owns context fitting. */
     inputTokens: number | null
     /**
      * Trusted requirement that makes unknown compatibility, capability,
-     * effort or context fit block even an unchanged inherited request.
+     * or effort block even an unchanged inherited request.
      * Known hard failures always block regardless of this flag.
      */
     mandatory: boolean
@@ -193,7 +193,7 @@ export interface PolicyDecision {
   ruleId: string | null
   configuration: {id: string | null; model: string | null; effort: EffortToken} | null
   changes: {model?: string; effort?: EffortToken} | null
-  qualification: 'verified' | 'unverified' | null
+  qualification: 'verified' | 'configured' | 'unverified' | null
   experimental: boolean
   question: string | null
   blocker: string | null

@@ -2,14 +2,14 @@ import {expect,test} from 'claude-code/testing'
 import {readFileSync} from 'node:fs'
 import {loadReplay,mismatches,runCase} from '../scripts/v2-replay-lib.mjs'
 import {decide,validatePolicy} from '../hooks/v2/policy.ts'
-import {POLICY} from '../hooks/v2/policy-data.ts'
+import {POLICY,configuredPolicy,runtimeCatalog} from '../hooks/v2/policy-data.ts'
 import {effortTokenOf,fingerprint} from '../hooks/v2/contract.ts'
 import {parseCatalogV2} from '../hooks/model-catalog.ts'
 const {fixture,sources}=await loadReplay()
 const synthetic=sources.synthetic, production=sources.production
 const base=()=>structuredClone(fixture.cases.find((c:any)=>c.id==='specified-downgrade').snapshot)
 const prodBase=()=>structuredClone(fixture.cases.find((c:any)=>c.id==='production-timeout-preserves').snapshot)
-const o=(value:string,confidence=.95)=>({value,confidence})
+const o=(value:string,confidence:number|null=.95)=>({value,confidence})
 
 for(const c of fixture.cases)test(`replay ${c.catalog}: ${c.id}`,()=>{expect(runCase(c,sources).problems).toEqual([])})
 
@@ -26,14 +26,52 @@ test('the comparator rejects a wrong expectation (guards against vacuous passes)
  expect(mismatches(d,{outcome:d.outcome,reasons:d.reasons})).toEqual([])
 })
 test('production policy is valid against the migrated catalog',()=>{expect(validatePolicy(POLICY,production.catalog)).toEqual([])})
-test('every production rule is unavailable until qualified records exist',()=>{
+test('configured production rules use declared preferences without inventing workload approvals',()=>{
  const values:Record<string,string>={specification:'explicit',verification:'executable',executionSpan:'bounded',consequence:'reversible'}
  for(const rule of POLICY.rules){
   const s=prodBase();const w=rule.when as Record<string,string[]>
   s.classification={status:'ok',output:{role:o(rule.roles[0]),...Object.fromEntries(Object.keys(values).map(k=>[k,o(w[k]?.[0]??values[k])]))}}
   const d=decide(s,POLICY,production.catalog)
-  expect(d.outcome).toBe('unavailable');expect(d.reasons.includes('workload_unapproved')).toBe(true)
+  expect(['select','preserve'].includes(d.outcome)).toBe(true);expect(d.qualification).toBe('configured')
+  expect(d.candidates.every(c=>c.approvalId===null&&c.limits===null)).toBe(true)
+  const evidenceOnly=decide(s,{...POLICY,admission:'evidence'},production.catalog)
+  expect(evidenceOnly.outcome).toBe('unavailable');expect(evidenceOnly.reasons.includes('workload_unapproved')).toBe(true)
  }
+ expect(production.catalog.approvals).toEqual([]);expect(production.catalog.environments).toEqual([])
+})
+test('simple answers use confident role/span without requiring implementation specification confidence',()=>{
+ const s=prodBase();s.current={model:'gpt-6.1-sol',effort:'high',modelOrigin:'inherited',effortOrigin:'inherited'};s.controls.changeModel=true;s.controls.changeEffort=true
+ s.classification={status:'ok',output:{role:o('simple-answer',1),specification:o('explicit',.68),verification:o('executable',.88),executionSpan:o('bounded',.97),consequence:o('reversible',.7)}}
+ const d=decide(s,POLICY,production.catalog)
+ expect(d.outcome).toBe('select');expect(d.configuration?.model).toBe('claude-haiku-5-5');expect(d.configuration?.effort).toEqual({kind:'level',value:'medium'})
+ for(const field of ['role','executionSpan']){const weak=structuredClone(s);weak.classification.output[field].confidence=.79;expect(decide(weak,POLICY,production.catalog).outcome).toBe('preserve')}
+ const risky=structuredClone(s);risky.classification.output.consequence=o('consequential',1)
+ expect(decide(risky,POLICY,production.catalog).ruleId).toBe('consequential-work')
+})
+test('configured simple answers and chat prefer low effort, reuse the model preference and respect fixed effort/pins',()=>{
+ const catalog=runtimeCatalog(production.catalog),policy=configuredPolicy({},catalog),s=prodBase()
+ s.current={model:'gpt-6.1-sol',effort:'high',modelOrigin:'inherited',effortOrigin:'inherited'};s.controls.changeModel=true;s.controls.changeEffort=true
+ s.classification={status:'ok',output:{role:o('simple-answer'),specification:o('unknown',null),verification:o('judgment'),executionSpan:o('bounded'),consequence:o('unknown',null)}}
+ const d=decide(s,policy,catalog);expect(d.configuration?.model).toBe('claude-haiku-5-5');expect(d.configuration?.effort).toEqual({kind:'level',value:'low'})
+ const custom=decide(s,configuredPolicy({simpleAnswerModel:'claude-sonnet-5-5'},catalog),catalog)
+ expect(custom.configuration?.model).toBe('claude-sonnet-5-5');expect(custom.configuration?.effort).toEqual({kind:'level',value:'low'})
+ const fixed=structuredClone(s);fixed.controls.changeEffort=false
+ expect(decide(fixed,policy,catalog).configuration?.effort).toEqual({kind:'level',value:'high'})
+ const pinned=structuredClone(s);pinned.pins=[{field:'effort',value:'high',scope:'session',purpose:'execution',source:'router-command',experimental:false}]
+ expect(decide(pinned,policy,catalog).configuration?.effort).toEqual({kind:'level',value:'high'})
+ const mediumOnly=configuredPolicy({},production.catalog).rules.find(r=>r.id==='simple-answer')!
+ expect(mediumOnly.primary).toEqual(POLICY.rules.find(r=>r.id==='simple-answer')!.primary)
+})
+test('unknown and low-confidence roles never become a lightweight default',()=>{
+ const catalog=runtimeCatalog(production.catalog),policy=configuredPolicy({},catalog),s=prodBase()
+ s.classification={status:'ok',output:{role:o('unknown',null),specification:o('unknown',null),verification:o('unknown',null),executionSpan:o('bounded'),consequence:o('unknown',null)}}
+ expect(decide(s,policy,catalog).outcome).toBe('preserve')
+ s.classification.output.role=o('simple-answer',.79)
+ expect(decide(s,policy,catalog).outcome).toBe('preserve')
+})
+test('explanation without a configured rule preserves rather than inventing a lower tier',()=>{
+ const s=prodBase();s.classification={status:'ok',output:{role:o('explanation'),specification:o('inferable'),verification:o('judgment'),executionSpan:o('bounded'),consequence:o('reversible')}}
+ const d=decide(s,POLICY,production.catalog);expect(d.outcome).toBe('preserve');expect(d.reasons).toEqual(['no_matching_rule'])
 })
 test('same-priority overlapping rules make the policy invalid and block dispatch',()=>{
  const policy=structuredClone(synthetic.policy);policy.rules[2].priority=policy.rules[3].priority;policy.rules[2].roles=['implementation']
@@ -92,11 +130,16 @@ test('a later contradicting availability observation blocks selection',()=>{
  const d=decide(base(),synthetic.policy,parseCatalogV2(c))
  expect(d.outcome).toBe('unavailable');expect(d.reasons).toEqual(['model_unavailable'])
 })
-test('context fit uses the verified window, margin and reserve',()=>{
- const s=base();s.requirements.inputTokens=170000
- expect(decide(s,synthetic.policy,synthetic.catalog).reasons.includes('capability_missing')).toBe(true)
- const u=base();u.requirements.inputTokens=null
- expect(decide(u,synthetic.policy,synthetic.catalog).reasons.includes('context_fit_unknown')).toBe(true)
+test('context estimates, windows, margins and reserves do not control routing',()=>{
+ const reference=decide(base(),synthetic.policy,synthetic.catalog)
+ for(const inputTokens of [null,170000,250000,1_000_000]){
+  const s=base();s.requirements.inputTokens=inputTokens
+  const catalog=structuredClone(synthetic.catalog)
+  for(const c of catalog.compatibility)c.contextWindowTokens=null
+  const d=decide(s,synthetic.policy,catalog)
+  expect(d.outcome).toBe(reference.outcome);expect(d.configuration).toEqual(reference.configuration)
+  expect(d.candidates.every(c=>!c.passed.includes('context')&&!c.failed.some(f=>f.check==='context'))).toBe(true)
+ }
 })
 test('a failed preferred primary is not silently replaced by another primary',()=>{
  const p=structuredClone(synthetic.policy),s=base()
@@ -115,9 +158,9 @@ test('malformed policies return configuration_invalid instead of throwing',()=>{
   expect(d.outcome).toBe('unavailable');expect(d.reasons).toEqual(['configuration_invalid'])
  }
 })
-test('preservation never bypasses known context overflow or reviewer independence',()=>{
+test('host-managed context does not block preservation; required reviewer independence still does',()=>{
  const s=base();s.controls={...s.controls,changeModel:false,changeEffort:false};s.requirements.inputTokens=190000
- expect(decide(s,synthetic.policy,synthetic.catalog).outcome).toBe('unavailable')
+ expect(decide(s,synthetic.policy,synthetic.catalog).outcome).toBe('preserve')
  const r=structuredClone(fixture.cases.find((c:any)=>c.id==='reviewer-cross-family').snapshot)
  r.current={model:'syn-opus',modelOrigin:'inherited',effort:'medium',effortOrigin:'inherited'}
  r.controls.changeModel=false;r.controls.changeEffort=false
@@ -252,15 +295,21 @@ test('provider preference and stable configuration ID break primary ties determi
  rule.preference=cfg('syn-astra').id
  expect(decide(s,p,synthetic.catalog).configuration?.model).toBe('syn-astra')
 })
-test('known context overflow blocks inherited preservation even without workload approval',()=>{
+test('host-managed context remains outside routing even without workload approval',()=>{
  const s=base();s.current.model='syn-sonnet';s.current.effort='high';s.requirements.inputTokens=250000
  s.controls.changeModel=false;s.controls.changeEffort=false
  const d=decide(s,synthetic.policy,synthetic.catalog)
- expect(d.outcome).toBe('unavailable');expect(d.reasons).toContain('capability_missing')
+ expect(d.outcome).toBe('preserve');expect(d.reasons.includes('context_fit_unknown')).toBe(false)
 })
 test('pure v2 modules import no Node APIs and call no harness operations',()=>{
  for(const f of ['contract','classifier','policy','policy-data','pins']){
   const src=readFileSync(new URL(`../hooks/v2/${f}.ts`,import.meta.url),'utf8')
   expect(/from ['"]node:|require\(|\$\.|fetch\(|Date\.now|new Date\(\)/.test(src)).toBe(false)
  }
+})
+test('configured routing treats unknown inherited capabilities as unverified, not as known failures',()=>{
+ const s=prodBase();s.current.model='gpt-6.1-sol';s.current.effort='high'
+ const d=decide(s,POLICY,production.catalog)
+ expect(d.outcome).toBe('preserve');expect(d.qualification).toBe('unverified')
+ expect(d.reasons.includes('capability_missing')).toBe(false)
 })

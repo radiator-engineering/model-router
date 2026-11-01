@@ -16,7 +16,7 @@ export function harnessFixture(engine:'legacy'|'v2-shadow'|'v2'='v2') {
  const state=createHarness(controls,{...clone(saved.synthetic),classifier:{provider:null,url:'',model:'',apiKey:'private-key',deadlineMs:800},pluginVersion:'fixture',sourceRevision:null})
  state.conversationId='conversation'
  let now=Date.parse(sample.now),conversation='conversation',pins=emptyPinState('conversation')
- const facts:RequestFacts={applicationQualified:true,limitsEnforced:true,modelOrigin:'inherited',effortOrigin:'inherited',requirements:sample.requirements,environment:sample.environment,resources:sample.resources,fallback:null,shadowClassifierOptIn:false}
+ const facts:RequestFacts={routingAvailable:true,modelOrigin:'inherited',effortOrigin:'inherited',requirements:sample.requirements,environment:sample.environment,resources:sample.resources,fallback:null,shadowClassifierOptIn:false}
  const calls={classify:0,pins:0,reserve:0,save:0}
  const timers:(()=>void)[]=[]
  const ports:HarnessPorts={now:async()=>now,conversationId:async()=>conversation,sleep:()=>new Promise<void>(resolve=>timers.push(resolve)),
@@ -67,13 +67,13 @@ test('cancellation and conversation changes invalidate delayed classification',a
   expect(a.decision!.outcome).toBe('unavailable');expect(await prepareDispatch(f.state,a,0,f.ports)).toBe(false)
  }
 })
-test('unmatched inputs and unqualified enforcement never call the dimension classifier',async()=>{
- for(const patch of [{matched:false},{applicationQualified:false},{limitsEnforced:false}]){
+test('unmatched inputs and unavailable rewrites do not call the dimension classifier',async()=>{
+ for(const patch of [{matched:false},{routingAvailable:false}]){
   const f=harnessFixture();Object.assign(f.facts,patch)
   const a=await beginAssignment(f.state,{...f.input,...('matched' in patch?{matched:false}:{})},f.ports)
   expect(f.calls.classify).toBe(0)
   await evaluateStep(f.state,a,f.request,f.ports)
-  if(!f.facts.applicationQualified||!f.facts.limitsEnforced)expect(a.decision!.outcome).toBe('unavailable')
+  if(!f.facts.routingAvailable)expect(a.decision!.outcome).toBe('preserve')
  }
 })
 test('shadow classifier requires explicit opt-in and never consumes pins, reserves or applies',async()=>{
@@ -94,11 +94,11 @@ test('next intent commits only before eligible dispatch; concurrent replacement 
  expect(f.getPins().pins[0]!.value).toBe('syn-sonnet');expect(a.decision!.outcome).toBe('unavailable')
 })
 test('duplicate requests, unexpected target changes and lost eligibility hold continuation',async()=>{
- for(const scenario of ['duplicate','target','eligibility']){
+ for(const scenario of ['duplicate','target']){
   const f=harnessFixture(),a=await beginAssignment(f.state,f.input,f.ports)
   await evaluateStep(f.state,a,f.request,f.ports);ok(await prepareDispatch(f.state,a,0,f.ports))
   if(scenario==='duplicate')expect(await prepareDispatch(f.state,a,0,f.ports)).toBe(false)
-  else {if(scenario==='eligibility')f.facts.applicationQualified=false;await evaluateStep(f.state,a,{model:scenario==='target'?'syn-opus':'syn-haiku',effort:'medium'},f.ports);expect(await prepareDispatch(f.state,a,1,f.ports)).toBe(false)}
+  else {if(scenario==='eligibility')f.facts.routingAvailable=false;await evaluateStep(f.state,a,{model:'unexpected',effort:'medium'},f.ports);expect(await prepareDispatch(f.state,a,1,f.ports)).toBe(false)}
   expect(a.decision!.outcome).toBe('unavailable')
  }
 })
@@ -161,4 +161,13 @@ test('atomic reservation failure leaves next intent unconsumed',async()=>{
  const a=await beginAssignment(f.state,f.input,f.ports);await evaluateStep(f.state,a,f.request,f.ports)
  a.decision!.reservation.required=true;f.ports.reserve=async()=>false
  expect(await prepareDispatch(f.state,a,0,f.ports)).toBe(false);expect(f.getPins().pins.length).toBe(1);expect(f.calls.pins).toBe(0)
+})
+test('separately authorized subagent effort is resolved at the canonical first request, not spawn',async()=>{
+ const f=harnessFixture();f.controls.v2.routeSubagentEffort=true
+ const a=await beginAssignment(f.state,{...f.input,id:'spawn:tool',agentId:'spawn:tool',kind:'delegated'},f.ports)
+ await evaluateStep(f.state,a,f.request,f.ports);await prepareDispatch(f.state,a,-1,f.ports)
+ a.applied!.effort={kind:'unknown'};a.id='child-turn';a.agentId='child-agent'
+ await evaluateStep(f.state,a,{model:'syn-haiku',effort:'high',agentId:'child-agent',index:0},f.ports)
+ expect(a.snapshot!.controls.changeModel).toBe(false);expect(a.snapshot!.controls.changeEffort).toBe(true)
+ expect(a.applied!.effort).toEqual({kind:'level',value:'medium'});expect(await prepareDispatch(f.state,a,0,f.ports)).toBe(true)
 })

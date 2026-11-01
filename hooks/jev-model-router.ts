@@ -1,7 +1,7 @@
 import {registerRouterControls, createRouterControls, normalizeRouterMode} from './router-controls.ts'
 import catalogData from '../catalog/model-data.ts'
 import {parseCatalog,parseCatalogV2} from './model-catalog.ts'
-import {POLICY} from './v2/policy-data.ts'
+import {configuredPolicy,runtimeCatalog} from './v2/policy-data.ts'
 import {createHarness,captureLegacyClassifier,boundEngine,nativeIntake,nativeTurnStart,nativeStepPlan,nativeV2Step,nativePrepareSpawn,nativeSpawnStarted,nativeTurnComplete,nativeToolGuard,recordLegacyRequest} from './v2/harness.ts'
 import type {HarnessAdapters} from './v2/harness.ts'
 import {workflowComplete,workflowTurnStart,workflowSpawnGuard,workflowToolGuard} from './v2/review-harness.ts'
@@ -125,12 +125,13 @@ export function registerWithAdapters(on:Parameters<Register>[0],options:Paramete
   const routeMainModel = flag('routeMainModel', false)
   const controls = createRouterControls({mode:taskMode, mainModel:routeMainModel, mainEffort:routeMainEffort, subagents:routeSubagentModel, classifyTurns:flag('classifyTurns', true)}, options)
   registerRouterControls(on, controls)
-  const harness=createHarness(controls,{catalog:adapters?.catalog??parseCatalogV2(catalogData),policy:adapters?.policy??POLICY,legacyCatalog:catalog,
+  const v2Catalog=adapters?.catalog??runtimeCatalog(parseCatalogV2(catalogData))
+  const harness=createHarness(controls,{catalog:v2Catalog,policy:adapters?.policy??configuredPolicy(options,v2Catalog),legacyCatalog:catalog,
     classifier:{provider:active,url,model:modelId,apiKey,deadlineMs:Number.isSafeInteger(timeoutMs)&&timeoutMs>0?Math.min(timeoutMs,600000):800},
-    pluginVersion:null,sourceRevision:null,adapters})
+    pluginVersion:null,sourceRevision:null,logDecisions:flag('logDecisions',true),adapters})
   controls.runtime=harness
   adapters?.onRuntimeReady?.(harness)
-  on('turn.start',async($,e,next)=>{if(!await workflowTurnStart($,harness,e))await nativeTurnStart($,harness,controls,e);return next(e)}).catch(($,e)=>({turnId:e.turnId}))
+  on('turn.start',async($,e,next)=>{try{if(!await workflowTurnStart($,harness,e))await nativeTurnStart($,harness,controls,e)}catch(error){$.ui.log(`[router] Turn association failed: ${error instanceof Error?error.message:'unknown association error'}`,{to:'debug'})}return next(e)}).catch(($,e)=>({turnId:e.turnId}))
   on('turn.complete',async($,e,next)=>{try{if(!await workflowComplete($,harness,e))await nativeTurnComplete($,harness,controls,e)}catch{$.ui.log('[router] Completion metadata unavailable; no review/acceptance is inferred.',{to:'debug'})}return next(e)})
   on('tool.call',async($,e,next)=>{const deny=(next.origin.plugin&&next.origin.plugin!=='engine'?null:await workflowToolGuard($,harness,e))??await nativeToolGuard($,harness,e,next.origin.plugin);return deny?{deny}:next(e)}).catch(($,e,next)=>next.called||(!e.agentId||!Object.values(harness.workflow?.jobs??{}).some(j=>!j.completion&&(!j.agentId||j.agentId===e.agentId)))&&boundEngine(harness)!=='v2'?next(e):{deny:'unavailable: tool allowance could not be established.'})
   const logDecisions = flag('logDecisions', true)
