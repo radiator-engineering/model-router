@@ -7,8 +7,9 @@ import {ROLES} from '../task-routing.ts'
 import type {ApprovalLimits} from '../model-catalog.ts'
 
 export const CONTRACT_VERSION = 3
-export type TaskRole = typeof ROLES[number]
-export const TASK_ROLES: readonly TaskRole[] = ROLES
+/** V2-only additions must not change the frozen legacy classifier vocabulary. */
+export const TASK_ROLES = [...ROLES, 'planning', 'research', 'writing', 'summarization', 'translation', 'extraction', 'data-analysis', 'mathematics', 'operations'] as const
+export type TaskRole = typeof TASK_ROLES[number]
 
 /** Logical classifier dimensions. `unknown` never carries confidence. */
 export const DIMENSIONS = {

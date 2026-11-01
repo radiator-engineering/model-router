@@ -3,6 +3,7 @@ import {registerRouterControls,createRouterControls,parseRouterCommand,routerSta
 import {readFileSync} from 'node:fs'
 import {recordHooks} from '../scripts/test-adapter.mjs'
 import {emptyPinState} from '../hooks/v2/pins.ts'
+import {V2_MODEL_DEFAULTS} from '../hooks/v2/policy-data.ts'
 import type {RouterSettings} from '../hooks/router-controls.ts'
 import {register} from '../hooks/jev-model-router.ts'
 const initial:RouterSettings={mode:'custom',mainModel:false,mainEffort:false,subagents:true,classifyTurns:true}
@@ -47,6 +48,10 @@ test('native config describes router rows and hides unrelated settings',async()=
  expect(row.label).toBe('Router · Main model routing');expect(row.description).toContain('main conversation')
  const chat=await h.handlers['config.describe'](h.$,{key:'jev-model-router.simpleAnswerModel',provider:{plugin:'jev-model-router@inline'}},async(e:any)=>e)
  expect(chat.isHidden).toBe(false);expect(chat.label).toBe('Router · Simple answers & chat model');expect(chat.description).toContain('save defaults, not session-only overrides')
+ for(const key of Object.keys(V2_MODEL_DEFAULTS)){
+  const pref=await h.handlers['config.describe'](h.$,{key:'jev-model-router.'+key,provider:{plugin:'jev-model-router@inline'}},async(e:any)=>e)
+  expect(pref.isHidden).toBe(false)
+ }
  const foreign=await h.handlers['config.describe'](h.$,{key:'other.simpleAnswerModel',provider:{plugin:'other'}},async(e:any)=>e)
  expect(foreign.isHidden).toBe(true)
 })
@@ -165,6 +170,7 @@ function v2Setup(options:any={},store=new Map<string,unknown>(),settings:any={us
 const userOptions=(options:any)=>({pluginConfigs:{'jev-model-router':{options}}})
 test('phase-4 manifest adds conservative defaults without changing legacy defaults',()=>{
  const cfg=manifest.userConfig
+ for(const [key,value] of Object.entries(V2_MODEL_DEFAULTS))expect(cfg[key].default).toBe(value)
  for(const [key,value] of Object.entries({policyEngine:'legacy',routeSubagentEffort:false,reviewMode:'recommend',persistentModelPin:'',persistentEffortPin:'',verificationChecksJson:'{"schemaVersion":1,"checks":[]}'}))expect(cfg[key].default).toBe(value)
  expect(cfg.routeMainModel.default).toBe(false);expect(cfg.routeMainEffort.default).toBe(true);expect(cfg.routeSubagentModel.default).toBe(true);expect(cfg.taskRoutingMode.default).toBe('observe')
 })

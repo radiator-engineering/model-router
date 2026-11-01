@@ -10,20 +10,23 @@ import {performance} from 'node:perf_hooks';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const args = process.argv.slice(2);
-if (args.some(x => !['--live', '--tasks', '--help'].includes(x))) throw new Error('Usage: node scripts/smoke.mjs [--live] [--tasks]');
+if (args.some(x => !['--live', '--tasks', '--v2', '--help'].includes(x))) throw new Error('Usage: node scripts/smoke.mjs [--live] [--tasks|--v2]');
 if (args.includes('--help')) {
-  console.log('node scripts/smoke.mjs [--live] [--tasks]\nOffline: policy, catalog and task-hook tests. Live: also classify fixed prompts using TypeSafe. --tasks: evaluate the new role/category questions.\nJEV_API_KEY overrides plugin settings; JEV_MODEL optionally pins the model.');
+  console.log('node scripts/smoke.mjs [--live] [--tasks|--v2]\nOffline: policy, catalog and task-hook tests. Live: also classify fixed prompts using TypeSafe. --tasks: legacy role/category questions. --v2: v2 role coverage/confidence only; no task execution.\nJEV_API_KEY overrides plugin settings; JEV_MODEL optionally pins the model.');
   process.exit(0);
 }
 const live = args.includes('--live');
-const tasks = args.includes('--tasks');
-const mode = live ? (tasks ? 'live-tasks' : 'live') : 'offline';
+const tasks = args.includes('--tasks'),v2=args.includes('--v2');
+if(v2&&(!live||tasks))throw new Error('--v2 requires --live and cannot be combined with --tasks');
+const mode = live ? (v2?'live-v2':tasks ? 'live-tasks' : 'live') : 'offline';
 register('./test-loader.mjs', import.meta.url);
 const {cases} = await import('./test-adapter.mjs');
 const policy = await import('../hooks/policy.ts');
 const hash = text => createHash('sha256').update(text).digest('hex');
-const fixturesText = await readFile(path.join(root, 'tests/fixtures/smoke.json'), 'utf8');
-const fixtures = JSON.parse(fixturesText).filter(x=>tasks || !x.taskOnly);
+const {v2RequestBody,normalizeV2Response}=await import('../hooks/v2/classifier.ts');
+const {normalizeUsage}=await import('../hooks/v2/records.ts');
+const fixturesText = await readFile(path.join(root, v2?'tests/fixtures/v2-classification.json':'tests/fixtures/smoke.json'), 'utf8');
+const fixtures = v2?JSON.parse(fixturesText).cases:JSON.parse(fixturesText).filter(x=>tasks || !x.taskOnly);
 const {recommendTask} = await import('../hooks/task-routing.ts');
 const {parseCatalog} = await import('../hooks/model-catalog.ts');
 // Legacy consumers receive the validated legacy projection, never raw v2 JSON.
@@ -36,7 +39,7 @@ const report = {
   schemaVersion:1, id, startedAt, mode,
   commit:git('rev-parse', 'HEAD'), dirty:Boolean(git('status', '--porcelain')),
   node:process.version, policyHash, fixtureHash:hash(fixturesText),
-  questionsHash:hash(JSON.stringify(JSON.parse(policy.requestBody('typesafe',{},'hash',tasks)).questions)),
+  questionsHash:hash(JSON.stringify(JSON.parse(v2?v2RequestBody('typesafe',{prompt:''},'hash'):policy.requestBody('typesafe',{},'hash',tasks)).questions)),
   suiteHash:hash(await readFile(path.join(root, 'tests/policy.test.ts'))),
   controlsCodeHash:hash(await readFile(path.join(root,'hooks/router-controls.ts'))),
   controlsSuiteHash:hash(await readFile(path.join(root,'tests/router-controls.test.ts'))),
@@ -83,15 +86,21 @@ if (live) {
   report.provider = 'typesafe';
   for (const fixture of fixtures) {
     const start = performance.now();
-    const result = {id:fixture.id, expected:{tier:fixture.tier, risky:fixture.risky, ...(tasks ? {task:fixture.task ?? null} : {})}};
+    const result = {id:fixture.id, expected:v2?{role:fixture.expected.role}:{tier:fixture.tier, risky:fixture.risky, ...(tasks ? {task:fixture.task ?? null} : {})}};
     try {
       const response = await fetch(url, {
         method:'POST', headers:policy.requestHeaders('typesafe', key, model),
-        body:policy.requestBody('typesafe', {prompt:fixture.prompt}, model, tasks),
+        body:v2?v2RequestBody('typesafe',{prompt:fixture.prompt},model):policy.requestBody('typesafe', {prompt:fixture.prompt}, model, tasks),
         signal:AbortSignal.timeout(15000),
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const text = await response.text();
+      if(v2){
+        const observation=normalizeV2Response(text);if(!observation)throw new Error('Invalid v2 classification')
+        const payload=JSON.parse(text);result.observation=observation;result.actualModel=payload.model??null;result.usage=normalizeUsage(payload.usage)
+        result.roleCorrect=observation.role.value===fixture.expected.role;result.confidentRole=observation.role.confidence!==null&&observation.role.confidence>=.8
+        result.status=result.roleCorrect?'pass':'fail'
+      }else{
       const decision = policy.readDecision(text);
       if (!decision) throw new Error('Response contained no valid decision');
       const payload = JSON.parse(text);
@@ -106,6 +115,7 @@ if (live) {
       result.taskCorrect = tasks && fixture.task ? decision.task?.role===fixture.task.role && decision.task?.implementationCategory===fixture.task.category : null;
       if(tasks) result.recommendation=recommendTask(decision.task ?? null,catalog,undefined,.8,(decision.risky ?? 0)>.7);
       result.status = result.tierCorrect !== false && result.riskCorrect && result.taskCorrect!==false ? 'pass' : 'fail';
+      }
     } catch (error) {
       result.status = 'error';
       // Do not save request headers, keys, raw response bodies or settings.
@@ -114,7 +124,8 @@ if (live) {
     }
     result.latencyMs = performance.now()-start;
     report.classifications.push(result);
-    console.log(`${result.status.toUpperCase()} ${fixture.id}: ${result.decision?.tier ?? result.error}`);
+    console.log(`${result.status.toUpperCase()} ${fixture.id}: ${v2?result.observation?.role.value??result.error:result.decision?.tier??result.error}`);
+    if(v2&&result.status==='error'&&/^HTTP (401|403|429)$/.test(result.error))break;
   }
 }
 const failed = report.tests.filter(x => x.status !== 'pass');
@@ -129,6 +140,10 @@ report.summary = {
   riskCorrect:report.classifications.filter(x=>x.riskCorrect===true).length,
   taskChecks:report.classifications.filter(x=>x.taskCorrect!==null && x.taskCorrect!==undefined).length,
   taskCorrect:report.classifications.filter(x=>x.taskCorrect===true).length,
+  roleChecks:report.classifications.filter(x=>typeof x.roleCorrect==='boolean').length,
+  roleCorrect:report.classifications.filter(x=>x.roleCorrect===true).length,
+  confidentRoles:report.classifications.filter(x=>x.confidentRole===true).length,
+  unexpectedUnknowns:report.classifications.filter(x=>x.observation?.role.value==='unknown'&&x.expected.role!=='unknown').length,
   meanLatencyMs:report.classifications.length ? report.classifications.reduce((n,x)=>n+x.latencyMs,0)/report.classifications.length : null,
   meanTierConfidence: (()=>{
     const values=report.classifications.map(x=>x.decision?.confidence).filter(x=>typeof x==='number');

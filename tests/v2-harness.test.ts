@@ -1,6 +1,8 @@
 import {test,expect} from 'claude-code/testing'
 import {ok,rejects} from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
+import {spawnSync} from 'node:child_process'
+import {fileURLToPath} from 'node:url'
 import {createRouterControls} from '../hooks/router-controls.ts'
 import {emptyPinState,changePin} from '../hooks/v2/pins.ts'
 import {beginAssignment,createHarness,durableRuntime,evaluateStep,invalidateHarness,prepareDispatch,requestChanges,observeResponse} from '../hooks/v2/harness.ts'
@@ -26,6 +28,14 @@ export function harnessFixture(engine:'legacy'|'v2-shadow'|'v2'='v2') {
  const request={model:'syn-opus',effort:'medium'}
  return {state,controls,ports,facts,calls,timers,request,input:clone(input),sample,setPins:(v:typeof pins)=>{pins=clone(v)},getPins:()=>clone(pins),setConversation:(id:string)=>{conversation=id},advance:(ms:number)=>{now+=ms}}
 }
+test('live probe arguments fail closed before model spending on missing approval or malformed roles',()=>{
+ const script=fileURLToPath(new URL('../scripts/test-v2-live.mjs',import.meta.url))
+ for(const args of [[],['--confirm-live','--role',''],['--confirm-live','--role','__proto__'],['--confirm-live','--role','writing','--greeting']]){
+  const r=spawnSync(process.execPath,[script,...args],{encoding:'utf8',timeout:5000})
+  expect(r.status).toBe(1);expect(r.stdout).toBe('')
+  expect(/after approval|Unknown role probe|Choose one live case/.test(r.stderr)).toBe(true)
+ }
+})
 test('qualified assignment classifies once, freezes controls/pins and keeps the tool loop on one pair',async()=>{
  const f=harnessFixture(),a=await beginAssignment(f.state,f.input,f.ports)
  expect(a.prepared).toBe(true);expect(f.calls.classify).toBe(1)

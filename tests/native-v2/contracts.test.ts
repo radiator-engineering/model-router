@@ -21,6 +21,19 @@ test('clear restores new conversation controls without session.start and never t
  expect(f.store.get('model-router.pins.v2/native-conversation')).toEqual(old)
  expect(f.store.get('model-router.pins.v2/after-clear').pins).toEqual([])
 })
+test('production role rules dispatch Sonnet, Terra and Luna through actual native hooks',async($,on)=>{
+ const f=await setup($,on);let role='explanation';const requests:any[]=[]
+ on('turn.step',async function*(_,e){requests.push(e);return {turnId:e.turnId,index:e.index,answer:'ok',toolUses:[],stopReason:'end_turn',usage:null}})
+ await f.clock.advance(48*60*60*1000);await f.initialize();await $.command.run({...command(''),command:'native-default-workflow'})
+ for(const next of ['explanation','writing','extraction']){
+  role=next;const id='role-'+role
+  f.setClassification({role:{choice:role,confidence:.99},specification:{choice:'unknown'},verification:{choice:'judgment',confidence:.9},executionSpan:{choice:'bounded',confidence:.99},consequence:{choice:'reversible',confidence:.9}})
+  await $.prompt.submit({text:'Bounded '+role,wait:false,origin:{kind:'composer'}});await $.turn.start({turnId:id,text:'Bounded '+role})
+  await drain($.turn.step({...step,turnId:id,model:'gpt-6.1-sol',effort:'high'}))
+  await $.turn.complete({turnId:id,answer:'ok',durationMs:1,isAborted:false,reason:'answer'})
+ }
+ expect(requests.map(e=>[e.model,e.effort])).toEqual([['claude-sonnet-5-5','medium'],['gpt-6.1-terra','medium'],['gpt-6-luna','low']])
+})
 test('missing turn association produces a synthetic hold, never a downstream request',async($,on)=>{
  const f=await setup($,on);let calls=0;on('turn.step',async function*(){calls++;throw Error('unexpected request')})
  await f.initialize();const out=await drain($.turn.step(step));expect(calls).toBe(0);expect(out.result.toolUses).toEqual([]);expect(out.result.answer.includes('unavailable')).toBe(true)

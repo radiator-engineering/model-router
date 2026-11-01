@@ -193,3 +193,27 @@ Policy **v2-configured-2026-11-01.3** broadens v2 `simple-answer` to standalone 
 The first live `Yo` probe recognized the role at 0.99 but left span unknown and correctly preserved GPT/high. Execution-span guidance was then clarified: a standalone social reply is bounded even without a coding task; unspecified continuations/approvals remain unknown. No observation was synthesized and the 0.8 threshold was not lowered. A subsequent live `Yo` request starting on GPT/high selected **Haiku/low**, returned a social reply and reported Haiku usage. Separate live probes confirmed `Thanks!` → **Haiku/low**, but `Continue.` → unchanged **GPT/high**. These are development regressions, not held-out quality or savings measurements.
 
 Offline coverage includes classifier instructions, grouped greeting/thanks/continuation/approval fixtures, low-effort preference selection, model-option overrides, absent-low fallback, disabled effort routing, effort pins, unknown/low-confidence preservation and native-menu visibility. Final checks: **314/314** offline, **22/22** native, **48/48** replay, catalog equality, runtime strict types and plugin validation. The repeatable `test-v2-live.mjs --confirm-live --greeting` probe requires actual Haiku usage plus outgoing low-effort evidence; the separate subagent-effort probe now expects low for its simple answer. Private evidence is under `test-results/chat-*` and timestamped live logs.
+
+## Expanded role coverage — November 1, 2026
+
+Policy **v2-configured-2026-11-01.4** extends only the v2 role vocabulary to **17 roles plus unknown**. Legacy remains eight roles with unchanged request payloads/defaults and an exactly unchanged raw legacy catalog snapshot. New roles cover planning, research, writing, summarization, translation, extraction, data analysis, mathematics and operations. Existing explanation, bounded investigation and ordinary review now have explicit Sonnet rules. The [research/boundary record](../r-and-d/04-jev-options-and-role-coverage.md) documents the 255-option API ceiling, limitations of the evidence and primary-deliverable tie-breaks.
+
+Eight v2 model preferences are exposed in the native menu without changing settings scope or granting spending authority. Working defaults use Sonnet/medium for bounded explanation/analysis/review, Terra/medium for prose/research/operations, Luna/low for source-grounded transformations, and Opus/medium for planning/orchestration/extended work. Fable/high is an explicit long-horizon option, not an automatic alternative: its compatibility probe returned 429, usage credits required, so no successful compatibility was fabricated.
+
+Terra/medium and Luna/low passed bounded text plus governed Bash round trips on Claude Code 2.1.316. Their v2 records bind exact configuration, observed time, reported model and harness version, leaving proxy version/serving effort unknown and empirical approvals/environments empty. Negative tests reject future, mismatched-harness, mismatched-request-effort and wrong-reported-model evidence. These records do not promote the legacy profiles.
+
+Final validation:
+
+| Check | Result and limits |
+|---|---|
+| Offline registered suites | **320/320**; includes role vocabulary/boundaries, every configured mapping, model overrides, fixed fields/pins, resource restrictions, consequential precedence, unavailable Fable and fail-closed live-probe arguments. |
+| Native actual-registration contracts | **23/23**; production-catalog scenarios dispatch Sonnet, Terra and Luna through real hooks with external operations stubbed. |
+| Saved decision replay | **48/48**; compares policy decisions, not completed-work quality. |
+| Live Jev role fixtures | **36/36** expected role labels; **zero unexpected unknowns**, two intentional unknown continuation/approval controls. **33/34** known roles meet the unchanged 0.8 threshold; the screenshot-only description is correctly labeled visual-analysis but remains low-confidence (0.59). |
+| Classifier latency | Mean about **112 ms** in this development fixture run, not an SLA or accuracy–option-count curve. |
+| Live CLI routing | Explanation → Sonnet/medium; writing → Terra/medium; extraction → Luna/low; actual harmless Bash operations loop → Terra/medium. Existing literal replacement and separate child-effort probes also passed. |
+| Catalog/types/plugin/docs | Generated equality, runtime strict TypeScript, structural plugin validation, local Markdown paths/headings and whitespace checks passed. Existing root declaration/listing limitations remain separate. |
+
+The first classification pass used a broader data-analysis label for a formal proof (correct label under that draft, confidence 0.57). Mathematics was then made explicit rather than lowering the confidence threshold. Fixtures are development regressions, not a held-out benchmark; this iteration must not be presented as generalization evidence. Live role probes assert dispatch and simple integration, not completion-quality superiority. Native model-role configuration does not launch an independent review call or authorize operations outside normal host permissions.
+
+Private evidence: `test-results/roles-final-classifier.log`, its timestamped live-v2 report, `roles-final-native.log`, `roles-final-*` validation logs and `roles-live-*.json`. Work is local on `codex/v2-role-coverage`; credentials, proxy configuration, billing and unrelated draft reports were not changed.

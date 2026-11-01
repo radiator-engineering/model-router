@@ -8,6 +8,7 @@ import type {HarnessState} from './v2/harness.ts'
 import {initializeHarness,invalidateHarness,saveRuntime} from './v2/harness.ts'
 import {workflowCommand,workflowCheckpoint} from './v2/review-harness.ts'
 import {DEFAULT_REVIEW_POLICY_JSON,validateReviewPolicyJson} from './v2/native-review.ts'
+import {V2_MODEL_DEFAULTS} from './v2/policy-data.ts'
 
 export interface RouterSettings {
   mode: 'basic' | 'custom' | 'observe'
@@ -330,7 +331,9 @@ export function registerRouterControls(on:Parameters<Register>[0],controls:Retur
     const field=routerField(e.key,e.provider?.plugin), v2=v2Field(e.key,e.provider?.plugin)
     const {value:routerOnly}=await $.state.get(menuState)
     const simpleAnswer=e.key.split('.').at(-1)==='simpleAnswerModel'&&e.provider?.plugin?.split('@')[0]==='jev-model-router'
-    if(routerOnly&&!field&&!v2&&!simpleAnswer)return next({...e,isHidden:true})
+    const rolePreference=e.provider?.plugin?.split('@')[0]==='jev-model-router'&&Object.hasOwn(V2_MODEL_DEFAULTS,e.key.split('.').at(-1)??'')
+    if(routerOnly&&!field&&!v2&&!simpleAnswer&&!rolePreference)return next({...e,isHidden:true})
+    if(rolePreference)return next({...e,isHidden:false})
     if(simpleAnswer)return next({...e,label:'Router · Simple answers & chat model',description:'Saved default model for simple answers and standalone greetings/thanks. V2 prefers low effort when configured. Continuations and approvals are not chat; routing switches and pins still apply. Native menu edits save defaults, not session-only overrides.',isHidden:false})
     if(v2)return next({...e,label:`Router · ${v2}`,description:'V2 routes configured model/effort preferences; context and ordinary execution limits are host-managed. Shadow classification is separately opt-in. Acceptance requires current evidence; review mode alone grants no spend. Persistent pins are execution-purpose; checks trust only user/managed-policy sources.',isHidden:false})
     if(!field)return next(e)

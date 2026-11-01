@@ -16,7 +16,7 @@ The [documentation index](docs/README.md) links current usage, contributor setup
 /router main-effort on
 ```
 
-- V2 classifies role, specification, verification, execution span and consequence, then applies configured preferences subject to switches, pins and known compatibility. `qualification=configured` is not empirical workload certification; the catalog still has no fabricated environments or workload approvals.
+- V2 classifies role, specification, verification, execution span and consequence, then applies configured preferences subject to switches, pins and known compatibility. It covers 17 task roles plus an explicit unknown case; ambiguous approvals/continuations are not forced into a cheap route. `qualification=configured` is not empirical workload certification; the catalog still has no fabricated environments or workload approvals.
 - Context fitting, compaction and ordinary execution limits/provider behavior are owned by Claude Code/proxy/provider, not router admission gates. Router-owned explicit fallback grants, pins, hard restrictions and review permissions remain enforced.
 - Execution pins support next, session and persistent scope. Subagent effort has its own switch, off by default, applied at the child's first request rather than spawn.
 - Candidate review, bounded repair, independent targeted verification and explicit acceptance bind to exact artifact/configuration hashes. Default fresh native completions enforce finite output-token/time allowances; repair uses governed Write. Review mode alone never grants automatic spend.
@@ -24,6 +24,22 @@ The [documentation index](docs/README.md) links current usage, contributor setup
 - `v2-shadow` retains legacy execution without v2 workflow effects; extra classification requires explicit user/managed-policy opt-in.
 
 See [controls, candidates and rollback](docs/usage/router-controls.md#v2-controls-and-pins), [functional live evidence and remaining research](docs/v2/validation.md#configured-native-integration--november-1-2026), and [runtime boundaries](docs/v2/runtime-contracts.md#phases-57-native-integration).
+
+### V2 role defaults
+
+| Work | Configured starting preference |
+|---|---|
+| Simple answers, standalone greetings/thanks | Haiku, low where configured |
+| Exact mechanical code edits; file scouting | Haiku, medium |
+| Routine implementation, explanation, diagnosis, data analysis, mathematics and ordinary review | Sonnet, medium |
+| Original prose, current/external research and existing tool/workflow operations | Terra, medium |
+| Source-grounded summarization, translation and extraction | Luna, low |
+| Planning/architecture, orchestration and extended work | Opus, medium |
+| Visual interpretation | Astra, medium; specific image-path support still needs evidence |
+
+These are configurable hypotheses, not benchmark-certified winners. Native compatibility probes passed for `gpt-6.1-terra`/medium and `gpt-6-luna`/low without changing the legacy catalog snapshot. Fable is available as a **long-horizon preference**, requesting high effort, but the current probe returned “usage credits required”; it is not silently enabled or substituted. Consequential-work rules, explicit requirements, switches and pins take precedence. Ordinary review does not launch an independent review worker.
+
+`/router` exposes the v2 explanation, writing, source-grounded text, research, analysis/review, planning, operations and long-horizon model defaults. Menu edits save defaults; direct routing commands are session controls. See the [full role boundaries and option-count research](docs/r-and-d/04-jev-options-and-role-coverage.md) and [task routing](docs/usage/task-routing.md#v2-role-coverage).
 
 ## How it works
 
@@ -101,7 +117,7 @@ Run the sync script before launch when connected models change. You can add it t
 Run `/router` to open the native config screen:
 
 - Down selects a setting. Space or Enter changes it; Mode uses the native choice selector.
-- Successful menu changes save immediately. Escape closes the screen and retains them.
+- Successful menu changes save shared defaults immediately. Escape retains them. Direct commands such as `/router main-model off` are session-only unless saved; those overrides currently reset on plugin reload.
 - `/router status` shows the effective runtime settings.
 
 For manual model selection, turn **Main model routing off**, then choose from `/model`. Turn **Main effort routing off** too if you want to control reasoning effort yourself. Enter in `/model` saves a default; `s` selects a model for the current session.
@@ -112,7 +128,8 @@ Classification and recommendation logs describe suggestions. The main result log
 
 | File | Change here |
 |---|---|
-| [hooks/task-routing.ts](hooks/task-routing.ts) | Task definitions, classifier examples, preferences, and eligibility checks. |
+| [hooks/task-routing.ts](hooks/task-routing.ts) | Legacy task definitions, examples and preference checks. |
+| [hooks/v2/classifier.ts](hooks/v2/classifier.ts), [hooks/v2/policy-data.ts](hooks/v2/policy-data.ts) | V2 role boundaries, dimension rules and configured model preferences. |
 | [catalog/models.json](catalog/models.json) | Model IDs, verified capabilities, availability, and Claude Code compatibility. |
 | [.claude-plugin/plugin.json](.claude-plugin/plugin.json) | User-facing options and their defaults. |
 | [hooks/policy.ts](hooks/policy.ts) | Basic tier policy, confidence thresholds, risk rules, and effort decisions. |
@@ -131,6 +148,8 @@ Existing user options override model preferences declared as code defaults. The 
 
 ```sh
 node scripts/smoke.mjs                  # Local tests; no network
+node scripts/replay-v2.mjs              # Saved routing decisions; no network
+node scripts/test-v2-native.mjs         # Native hook contracts; no inference
 node scripts/smoke.mjs --live --tasks   # Also sends fixture prompts to Jev
 command claude plugin validate "$MODEL_ROUTER_DIR"
 ```
