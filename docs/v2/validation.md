@@ -1,6 +1,6 @@
 # Model router v2 validation plan
 
-Status: Initial Mods contract validation and offline implementation phases 1–3 complete; native v2 adapter, coordinator and live integration checks pending. Date: October 31, 2026.
+Status: Offline implementation phases 1–7 complete; live compatibility, enforcement and workload-quality promotion gates remain closed. Date: October 31, 2026.
 
 Validate the v2 design against the installed harness and proxy before implementing application behavior. Keep capability checks separate from model-quality experiments. This plan records the questions to answer; it does not claim the answers or authorize live model spending.
 
@@ -45,7 +45,7 @@ Set evidence-backed availability freshness durations, context margins, compatibi
 
 The pre-refactor baseline was **82/82** tests on Node **23.11.0**, with generated catalog equality passing. The frozen legacy fixture now checks four backend/request combinations, 28 tier/effort/risk results, five response-reading cases and 15 Custom recommendations without changing the legacy classifier payload.
 
-Current checkpoints:
+Historical phases 1–3 checkpoint (`8e19c72`):
 
 | Check | Result and scope |
 |---|---|
@@ -58,7 +58,15 @@ Current checkpoints:
 
 The focused type-check invocation and milestone limitations are recorded in the [handoff](implementation-handoff.md#offline-milestone-result). Reports stay under ignored `test-results/`. The catalog review exposed generated `__proto__` handling, padded-effort migration and non-JSON/cyclic payload issues; the fixes have registered regressions. Policy regressions also cover unauthorized primary substitution, scoped fallback permission, fixed/unknown-origin fields, context and reviewer independence, contradictory compatibility records, and invalid configuration.
 
-These results clear only the first offline coding milestone. The plugin manifest and active legacy hooks/defaults are unchanged. V2 engine selection, native pin persistence/application, governed checks, reviewer lifecycle and candidate acceptance are not implemented or qualified by these runs. Freshness, capacity and approvals for real workloads remain absent. No live classifier, provider, proxy-setting or credential changes were made.
+These results cleared only the first offline coding milestone. At that checkpoint, the plugin manifest and active legacy hooks/defaults were unchanged, and v2 controls/persistence/application and coordinator behavior were not yet implemented or qualified by those runs. Freshness, capacity and approvals for real workloads remain absent. No live classifier, provider, proxy-setting or credential changes were made.
+
+## Phase-4 evidence (October 31, 2026)
+
+The historical phase-4 registered smoke checkpoint was **234/234** on Node 23.11.0: the 196 prior cases, 23 additional control cases and 15 purpose-aware pin cases. Catalog generation equality and **48/48** fixed replay outcomes still pass, with no inference and no production catalog approvals. Runtime modules also pass strict/no-unchecked-index type checking against the installed **2.1.316** authoring API, and structural plugin validation passes with all affected routing/control gates registering `.catch` handlers. The missing icon and ignored/local OS metadata remain listing warnings; the repository-wide generated-config/test type-check limitation is not cleared by this narrower runtime-module check.
+
+Implemented controls persist intent, not model/reviewer execution. Session/next pin state is versioned and conversation-bound; persistent values use governed native settings with user/policy provenance. Tests cover purpose/scopes, duplicate assignment snapshots, unknown origins, reload/clear/resume, stale/concurrent/failed writes, managed constraints, inactive coordinator commands and pre-dispatch/error-handler blocking for unsupported engines. Legacy behavior/defaults and classifier payload regressions remain registered. See the [phase-4 handoff](implementation-handoff.md#phase-4-implementation-result) and [storage/control contract](runtime-contracts.md#phase-4-controls-and-pin-storage).
+
+At that checkpoint the v2 adapter/shadow path and coordinator were still pending; the phases 5–7 checkpoint below supersedes that implementation status. No live control-origin, effective-effort, proxy/fallback, reviewer-tool or model-quality qualification was performed, and `reviewMode=automatic` alone grants no launch authority.
 
 ## Implementation contract checks
 
@@ -66,7 +74,7 @@ Use the [runtime contracts](runtime-contracts.md) and the brief's [phase checkpo
 
 Verify deterministic v1 migration, exact legacy projection, unknown evidence preservation, and generated-document equality. Candidate/check tests must cover trusted origins, ambiguous selection, untracked/deleted paths, traversal and symlink rejection, unavailable check provenance, governed execution, quoting, failed or indeterminate completion, and content changed during checks.
 
-Review tests must establish that checks alone cannot renew review after repair. Exercise authorized independent targeted closure on the exact repaired revision, out-of-scope changes, new material findings, stale context, and exhausted verification allowance. Failure or missing authorization must leave acceptance blocked. These are planned checks; the prior harness probes do not establish them.
+Review tests must establish that checks alone cannot renew review after repair. Exercise authorized independent targeted closure on the exact repaired revision, out-of-scope changes, new material findings, stale context, and exhausted verification allowance. Failure or missing authorization must leave acceptance blocked. These checks now have registered pure, adapter and native coverage; the earlier supporting probes alone did not establish them.
 
 ## Checkpoints and comparisons
 
@@ -95,3 +103,19 @@ Before a constrained rollout, require no observed critical regression, no silent
 ## Research result format
 
 For each follow-up, record: question; source or experiment; date and exact environment; observed result; limitations; and affected spec sections. Distinguish a documented API capability, a locally observed behavior, and a proposed policy choice. Update the v2 specs when a finding changes the design, while preserving [research provenance](../r-and-d/README.md).
+
+## Phases 5–7 offline checkpoint
+
+October 31, 2026, Node **23.11.0**, installed authoring API/native host **2.1.316**, TypeScript **7.0.2**:
+
+| Check | Result and limits |
+|---|---|
+| `node scripts/smoke.mjs` | **299/299**, 12 explicitly registered suites; includes 17 assignment/record, 10 artifact, 13 verification and 25 review cases. Earlier legacy, controls, pin and policy suites remain registered. No live calls. |
+| `node scripts/test-v2-native.mjs` | **18/18** actual-registration contracts across two native suites, with isolated copied modules, synthetic approvals/facts and external-operation stubs. Covers shadow opt-in/no side effects, dispatch association, pin consumption, blocked requests, scoped registration, uncertain-start recovery, native completion correlation, deadlines, stale evidence, explicit acceptance and indeterminate Bash completion. No inference. |
+| Catalog/replay | Generated catalog equality; **48/48** deterministic saved outcomes. Production environments and approvals are still empty. |
+| Strict runtime types | All `hooks/*.ts` and `hooks/v2/*.ts` checked against the installed declaration with strict/no-unchecked-index, ES2023/DOM, bundler resolution and `.ts` imports. This is not a repository-wide generated-config/test typecheck. |
+| Structural validation | Actual plugin and isolated native fixture validate. Local listing warnings about missing icon and ignored OS metadata are not release qualification. |
+
+Smoke reports include suite counts, fixture/code hashes and version/source provenance. Native validation/test logs stay in ignored `test-results/`; temporary plugin directories are removed. The old 10-probe suite is supporting evidence, not a substitute for the actual registration tests.
+
+**Still closed:** real UI/headless/SDK association and origins; effective effort and context accounting; proxy/provider feature translation; first-substitution and generated-token/tool/time enforcement; reliable governed-check terminal success; observable independent reviewer identity/lifecycle/recovery; empirical classifier, execution and review quality. No live compatibility or quality trial was run, no approvals/environments were fabricated, and no credentials/proxy settings/default engine were changed. The native default therefore holds real v2 model/reviewer paths. Enabling an affected production path requires these exact compatibility/enforcement gates and the predeclared held-out quality/resource criteria above; offline implementation completion is not rollout approval.

@@ -1,8 +1,8 @@
 # Router controls
 
-Run `/router` to open Claude Code’s native configuration screen, filtered to the router’s five settings. There is no question dialog or free-text answer.
+Run `/router` to open Claude Code’s native configuration screen, filtered to the router’s settings. There is no question dialog or free-text answer.
 
-Use Down to focus a setting. Space or Enter toggles a boolean in place; Mode opens the native enum selector. Escape closes the screen. Each successful change is saved immediately to Claude Code’s plugin settings and applied to the router, so Escape retains changes. Setting descriptions are supplied through `config.describe`.
+Use Down to focus a setting. Space or Enter toggles a boolean in place; Mode opens the native enum selector. Escape closes the screen. Each successful native-config change is saved immediately to plugin settings, so Escape retains changes. Assignment-bound v2 controls affect new assignments; they do not rewrite active assignment snapshots. Setting descriptions are supplied through `config.describe`.
 
 The menu filter uses session state that survives plugin hot reloads. Running `/config` normally shows all settings.
 
@@ -43,3 +43,61 @@ Refresh immediately by running the sync script, then restart Claude Code. If the
 Normal transcript output shows one effective model/effort line per main turn, for example `[router] simple-answer · claude-haiku-5-5 · effort medium · custom`. Unchanged requests include `unchanged`; Basic fallback is identified when it applies. Subagent result lines report their model without claiming an effort setting. Raw classifications, Custom comparisons (including Observe), startup details, and classification errors go to the Claude Code debug log. Enable `claude --debug` to inspect those details. Routing describes the outgoing request, not proof of the model that ultimately served it upstream.
 
 Result lines include the classified request type. Implementation includes its category, such as `implementation/design-led`. Basic mode and missing classifications show `unclassified`; the log does not invent a task type.
+
+## V2 controls and pins
+
+Defaults remain `policyEngine=legacy`, `routeSubagentEffort=false`, `reviewMode=recommend`, no persistent pins, and an empty check-definition list. Basic/Custom/Observe are **legacy modes**, not alternatives to the engine selector.
+
+```text
+/router engine v2-shadow
+/router engine legacy
+/router review-mode off|recommend|automatic
+/router subagent-effort on|off
+/router pin model <exact-id> [--scope next|session|persistent]
+/router pin effort <low|medium|high|xhigh|max> [--scope next|session|persistent]
+/router unpin model|effort [--scope next|session|persistent]
+```
+
+Run mutation commands yourself in the composer. Model/plugin/notification text cannot mint control or enrollment authority. Direct engine/review/effort commands are session controls; native `/config` manages their saved defaults. `/router save` and `reset` still manage **legacy** defaults only, and do not erase pins.
+
+Model and effort resolve separately: assignment > session > persistent, within the same execution/review purpose. Public pins are execution-only. Next intent binds only to the eligible user execution assignment; control messages, delegated work and reviewers cannot consume it. Pins are committed before qualified dispatch and cannot overwrite concurrently replaced intent. Session/next intent is conversation-bound; clear/branch never copies it into a new identity, while same-identity reload/resume retains it. Persistent changes go through governed native settings and require observable user/managed-policy provenance. Unknown native origins stay fixed/unverified; a routing switch never overrides them.
+
+Shadow performs no v2 pin consumption, reservation, check, review or acceptance. Legacy classification remains unchanged. An **additional** dimension-classifier call requires `v2ShadowClassifier=true` in observable user or managed-policy settings; project/local/flag or malformed/ambiguous settings do not authorize it. This extra call can send the prompt to the configured classifier and consume allowance. It is off by default.
+
+Selecting `v2` is not production admission. The default native facts collector reports unknown origin/context/path/cap enforcement and holds before classifier/model dispatch. Only separately qualified, code-owned adapters and exact catalog approvals can establish those facts; there is no JSON test-mode switch.
+
+## Candidates, review and explicit acceptance
+
+```text
+/router candidate register path/to/candidate.json
+/router review [candidate-id]
+/router accept <candidate-id>
+```
+
+A candidate manifest is **data**, never a source of command/model/spending authority:
+
+```json
+{
+  "schemaVersion": 1,
+  "baseRevision": "HEAD",
+  "files": ["src/example.ts"],
+  "contextFiles": ["docs/requirements.md"],
+  "requirements": [{"id": "R1", "text": "Preserve the documented input/output invariant."}],
+  "checkIds": [],
+  "requireReview": true
+}
+```
+
+Use explicit repository-relative files, not globs/traversal. Selected untracked files and base-tracked deletions are supported; dangling/out-of-root links are rejected. Base commit resolves once. Requirements, artifact/context bytes, check configuration, reviewer configuration and policy/catalog identity bind the SHA-256 revision. Standing requirements are unioned, never waived by the manifest. Re-registering the same manifest path retains the original scope, candidate ID and attempt counters; use a different explicit manifest for a genuinely new candidate. Ordinary artifact edits require new evidence, not new counters.
+
+No-argument review selects only a single unambiguous enrolled candidate; otherwise it lists IDs and asks for a choice. `off` suppresses recommendations, not explicit or mandatory review. `recommend` does not auto-launch. `automatic` still requires a trusted, scoped workflow checkpoint and separate finite model/tool/time authorization; changing the mode grants no spending permission. The code-owned coordinator supports one full review, one authorized repair and one independent targeted closure per candidate. These later checkpoints are trusted coordinator operations, not ordinary author turn completion or model prose. The standalone default adapter supplies no qualified reviewer/repair allowance; these launch paths remain unavailable on the current build.
+
+Checks come only from `verificationChecksJson` in observable user/managed-policy settings, managed policy taking precedence. Its shape is `{"schemaVersion":1,"checks":[{"id":"test","command":"literal command","cwd":".","timeoutMs":120000}]}`. IDs do not define commands. Commands run via governed Bash, with bounded timeout and canonical shell-quoted cwd. On this build, foreground output saying PASS, absent errors or an invented `exitCode` do **not** prove success. Required executable checks block acceptance until a reliable completion contract is qualified.
+
+Reviewers use fresh nonfork definitions, explicit model/effort, read-only enrolled scope, finite turns/tool/time allowances and separate review-purpose eligibility. Unknown identity, missing authorization, stale content/configuration, incomplete checks or unsupported repair scope keep acceptance blocked. Uncertain starts are observed/reconciled, never blindly respawned. Repeating review can reconcile an observable uncertain job without buying a second pass. Checks alone never renew review after repair.
+
+Acceptance recaptures and checks current evidence. An artifact with neither required checks nor required review may be explicitly accepted as unreviewed; that is not a quality certification. No acceptance command commits or publishes anything. Review completion, ordinary “done” prose, and raw model claims cannot accept a candidate.
+
+## Rollback
+
+Run `/router engine legacy` for future assignments, disable `v2ShadowClassifier` in native config if enabled, and retain the existing Basic/Custom/Observe settings. This does not undo a request already dispatched, erase candidate counters or retroactively cancel an authorized job. Use scoped `unpin` commands to remove intent; restoring legacy leaves it staged. Engine changes mark mixed-policy candidate evidence and must not be interpreted as single-policy comparisons. Real v2 promotion remains blocked until the [live gates](../v2/validation.md#phases-57-offline-checkpoint) pass.

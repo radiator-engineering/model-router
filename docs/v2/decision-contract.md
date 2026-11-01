@@ -278,3 +278,7 @@ This draft proposes pins over soft preferences, no default substitution, a provi
 - The exact fallback alternatives, eligible failure reasons, and finite transport retry policy.
 
 Resolve these through policy data and adapter checks before enabling application. Offline replay can begin with explicit test values. This contract requires no live model experiment to review its precedence and failure behavior.
+
+## Offline implementation status — October 31, 2026
+
+Phases 1–7 now have implementation and offline checks. This does not enable production v2: legacy remains the default, real environments/approvals remain empty, native origin/context/token-cap/fallback qualification and governed-check terminal success remain unavailable, and no live quality experiment was run. Review mode alone grants no spend; unsupported author/reviewer/repair/verification paths hold. See the [final offline checkpoint and remaining live gates](validation.md#phases-57-offline-checkpoint), [runtime integration](runtime-contracts.md#phases-57-native-integration) and [usage/rollback](../usage/router-controls.md#v2-controls-and-pins) for the implemented boundary.

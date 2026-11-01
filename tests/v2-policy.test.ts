@@ -259,7 +259,7 @@ test('known context overflow blocks inherited preservation even without workload
  expect(d.outcome).toBe('unavailable');expect(d.reasons).toContain('capability_missing')
 })
 test('pure v2 modules import no Node APIs and call no harness operations',()=>{
- for(const f of ['contract','classifier','policy','policy-data']){
+ for(const f of ['contract','classifier','policy','policy-data','pins']){
   const src=readFileSync(new URL(`../hooks/v2/${f}.ts`,import.meta.url),'utf8')
   expect(/from ['"]node:|require\(|\$\.|fetch\(|Date\.now|new Date\(\)/.test(src)).toBe(false)
  }

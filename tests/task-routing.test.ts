@@ -1,5 +1,6 @@
 import {expect,test} from 'claude-code/testing'
 import {readFileSync} from 'node:fs'
+import {recordHooks} from '../scripts/test-adapter.mjs'
 import {parseCatalog} from '../hooks/model-catalog.ts'
 import {taskQuestions,readTaskClassification,recommendTask,DEFAULT_PREFERENCES,taskLabel} from '../hooks/task-routing.ts'
 import type {TaskClassification} from '../hooks/task-routing.ts'
@@ -64,14 +65,14 @@ test('nonfinite confidence cannot authorize routing',()=>{
 // Exercise actual registered hooks with the Claude runtime mocked, without model calls.
 function harness(mode:string){
  const handlers:any={};const logs:string[]=[];const debug:string[]=[];let sent:any
- register(((name:string,handler:any)=>{handlers[name]=handler}) as any,{taskRoutingMode:mode} as any)
+ register(recordHooks(handlers) as any,{taskRoutingMode:mode} as any)
  const $:any={ui:{log:(x:string,options?:any)=>(options?.to==='debug'?debug:logs).push(x),status:()=>{}},clock:{now:async()=>0,sleep:()=>new Promise(()=>{})},http:{fetch:async(_u:any,opts:any)=>{sent=JSON.parse(opts.body);return {ok:true,text:JSON.stringify({answers:answers()})}}}}
  return {handlers,$,logs,get sent(){return sent}}
 }
 test('observe hooks collect new fields but keep legacy routing',async()=>{
  const h=harness('observe')
  // Configure a key to use the HTTP path instead of the built-in classifier.
- const handlers:any={};register(((n:string,f:any)=>handlers[n]=f) as any,{taskRoutingMode:'observe',typesafeApiKey:'fake',routeMainModel:true} as any)
+ const handlers:any={};register(recordHooks(handlers) as any,{taskRoutingMode:'observe',typesafeApiKey:'fake',routeMainModel:true} as any)
  await handlers['prompt.submit'](h.$,{text:'Implement the supplied spec'},async(e:any)=>e)
  let result:any
  for await(const _ of handlers['turn.step'](h.$,{model:'sonnet',effort:'medium',index:0,turnId:'a'},async function*(e:any){result=e;yield e})){}
@@ -80,7 +81,7 @@ test('observe hooks collect new fields but keep legacy routing',async()=>{
 })
 test('apply hooks keep current model when preferred catalog entry is unverified',async()=>{
  const h=harness('custom');const handlers:any={}
- register(((n:string,f:any)=>handlers[n]=f) as any,{taskRoutingMode:'custom',typesafeApiKey:'fake',routeMainModel:true,specifiedModel:'gpt-6.1-terra'} as any)
+ register(recordHooks(handlers) as any,{taskRoutingMode:'custom',typesafeApiKey:'fake',routeMainModel:true,specifiedModel:'gpt-6.1-terra'} as any)
  await handlers['prompt.submit'](h.$,{text:'Implement supplied spec'},async(e:any)=>e)
  let result:any
  for await(const _ of handlers['turn.step'](h.$,{model:'sonnet',effort:'medium',index:0,turnId:'a'},async function*(e:any){result=e;yield e})){}
@@ -88,7 +89,7 @@ test('apply hooks keep current model when preferred catalog entry is unverified'
 })
 test('off mode omits task questions and subagent forks remain untouched',async()=>{
  const h=harness('basic');const handlers:any={}
- register(((n:string,f:any)=>handlers[n]=f) as any,{taskRoutingMode:'basic',typesafeApiKey:'fake'} as any)
+ register(recordHooks(handlers) as any,{taskRoutingMode:'basic',typesafeApiKey:'fake'} as any)
  await handlers['prompt.submit'](h.$,{text:'x'},async(e:any)=>e)
  expect(h.sent.questions.taskRole).toBeUndefined()
  const e={fork:true,model:'opus'};expect(await handlers['agent.spawn'](h.$,e,async(x:any)=>x)).toEqual(e)
@@ -107,7 +108,7 @@ test('simple answers route to Haiku while substantive explanations use tier/effo
 
 test('custom logs only the effective request and reuses its route across tool steps',async()=>{
  const h=harness('custom');const handlers:any={}
- register(((n:string,f:any)=>handlers[n]=f) as any,{taskRoutingMode:'custom',typesafeApiKey:'fake',routeMainModel:true} as any)
+ register(recordHooks(handlers) as any,{taskRoutingMode:'custom',typesafeApiKey:'fake',routeMainModel:true} as any)
  await handlers['prompt.submit'](h.$,{text:'Implement supplied spec'},async(e:any)=>e)
  const results:any[]=[]
  for(const index of [0,1,2]) {

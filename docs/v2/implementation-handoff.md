@@ -1,6 +1,6 @@
 # Model router v2 implementation handoff
 
-Status: Offline phases 1–3 implemented, October 31, 2026. Production v2 application and phases 4–7 are not implemented. These notes retain the checkpoint/comparison contract and record the first milestone below; they do not authorize live inference or rollout.
+Status: Offline phases 1–7 implemented, October 31, 2026. Real production v2 paths remain unqualified/disabled. Historical checkpoints below are superseded by the final implementation result; nothing here authorizes live inference or rollout.
 
 ## Read first
 
@@ -84,6 +84,8 @@ The next session should report the implemented phases, exact checks/case counts,
 
 ## Offline milestone result
 
+Historical phases 1–3 checkpoint, committed and pushed as `8e19c72`. Current phase-4 results follow this section.
+
 Implemented on branch `codex/v2-phases-1-3`, preserving the existing uncommitted spec/research files:
 
 1. **Phase 1:** normalized classifier/snapshot/decision contracts and independent TypeSafe/Gateway v2 questions/normalization. Unknown dimensions/confidence stay unknown. No v2 network transport is wired into the plugin.
@@ -116,8 +118,38 @@ This uses standard globals such as `structuredClone`; it does not qualify a harn
 
 **Preserved:** plugin identity/version, manifest options/defaults, active legacy Basic/Custom/Observe behavior and classifier payload. New engine/review/subagent-effort controls are not installed in this milestone; the intended `legacy`/`recommend`/`false` defaults still belong to phase 4. There are no automatic v2 shadow calls, reviewers, checks or reservations, and no new runtime dependencies, credential or proxy-setting changes.
 
-**Remaining:** phase 4 controls and identity-bound durable pins; phase 5 native adapter, actual assignment association, deadline/cancellation, request blocking and guarded shadow/application; phase 6 candidate/check/coordinator/acceptance lifecycle; phase 7 released usage documentation. Live origin/effort/forwarding/fallback/tool-completion/reviewer-restriction checks and real workload/context/freshness/resource calibration are still required before enabling any affected path. Offline success grants no production workload approval and proves no counterfactual completion benefit.
+**Remaining at the phases 1–3 checkpoint (historical):** phase 4 controls and identity-bound durable pins; phase 5 native adapter, actual assignment association, deadline/cancellation, request blocking and guarded shadow/application; phase 6 candidate/check/coordinator/acceptance lifecycle; phase 7 released usage documentation. Live origin/effort/forwarding/fallback/tool-completion/reviewer-restriction checks and real workload/context/freshness/resource calibration are still required before enabling any affected path. Offline success grants no production workload approval and proves no counterfactual completion benefit.
+
+## Phase-4 implementation result
+
+Phase 4 adds the declared conservative options and composer-only controls, scoped execution pin/unpin commands, conversation-bound version-2 pin persistence/migration, and a shared pure purpose/field/scope resolver. Pure assignment snapshots preserve next-assignment consumption and tool-loop stability without reimplementing eligibility. Execution pins do not choose full or targeted reviewers; unknown native origins remain unknown.
+
+Persistent commands use the governed native configuration path and verify the exact effective trusted user/policy value. Session/next commands serialize writes and reject identity changes or storage errors rather than overwriting unread intent. Session end invalidates cached context; same-identity reload/resume restores persisted intent, while a new identity reads a different record. The self-contained host contract and top-level typed host adapters pass the current Mods loader's restrictions.
+
+The runtime remains **legacy**. Pins and the new effort/review controls are explicitly staged, not applied to legacy requests. Legacy turns do not consume next pins. V2/shadow cannot be selected from the new controls yet; unsupported startup engine values are held before prompt, model or spawn dispatch, with fail-closed error handlers. Candidate/register/review/accept syntax is trusted-origin checked but returns unavailable without reading a manifest or executing checks/review. No standing review authorization is inferred from `reviewMode=automatic`.
+
+Checkpoint (Node 23.11.0):
+
+| Check | Result |
+|---|---|
+| `node scripts/smoke.mjs` | **234/234**: policy 42; catalog 23; task routing 17; router controls 38; frozen legacy 4; v2 classifier 12; v2 policy/replay 83; v2 pins 15. |
+| `node scripts/build-catalog.mjs --check` | Passed; no catalog facts or production approvals changed. |
+| `node scripts/replay-v2.mjs` | **48/48** unchanged fixed outcomes; no inference. |
+| Current-host hook type check | Passed against the **2.1.316** API emitted by the installed authoring skill, strict/no-unchecked-index settings and explicit `.ts` imports; includes the actual entry point, controls and self-contained state contract. |
+| `claude plugin validate` | Passed; routing/control gating hooks register `.catch` handlers. Missing-icon/local-OS-metadata listing warnings remain. |
+
+The phase-4 control suite adds 23 cases to the 15 legacy control regressions; the separate 15-case pin suite is explicitly registered and fingerprinted by the smoke runner. Checks cover trusted/unknown origins, per-field scopes/purpose, migration, same/new conversation identity, failed or concurrent writes, stale identities, managed/default provenance, exact persistent-pin acknowledgement, inactive workflow controls, zero forbidden dispatch and guard error handlers. Offline hook recorders now capture `.catch` registrations rather than forcing production guards to accommodate incomplete test doubles.
+
+No inference, dependency installation, account/credential/proxy changes, native manual-selection mapping or v2 model/effort application was performed. Plugin identity/version and all earlier option defaults remain unchanged. The root generated-config type check still has the documented import/Node/test declaration limitations; the current-host runtime-module check is separate, not a claim that all tests type-check or that live provider enforcement works.
+
+**Next at the phase-4 checkpoint (historical):** phase 5 must implement real assignment association, trusted facts/origins, deadline/cancellation generations, pin consumption at qualified boundaries, guarded v2/shadow dispatch and decision records, plus the isolated native v2 suite. It must preserve these phase-4 safety gates until an affected path qualifies. Phase 6 still owns enrollment/check execution/reviewer lifecycle/acceptance, and phase 7 owns released usage documentation.
 
 ## Suggested next-session request
 
-> Read docs/v2/implementation-handoff.md and its linked contracts. Continue with phase 4 of the v2 brief: durable purpose-aware pins and controls with registered offline tests. Preserve the completed phase 1–3 checks, existing work, legacy behavior/defaults and classifier payload. Keep application and automatic review disabled; do not run live inference, invent approvals, change credentials/proxy settings or claim native enforcement before the phase 5–6 and live gates. Report exact counts and remaining limitations.
+> Historical phase-5 continuation prompt, now completed offline: Read docs/v2/implementation-handoff.md and its linked contracts. Implement phase 5 with the actual typed harness adapter, qualified assignment association, cancellation/deadline handling, guarded dispatch/shadow evaluation, comparison records and registered pure/native offline tests. Preserve the phase 1–4 checks, legacy behavior/defaults and classifier payload. Do not run live inference, invent approvals, change credentials/proxy settings or enable unqualified v2 paths. Keep coordinator execution and automatic review disabled until phase 6 and its authority/evidence gates. Report exact counts and remaining limitations.
+
+## Phases 5–7 implementation result
+
+October 31, 2026: the assignment kernel/native adapter, bounded records, artifact enrollment/check bridge, pure review/repair/targeted coordinator, native lifecycle/recovery/acceptance bridge and usage/rollback documentation are implemented. The actual registration passes the offline/native checks recorded in [validation](validation.md#phases-57-offline-checkpoint): **299/299** offline, **18/18** isolated native, **48/48** replay, catalog equality, strict runtime types and structural validation. The phase-4 result above is historical, not the current implementation boundary.
+
+No live inference, new runtime dependency, production approval/environment, credential/proxy change or default-engine promotion was made. Legacy Basic/Custom/Observe and the legacy classifier payload remain covered. Real v2 dispatch/review stay unavailable on the shipped facts/authorization adapter; required executable checks cannot pass on this build's Bash schema. Missing semantic repair scope cannot authorize targeted renewal. `automatic` alone buys no work. Live compatibility/enforcement and held-out quality/resource gates remain prerequisites to enabling affected paths. Repository-wide generated-config/test typing and listing readiness are not cleared by runtime checks. Work after commit `8e19c72` remains local until separately authorized for publication.

@@ -15,6 +15,52 @@
     "routing"
   ],
   "userConfig": {
+    "policyEngine": {
+      "type": "string",
+      "title": "Routing policy engine",
+      "description": "Legacy is the default. Shadow keeps legacy execution active; v2 holds until exact native path, origin, context and cap enforcement qualify.",
+      "default": "legacy",
+      "options": [
+        "legacy",
+        "v2-shadow",
+        "v2"
+      ]
+    },
+    "routeSubagentEffort": {
+      "type": "boolean",
+      "title": "Allow v2 subagent effort routing",
+      "description": "Independent permission for a future qualified v2 adapter. Legacy routing does not apply subagent effort.",
+      "default": false
+    },
+    "reviewMode": {
+      "type": "string",
+      "title": "Independent review mode",
+      "description": "Review preference only: automatic still needs explicit standing authorization, a qualified reviewer and a candidate checkpoint. The shipped adapter has no qualified reviewer or finite launch allowance; changing this preference alone never launches work.",
+      "default": "recommend",
+      "options": [
+        "off",
+        "recommend",
+        "automatic"
+      ]
+    },
+    "persistentModelPin": {
+      "type": "string",
+      "title": "Persistent execution model pin",
+      "description": "Exact model ID for future execution assignments, not reviewers. Trusted user/managed-policy sources only; staged until v2 application qualifies.",
+      "default": ""
+    },
+    "persistentEffortPin": {
+      "type": "string",
+      "title": "Persistent execution effort pin",
+      "description": "Named effort for future execution assignments; does not pin reviewers or bypass fixed fields/eligibility. Staged until v2 application qualifies.",
+      "default": ""
+    },
+    "verificationChecksJson": {
+      "type": "string",
+      "title": "Trusted verification check definitions",
+      "description": "Versioned check definitions from observable user or managed-policy settings only. Project/local/flag values grant no authority. Commands run only at authorized candidate checkpoints; unknown Bash completion never certifies a pass.",
+      "default": "{\"schemaVersion\":1,\"checks\":[]}"
+    },
     "typesafeApiKey": {
       "type": "string",
       "title": "TypeSafe API key",
@@ -189,6 +235,12 @@
       "title": "Simple answer model",
       "description": "Custom preference for spelling, small literal counts and straightforward stable facts; substantive explanations use tier/effort assessment.",
       "default": "claude-haiku-5-5"
+    },
+    "v2ShadowClassifier": {
+      "type": "boolean",
+      "title": "Opt into v2 shadow classification",
+      "description": "Additional dimension-classifier calls in shadow mode, only when explicitly set in observable user or managed-policy settings. Does not enable dispatch, pins, checks or reviews.",
+      "default": false
     }
   },
   "types": "./types/router-state.d.ts"

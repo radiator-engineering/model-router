@@ -1,6 +1,6 @@
 # Development guide
 
-Use this guide to run and check a checkout of the current plugin. See [router controls](usage/router-controls.md) and [task routing](usage/task-routing.md) for its behavior. The [v2 specs](v2/product.md) describe the proposed redesign.
+Use this guide to run and check a checkout of the current plugin. See [router controls](usage/router-controls.md) and [task routing](usage/task-routing.md) for its behavior. The [v2 specs](v2/product.md) describe the implemented offline v2 contract and the still-closed production promotion gates.
 
 ## Requirements and checkout
 
@@ -82,3 +82,29 @@ A failed expected label remains a classification failure even if a confidence ch
 Keep reusable setup instructions, tests, portable configuration, and bounded compatibility evidence in the public repository. Put workstation notes and unredacted research in ignored `/local/`. Native personal project settings at `.claude/settings.local.json` are also ignored. Keep credentials in their existing user-level stores.
 
 The ignore rules also exclude generated declarations, graph caches, environment files, logs, and test reports. They do not exclude shared plugin configuration or the runtime model catalog. See the [documentation index](README.md) for public guides and the [research index](r-and-d/README.md) for source provenance.
+
+## Offline v2 checks and release boundary
+
+Use Node 23.6+ (the recorded checkpoint used 23.11.0):
+
+```sh
+node scripts/smoke.mjs
+node scripts/build-catalog.mjs --check
+node scripts/replay-v2.mjs
+node scripts/test-v2-native.mjs
+claude plugin validate .
+git diff --check
+```
+
+The native runner copies the actual registration/modules into a new temporary plugin with clearly synthetic qualification data, stubs external operations, saves private logs under ignored `test-results/` and removes its temporary directory. It installs nothing and performs no inference. Do not load the fixture as an interactive plugin or copy its approvals into production.
+
+Runtime-only strict typecheck (use the actual declaration path emitted by the installed plugin-authoring skill):
+
+```sh
+tsc --ignoreConfig --noEmit --strict --noUncheckedIndexedAccess \
+  --target es2023 --lib es2023,dom --module esnext --moduleResolution bundler \
+  --allowImportingTsExtensions --skipLibCheck \
+  "$AUTHORING_TYPES/claude-code.d.ts" hooks/*.ts hooks/v2/*.ts
+```
+
+The root generated-config/test declaration limitations remain; this narrower check does not clear `tsc -p . --noEmit`. No new dependency is needed. Real provider tests, settings changes or consuming usage queries are not part of these commands. Before production v2 promotion, establish exact origin/context/cap/fallback and independent-review compatibility, reliable executable-check evidence, then the declared quality/resource gates in [validation](v2/validation.md#phases-57-offline-checkpoint). Keep `policyEngine=legacy` until admission exists; rollback instructions are in [controls](usage/router-controls.md#rollback).

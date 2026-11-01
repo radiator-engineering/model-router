@@ -42,3 +42,7 @@ Status: **Proposed v2 design baseline, October 31, 2026.** These documents do no
 The [Claude Mods harness validation](r-and-d/03-claude-code-mods-harness-validation.md) records official capabilities, primary community evidence, local offline results, and the remaining live checks.
 
 Update the specs when research changes a design decision. Preserve source provenance and record new findings separately, with their sources, tested versions, and limits.
+
+## V2 implementation checkpoint
+
+Phases 1–7 are implemented offline; production promotion is still gated. Start with [controls, candidates and rollback](usage/router-controls.md#v2-controls-and-pins), [actual validation evidence](v2/validation.md#phases-57-offline-checkpoint) and [native runtime boundaries](v2/runtime-contracts.md#phases-57-native-integration). The [development guide](development.md#offline-v2-checks-and-release-boundary) lists reproducible checks. Legacy is still the default, and synthetic native/replay evidence is not a workload approval.

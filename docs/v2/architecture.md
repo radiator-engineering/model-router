@@ -6,7 +6,7 @@ The [official v2 design brief](design-brief.md) selects the architecture and fil
 
 The architecture separates task observation, deterministic selection, and execution. Jev classifies assignments. The policy engine selects configurations from an immutable snapshot. A harness adapter applies or blocks the decision, and the orchestrator manages tools, review, repair, and acceptance.
 
-The [decision contract](decision-contract.md) governs precedence and failure behavior. The schemas below describe logical interfaces to implement after harness validation. The [runtime contracts](runtime-contracts.md) define concrete catalog storage/reader APIs, candidate enrollment, and trusted checks. They do not claim that the current plugin or Jev endpoint already uses these shapes.
+The [decision contract](decision-contract.md) governs precedence and failure behavior. The schemas below describe logical interfaces; concrete implemented shapes are in hooks/v2 and the runtime contracts. The [runtime contracts](runtime-contracts.md) define concrete catalog storage/reader APIs, candidate enrollment, and trusted checks. They are not a claim that a live Jev endpoint or provider supports these shapes; native/runtime qualification is separate.
 
 The [Mods validation report](../r-and-d/03-claude-code-mods-harness-validation.md) establishes an in-process implementation path. V2 selects harness and review-coordinator modules inside the existing plugin. Keeping them separate from pure selection is a component boundary, not a requirement for a separate service. A companion Mod remains a future alternative.
 
@@ -167,3 +167,7 @@ Hooks active when an agent is spawned can be skipped on its loop. Put reviewer r
 First evaluate v2 in shadow mode alongside the active policy. The proposed `policyEngine` selects `legacy`, `v2-shadow`, or `v2`, defaulting to legacy. Current Observe mode still applies Basic routing and must retain that meaning. Keep its classifier request unchanged; a separate live v2 classification can add explicit evaluation overhead. Shadow records never appear as applied changes. Enable application only after the adapter can enforce the outcomes required by its policy. Keep legacy routing as an explicit rollback selection.
 
 The [validation plan](validation.md) covers hook support, pin origins, identity and effort translation, review orchestration, telemetry, and quality comparisons. Those findings can change the integration design while preserving explicit control and observable failure behavior.
+
+## Offline implementation status — October 31, 2026
+
+Phases 1–7 now have implementation and offline checks. This does not enable production v2: legacy remains the default, real environments/approvals remain empty, native origin/context/token-cap/fallback qualification and governed-check terminal success remain unavailable, and no live quality experiment was run. Review mode alone grants no spend; unsupported author/reviewer/repair/verification paths hold. See the [final offline checkpoint and remaining live gates](validation.md#phases-57-offline-checkpoint), [runtime integration](runtime-contracts.md#phases-57-native-integration) and [usage/rollback](../usage/router-controls.md#v2-controls-and-pins) for the implemented boundary.

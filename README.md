@@ -4,7 +4,18 @@ A Claude Code mod that uses [TypeSafe’s Jev](https://typesafe.ai/) to choose m
 
 This project started from the Jev model router in [Daniel (San) Ávila’s claude-code-templates](https://github.com/davila7/claude-code-templates/tree/8f1f608e9396ba7e70d73372cabc85c028c2f79d/cli-tool/components/mods/productivity/jev-model-router). It retains the original MIT license. See [Credits](#credits).
 
-The [documentation index](docs/README.md) links current usage, contributor setup, and research. The [v2 design brief](docs/v2/design-brief.md) defines the proposed redesign; this README describes the current plugin.
+The [documentation index](docs/README.md) links current usage, contributor setup, and research. The [v2 design brief](docs/v2/design-brief.md) defines the v2 contract; this README separates the default legacy path from the implemented, qualification-gated v2 path.
+
+## V2 implementation and release gates
+
+Offline implementation covers phases 1–7. **Legacy remains the default; real v2 dispatch and reviewer paths are not qualified or enabled.** The production catalog has no v2 environments or workload approvals. Offline synthetic success is not production admission.
+
+- `/router engine legacy|v2-shadow|v2` selects the engine for **new** assignments. Shadow keeps legacy execution and makes proposals only. Its extra dimension-classifier call is off unless `v2ShadowClassifier=true` is explicitly present in observable user/managed-policy settings.
+- Execution pins support next, session and persistent scope. They do not select reviewers or override fixed fields/eligibility.
+- Candidate registration and explicit acceptance bind to exact artifact/configuration hashes. Review requires separate finite authorization and an independently qualified fresh reviewer. Ordinary edits and “done” messages never launch review or accept work.
+- This native build cannot attest successful Bash completion or enforce a per-request generated-token ceiling through the exposed rewrite API. Required executable checks therefore remain unavailable, not passed; unqualified model paths hold before dispatch.
+
+See [controls, candidates and rollback](docs/usage/router-controls.md#v2-controls-and-pins), [validation evidence and remaining live gates](docs/v2/validation.md#phases-57-offline-checkpoint), and [runtime boundaries](docs/v2/runtime-contracts.md#phases-57-native-integration).
 
 ## How it works
 

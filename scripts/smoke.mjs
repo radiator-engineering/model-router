@@ -50,7 +50,7 @@ const report = {
   tests:[], classifications:[],
 };
 // Each suite must register cases; a runner that never imported a suite is not verification.
-const SUITES = ['policy', 'catalog', 'task-routing', 'router-controls', 'legacy-regression', 'v2-classifier', 'v2-policy'];
+const SUITES = ['policy', 'catalog', 'task-routing', 'router-controls', 'legacy-regression', 'v2-classifier', 'v2-policy', 'v2-pins', 'v2-harness', 'v2-artifacts', 'v2-verification', 'v2-review'];
 report.suites = [];
 for (const suite of SUITES) {
   const file = `tests/${suite}.test.ts`;
@@ -66,7 +66,7 @@ for (const {name, fn, suite} of cases) {
 }
 for (const s of report.suites) if (!s.cases) report.tests.push({name:`${s.suite} registered no cases`, suite:s.suite, status:'fail', latencyMs:0});
 report.fingerprints = {};
-for (const file of ['hooks/v2/contract.ts', 'hooks/v2/classifier.ts', 'hooks/v2/policy.ts', 'hooks/v2/policy-data.ts', 'scripts/build-catalog.mjs', 'scripts/v2-replay-lib.mjs', 'scripts/replay-v2.mjs', 'tests/fixtures/v2-decisions.json', 'tests/fixtures/v2-classification.json', 'tests/fixtures/legacy-regression.json', 'tests/fixtures/catalog-v1-migration.json', 'tests/fixtures/catalog-v2-migrated.json'])
+for (const file of ['.claude-plugin/plugin.json', 'types/router-state.d.ts', 'hooks/v2/pins.ts', 'hooks/v2/harness.ts', 'hooks/v2/records.ts', 'hooks/v2/artifacts.ts', 'hooks/v2/verification.ts', 'hooks/v2/review.ts', 'hooks/v2/review-harness.ts', 'scripts/test-v2-native.mjs', 'tests/native-v2/helpers.ts', 'tests/native-v2/contracts.test.ts', 'tests/native-v2/review.test.ts', 'hooks/v2/contract.ts', 'hooks/v2/classifier.ts', 'hooks/v2/policy.ts', 'hooks/v2/policy-data.ts', 'scripts/build-catalog.mjs', 'scripts/test-adapter.mjs', 'scripts/v2-replay-lib.mjs', 'scripts/replay-v2.mjs', 'tests/fixtures/v2-decisions.json', 'tests/fixtures/v2-classification.json', 'tests/fixtures/legacy-regression.json', 'tests/fixtures/catalog-v1-migration.json', 'tests/fixtures/catalog-v2-migrated.json'])
   report.fingerprints[file] = hash(await readFile(path.join(root, file)));
 if (live) {
   let options = {};

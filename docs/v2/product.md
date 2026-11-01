@@ -2,7 +2,7 @@
 
 Status: Draft design baseline. Date: October 31, 2026.
 
-The [v2 design brief](design-brief.md) is the official design entry point. This supporting spec owns user behavior; the brief selects the control interfaces and delivery sequence. New syntax described there is proposed and not implemented.
+The [v2 design brief](design-brief.md) is the official design entry point. This supporting spec owns user behavior; the brief selects the control interfaces and delivery sequence. The controls and candidate syntax are implemented offline; real model/reviewer application remains qualification-gated. See the implementation-status section below.
 
 V2 routes software and product assignments through a small, inspectable policy. It uses Jev to classify the work, checks model eligibility, and selects a qualified configuration while respecting manual control. It makes model selection, preservation, clarification, and failure visible to the user.
 
@@ -94,3 +94,7 @@ V2 includes classifier observations, deterministic policy, shared eligibility ch
 Before application, demonstrate that all four outcomes work, automatic paths share eligibility checks, pins and fixed fields survive routing, and model/effort remain stable through the tool loop. Required review must never become implicit approval when it cannot run. Shadow results must remain distinct from applied requests.
 
 Offline replay validates decision behavior. [Harness research](../r-and-d/03-claude-code-mods-harness-validation.md) identifies supported Mod primitives and records offline native-host probes; it does not establish provider translation or review quality. Paired execution trials evaluate completed work, including repair, latency, and provider consumption. A small pilot can justify a constrained rollout; it cannot establish general reliability. The [validation plan](validation.md) defines the evidence needed before promotion. The [decision contract](decision-contract.md) owns detailed routing semantics.
+
+## Offline implementation status — October 31, 2026
+
+Phases 1–7 now have implementation and offline checks. This does not enable production v2: legacy remains the default, real environments/approvals remain empty, native origin/context/token-cap/fallback qualification and governed-check terminal success remain unavailable, and no live quality experiment was run. Review mode alone grants no spend; unsupported author/reviewer/repair/verification paths hold. See the [final offline checkpoint and remaining live gates](validation.md#phases-57-offline-checkpoint), [runtime integration](runtime-contracts.md#phases-57-native-integration) and [usage/rollback](../usage/router-controls.md#v2-controls-and-pins) for the implemented boundary.

@@ -4,9 +4,10 @@
  */
 import {validateCatalog} from '../model-catalog.ts'
 import type {CatalogV2, Configuration, WorkloadApproval} from '../model-catalog.ts'
-import {CONTRACT_VERSION, DIMENSIONS, DIMENSION_KEYS, PIN_SCOPES, TASK_ROLES, canonicalEffort, confident, effortTokenOf, fingerprint, isId, isObject, validateSnapshot} from './contract.ts'
+import {CONTRACT_VERSION, DIMENSIONS, DIMENSION_KEYS, TASK_ROLES, canonicalEffort, confident, effortTokenOf, fingerprint, isId, isObject, validateSnapshot} from './contract.ts'
 import type {CandidateCheck, CheckName, Dimension, EffortToken, Pin, PolicyDecision, PolicySnapshot, ReasonCode, ReviewDisposition, TaskRole} from './contract.ts'
 import type {PolicyData, WorkloadRule} from './policy-data.ts'
+import {resolvePinFields} from './pins.ts'
 
 type Candidate = {id: string | null; model: string | null; effort: EffortToken}
 type Mode = {automatic: boolean; experimental: boolean; ruleId: string | null}
@@ -204,16 +205,10 @@ export function decide(snapshot: PolicySnapshot, policy: PolicyData, catalog: Ca
   const taskRole: TaskRole | null = s.assignment.purpose === 'review' ? 'review'
     : s.assignment.requestedRole ?? (out && confident(out.role, threshold) ? out.role.value as TaskRole : null)
 
-  // 1. Pins within the assignment purpose, field by field, most specific scope first.
-  const pinned: Partial<Record<'model' | 'effort', Pin>> = {}
-  for (const field of ['model', 'effort'] as const) {
-    for (const scope of PIN_SCOPES) {
-      const pins = s.pins.filter(p => p.purpose === s.assignment.purpose && p.field === field && p.scope === scope)
-      if (new Set(pins.map(p => JSON.stringify([p.value, p.experimental]))).size > 1)
-        return {...base, outcome: 'clarify', reasons: ['override_conflict'], question: `Conflicting ${scope} ${field} pins: ${pins.map(p => p.value).join(', ')}. Which one applies?`}
-      if (pins.length) { pinned[field] = pins[0]; break }
-    }
-  }
+  // 1. Shared purpose/field/scope resolution; a tie never chooses arbitrarily.
+  const {fields: pinned, conflict} = resolvePinFields(s.pins, s.assignment.purpose)
+  if (conflict) return {...base, outcome: 'clarify', reasons: ['override_conflict'],
+    question: `Conflicting ${conflict.scope} ${conflict.field} pins: ${conflict.pins.map(p => p.value).join(', ')}. Which one applies?`}
   const pinEffort = pinned.effort ? effortTokenOf(pinned.effort.value, 'pin') : null
   // Fixed fields: routing switch off, or an origin the adapter could not establish.
   const modelUnknownOrigin = s.current.modelOrigin === 'unknown', effortUnknownOrigin = s.current.effortOrigin === 'unknown'
