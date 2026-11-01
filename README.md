@@ -4,6 +4,27 @@ A Claude Code mod that uses [TypeSafe’s Jev](https://typesafe.ai/) to choose m
 
 This project started from the Jev model router in [Daniel (San) Ávila’s claude-code-templates](https://github.com/davila7/claude-code-templates/tree/8f1f608e9396ba7e70d73372cabc85c028c2f79d/cli-tool/components/mods/productivity/jev-model-router). It retains the original MIT license. See [Credits](#credits).
 
+The [documentation index](docs/README.md) links current usage, contributor setup, and research. The [v2 design brief](docs/v2/design-brief.md) defines the v2 contract.
+
+## V2 routing and bounded review
+
+**V2 works on the native Claude Code path; legacy remains the default.** Enable it for new assignments:
+
+```text
+/router engine v2
+/router main-model on
+/router main-effort on
+```
+
+- V2 classifies role, specification, verification, execution span and consequence, then applies configured preferences subject to switches, pins and known compatibility. `qualification=configured` is not empirical workload certification; the catalog still has no fabricated environments or workload approvals.
+- Context fitting, compaction and ordinary execution limits/provider behavior are owned by Claude Code/proxy/provider, not router admission gates. Router-owned explicit fallback grants, pins, hard restrictions and review permissions remain enforced.
+- Execution pins support next, session and persistent scope. Subagent effort has its own switch, off by default, applied at the child's first request rather than spawn.
+- Candidate review, bounded repair, independent targeted verification and explicit acceptance bind to exact artifact/configuration hashes. Default fresh native completions enforce finite output-token/time allowances; repair uses governed Write. Review mode alone never grants automatic spend.
+- Required executable checks use governed Bash with nonce-bound terminal exit receipts. Prose saying PASS is not evidence. Ordinary edits and “done” messages neither launch review nor accept work.
+- `v2-shadow` retains legacy execution without v2 workflow effects; extra classification requires explicit user/managed-policy opt-in.
+
+See [controls, candidates and rollback](docs/usage/router-controls.md#v2-controls-and-pins), [functional live evidence and remaining research](docs/v2/validation.md#configured-native-integration--november-1-2026), and [runtime boundaries](docs/v2/runtime-contracts.md#phases-57-native-integration).
+
 ## How it works
 
 ```text
@@ -16,9 +37,9 @@ Your prompt → Jev classification → routing policy → Claude Code request
 
 Claude Code supplies the agent loop and tools. The router can change the model and reasoning effort on the first request of a main turn, or the model when Claude Code spawns a subagent. VibeProxy is optional; it lets the harness reach models from several providers through one local endpoint.
 
-Jev answers tier, effort, risk, task type, and implementation category questions in one classification request. The router reuses the main turn’s decision through that turn’s tool loop. It does not reclassify every tool call.
+Legacy asks tier, effort, risk, task type and implementation category in one classification request. V2 uses its separate role/specification/verification/span/consequence questions. The router reuses the main turn’s decision through that turn’s tool loop. It does not reclassify every tool call.
 
-## Routing modes
+## Legacy routing modes
 
 | Mode | What runs |
 |---|---|
@@ -41,15 +62,16 @@ Custom preferences:
 | Simple answers: spelling, small counts, straightforward stable facts | Haiku 5.5 |
 | Investigation, review, substantive explanation | Basic tier and effort policy |
 
-These are editable preferences, not benchmark rankings or a measured cost optimizer. The router applies a preference only when confidence, risk, availability, and tool compatibility checks permit it. An unverified preferred model or low-confidence preference retains the current request; consequential tasks use the original risk policy. Subagents have no effort parameter, so the router cannot enforce the orchestration model/medium-effort combination there.
+These are editable preferences, not benchmark rankings or a measured cost optimizer. The router applies a preference only when confidence, risk, availability, and tool compatibility checks permit it. An unverified preferred model or low-confidence preference retains the current request; consequential tasks use the original risk policy. Legacy does not apply subagent effort preferences; v2 supports them with the separate `routeSubagentEffort` permission.
 
 ## Setup
 
-Use a Claude Code version with function-hook Mods support. This copy has been validated with **Claude Code 2.1.314**. Python 3 is needed only for model-menu synchronization. Node 23.6+ runs the tests and catalog generator. No package installation is required for this repository.
+Use a Claude Code version with function-hook Mods support. This copy has been validated with **Claude Code 2.1.316**. Python 3 is needed only for model-menu synchronization. Node 23.6+ runs the tests and catalog generator. No package installation is required for this repository.
 
 ```sh
-git clone git@github.com:radiator-engineering/model-router.git "$HOME/Documents/repos/model-router"
-export MODEL_ROUTER_DIR="$HOME/Documents/repos/model-router"
+git clone https://github.com/radiator-engineering/model-router.git
+cd model-router
+export MODEL_ROUTER_DIR="$PWD"
 CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 command claude --plugin-dir "$MODEL_ROUTER_DIR"
 ```
 
@@ -84,7 +106,7 @@ Run `/router` to open the native config screen:
 
 For manual model selection, turn **Main model routing off**, then choose from `/model`. Turn **Main effort routing off** too if you want to control reasoning effort yourself. Enter in `/model` saves a default; `s` selects a model for the current session.
 
-Classification and recommendation logs describe suggestions. The main result log and router status distinguish changes applied to the request from requests left unchanged. See [Router controls](ROUTER-CONTROLS.md) for direct commands and persistence details.
+Classification and recommendation logs describe suggestions. The main result log and router status distinguish changes applied to the request from requests left unchanged. See [Router controls](docs/usage/router-controls.md) for direct commands and persistence details.
 
 ## Customize
 
@@ -115,7 +137,7 @@ command claude plugin validate "$MODEL_ROUTER_DIR"
 
 The smoke runner writes timestamped reports to the ignored `test-results/` directory and compares each run with the previous run of the same mode. Live classification can vary; inspect individual decisions and confidence scores when a fixture fails. These tests do not establish quality on every task or verify every advertised provider model.
 
-See [Local development](LOCAL-DEVELOPMENT.md), [Task routing](TASK-ROUTING.md), and the [catalog guide](catalog/README.md) for more detail.
+See the [development guide](docs/development.md), [task routing](docs/usage/task-routing.md), and the [catalog guide](catalog/README.md) for more detail. Keep workstation notes and unredacted research under ignored `/local/`; public documentation uses portable setup examples.
 
 ## Privacy and cost
 

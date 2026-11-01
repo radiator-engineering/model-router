@@ -15,6 +15,52 @@
     "routing"
   ],
   "userConfig": {
+    "policyEngine": {
+      "type": "string",
+      "title": "Routing policy engine",
+      "description": "Legacy is the default. V2 uses dimension-based configured routing; shadow retains legacy execution. Context and ordinary execution limits are managed by the host.",
+      "default": "legacy",
+      "options": [
+        "legacy",
+        "v2-shadow",
+        "v2"
+      ]
+    },
+    "routeSubagentEffort": {
+      "type": "boolean",
+      "title": "Allow v2 subagent effort routing",
+      "description": "Independent v2 effort permission applied at the child first request. Legacy does not apply subagent effort.",
+      "default": false
+    },
+    "reviewMode": {
+      "type": "string",
+      "title": "Independent review mode",
+      "description": "Review preference only. Explicit composer checkpoints authorize bounded stages; automatic additionally requires exact trusted candidate/stage grants. Changing mode alone never launches work.",
+      "default": "recommend",
+      "options": [
+        "off",
+        "recommend",
+        "automatic"
+      ]
+    },
+    "persistentModelPin": {
+      "type": "string",
+      "title": "Persistent execution model pin",
+      "description": "Exact execution model ID, not a reviewer choice. Trusted user/managed-policy sources only; applied by v2, staged under legacy/shadow.",
+      "default": ""
+    },
+    "persistentEffortPin": {
+      "type": "string",
+      "title": "Persistent execution effort pin",
+      "description": "Named execution effort, not a reviewer choice. Respects routing switches and eligibility; applied by v2, staged under legacy/shadow.",
+      "default": ""
+    },
+    "verificationChecksJson": {
+      "type": "string",
+      "title": "Trusted verification check definitions",
+      "description": "Versioned check definitions from observable user or managed-policy settings only. Project/local/flag values grant no authority. Commands run only at authorized candidate checkpoints; unknown Bash completion never certifies a pass.",
+      "default": "{\"schemaVersion\":1,\"checks\":[]}"
+    },
     "typesafeApiKey": {
       "type": "string",
       "title": "TypeSafe API key",
@@ -98,7 +144,7 @@
     "routeSubagentModel": {
       "type": "boolean",
       "title": "Route subagent models",
-      "description": "Pick the model of each subagent at agent.spawn (the Agent tool takes no effort)",
+      "description": "Pick each subagent model at agent.spawn; v2 effort is separately controlled at the child first request.",
       "default": true
     },
     "routeMainEffort": {
@@ -186,9 +232,21 @@
     },
     "simpleAnswerModel": {
       "type": "string",
-      "title": "Simple answer model",
-      "description": "Custom preference for spelling, small literal counts and straightforward stable facts; substantive explanations use tier/effort assessment.",
+      "title": "Simple answers & chat model",
+      "description": "Legacy Custom uses this for simple facts. V2 also routes confident standalone greetings and thanks here, preferring low effort where configured. Continuations/approvals are not chat; switches and pins still apply.",
       "default": "claude-haiku-5-5"
+    },
+    "v2ShadowClassifier": {
+      "type": "boolean",
+      "title": "Opt into v2 shadow classification",
+      "description": "Additional dimension-classifier calls in shadow mode, only when explicitly set in observable user or managed-policy settings. Does not enable dispatch, pins, checks or reviews.",
+      "default": false
+    },
+    "reviewPolicyJson": {
+      "type": "string",
+      "title": "Bounded review policy and scoped automatic grants",
+      "description": "User/managed-policy only. Manual review uses one fresh tool-less completion with finite output tokens and timeout. Automatic spending requires exact candidate/stage grants; mode alone is not authorization. Repair writes only enrolled finding paths.",
+      "default": "{\"schemaVersion\":1,\"reviewer\":{\"model\":\"claude-opus-5-5\",\"effort\":\"medium\"},\"repair\":{\"model\":\"claude-sonnet-5-5\",\"effort\":\"medium\"},\"maxTokens\":8192,\"timeoutMs\":120000,\"requireReview\":false,\"distinctFamily\":false,\"requiredCheckIds\":[],\"automatic\":[]}"
     }
   },
   "types": "./types/router-state.d.ts"

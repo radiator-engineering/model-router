@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "models": [
+    {
+      "id": "synthetic-verified/date only",
+      "provider": "anthropic",
+      "enabled": true,
+      "availability": "verified",
+      "claudeCodeCompatibility": "verified",
+      "capabilities": {
+        "qualityByUseCase": {
+          "implementation": null,
+          "investigation": null,
+          "review": 3,
+          "planning": null,
+          "explanation": null
+        },
+        "maxComplexity": null,
+        "contextWindowTokens": 200000,
+        "toolCalling": true,
+        "reasoningEfforts": [
+          "low",
+          "medium"
+        ]
+      },
+      "cost": {
+        "allowanceWeight": 1.5,
+        "inputUsdPerMillion": null,
+        "outputUsdPerMillion": null
+      },
+      "evidence": {
+        "source": "evaluation",
+        "checkedAt": "2026-10-30",
+        "notes": "SYNTHETIC FIXTURE: verified on a date only; notes mention Claude Code 2.1.314 without creating an environment."
+      }
+    },
+    {
+      "id": "synthetic-advertised",
+      "provider": "openai",
+      "enabled": true,
+      "availability": "advertised",
+      "claudeCodeCompatibility": "unverified",
+      "capabilities": {
+        "qualityByUseCase": {
+          "implementation": null,
+          "investigation": null,
+          "review": null,
+          "planning": null,
+          "explanation": null
+        },
+        "maxComplexity": null,
+        "contextWindowTokens": null,
+        "toolCalling": null,
+        "reasoningEfforts": []
+      },
+      "cost": {
+        "allowanceWeight": null,
+        "inputUsdPerMillion": null,
+        "outputUsdPerMillion": null
+      },
+      "evidence": {
+        "source": "unmeasured",
+        "checkedAt": null,
+        "notes": "SYNTHETIC FIXTURE: advertised by discovery; no efforts established."
+      }
+    },
+    {
+      "id": "synthetic-unsupported",
+      "provider": "openai",
+      "enabled": true,
+      "availability": "verified",
+      "claudeCodeCompatibility": "incompatible",
+      "capabilities": {
+        "qualityByUseCase": {
+          "implementation": null,
+          "investigation": null,
+          "review": null,
+          "planning": null,
+          "explanation": null
+        },
+        "maxComplexity": null,
+        "contextWindowTokens": null,
+        "toolCalling": false,
+        "reasoningEfforts": [
+          "high"
+        ]
+      },
+      "cost": {
+        "allowanceWeight": null,
+        "inputUsdPerMillion": null,
+        "outputUsdPerMillion": null
+      },
+      "evidence": {
+        "source": "manual",
+        "checkedAt": "2026-10-29",
+        "notes": "SYNTHETIC FIXTURE: explicitly lacks tool calling."
+      }
+    }
+  ]
+}

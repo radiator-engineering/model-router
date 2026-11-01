@@ -1,193 +1,702 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
+  "legacy": {
+    "schemaVersion": 1,
+    "models": [
+      {
+        "id": "claude-haiku-5-5",
+        "provider": "anthropic",
+        "enabled": true,
+        "availability": "verified",
+        "claudeCodeCompatibility": "verified",
+        "capabilities": {
+          "qualityByUseCase": {
+            "implementation": null,
+            "investigation": null,
+            "review": null,
+            "planning": null,
+            "explanation": null
+          },
+          "maxComplexity": null,
+          "contextWindowTokens": null,
+          "toolCalling": true,
+          "reasoningEfforts": [
+            "medium"
+          ]
+        },
+        "cost": {
+          "allowanceWeight": null,
+          "inputUsdPerMillion": null,
+          "outputUsdPerMillion": null
+        },
+        "evidence": {
+          "source": "evaluation",
+          "checkedAt": "2026-10-30",
+          "notes": "Claude Code 2.1.314 through local VibeProxy: medium effort request completed a Bash printf tool call and returned its marker; local router loaded. This is a basic text/tool compatibility check, not a visual-input, quality, capacity or cost benchmark."
+        }
+      },
+      {
+        "id": "claude-sonnet-5-5",
+        "provider": "anthropic",
+        "enabled": true,
+        "availability": "verified",
+        "claudeCodeCompatibility": "verified",
+        "capabilities": {
+          "qualityByUseCase": {
+            "implementation": null,
+            "investigation": null,
+            "review": null,
+            "planning": null,
+            "explanation": null
+          },
+          "maxComplexity": null,
+          "contextWindowTokens": null,
+          "toolCalling": true,
+          "reasoningEfforts": [
+            "medium"
+          ]
+        },
+        "cost": {
+          "allowanceWeight": null,
+          "inputUsdPerMillion": null,
+          "outputUsdPerMillion": null
+        },
+        "evidence": {
+          "source": "evaluation",
+          "checkedAt": "2026-10-30",
+          "notes": "Claude Code 2.1.314 through local VibeProxy: medium effort request completed a Bash printf tool call and returned its marker; local router loaded. This is a basic text/tool compatibility check, not a visual-input, quality, capacity or cost benchmark."
+        }
+      },
+      {
+        "id": "claude-opus-5-5",
+        "provider": "anthropic",
+        "enabled": true,
+        "availability": "verified",
+        "claudeCodeCompatibility": "verified",
+        "capabilities": {
+          "qualityByUseCase": {
+            "implementation": null,
+            "investigation": null,
+            "review": null,
+            "planning": null,
+            "explanation": null
+          },
+          "maxComplexity": null,
+          "contextWindowTokens": null,
+          "toolCalling": true,
+          "reasoningEfforts": [
+            "medium"
+          ]
+        },
+        "cost": {
+          "allowanceWeight": null,
+          "inputUsdPerMillion": null,
+          "outputUsdPerMillion": null
+        },
+        "evidence": {
+          "source": "evaluation",
+          "checkedAt": "2026-10-30",
+          "notes": "Claude Code 2.1.314 through local VibeProxy: medium effort request completed a Bash printf tool call and returned its marker; local router loaded. This is a basic text/tool compatibility check, not a visual-input, quality, capacity or cost benchmark."
+        }
+      },
+      {
+        "id": "gpt-6.1-sol",
+        "provider": "openai",
+        "enabled": true,
+        "availability": "advertised",
+        "claudeCodeCompatibility": "unverified",
+        "capabilities": {
+          "qualityByUseCase": {
+            "implementation": null,
+            "investigation": null,
+            "review": null,
+            "planning": null,
+            "explanation": null
+          },
+          "maxComplexity": null,
+          "contextWindowTokens": null,
+          "toolCalling": null,
+          "reasoningEfforts": []
+        },
+        "cost": {
+          "allowanceWeight": null,
+          "inputUsdPerMillion": null,
+          "outputUsdPerMillion": null
+        },
+        "evidence": {
+          "source": "unmeasured",
+          "checkedAt": "2026-10-30",
+          "notes": "ID observed in local VibeProxy /v1/models. Inference, harness compatibility, quality and cost have not been evaluated."
+        }
+      },
+      {
+        "id": "gpt-6.1-terra",
+        "provider": "openai",
+        "enabled": true,
+        "availability": "advertised",
+        "claudeCodeCompatibility": "unverified",
+        "capabilities": {
+          "qualityByUseCase": {
+            "implementation": null,
+            "investigation": null,
+            "review": null,
+            "planning": null,
+            "explanation": null
+          },
+          "maxComplexity": null,
+          "contextWindowTokens": null,
+          "toolCalling": null,
+          "reasoningEfforts": []
+        },
+        "cost": {
+          "allowanceWeight": null,
+          "inputUsdPerMillion": null,
+          "outputUsdPerMillion": null
+        },
+        "evidence": {
+          "source": "unmeasured",
+          "checkedAt": "2026-10-30",
+          "notes": "ID observed in local VibeProxy /v1/models. Inference, harness compatibility, quality and cost have not been evaluated."
+        }
+      },
+      {
+        "id": "gpt-6-astra",
+        "provider": "openai",
+        "enabled": true,
+        "availability": "verified",
+        "claudeCodeCompatibility": "verified",
+        "capabilities": {
+          "qualityByUseCase": {
+            "implementation": null,
+            "investigation": null,
+            "review": null,
+            "planning": null,
+            "explanation": null
+          },
+          "maxComplexity": null,
+          "contextWindowTokens": null,
+          "toolCalling": true,
+          "reasoningEfforts": [
+            "medium"
+          ]
+        },
+        "cost": {
+          "allowanceWeight": null,
+          "inputUsdPerMillion": null,
+          "outputUsdPerMillion": null
+        },
+        "evidence": {
+          "source": "evaluation",
+          "checkedAt": "2026-10-30",
+          "notes": "Claude Code 2.1.314 through local VibeProxy: medium effort request completed a Bash printf tool call and returned its marker; local router loaded. This is a basic text/tool compatibility check, not a visual-input, quality, capacity or cost benchmark."
+        }
+      }
+    ]
+  },
   "models": [
     {
       "id": "claude-haiku-5-5",
       "provider": "anthropic",
-      "enabled": true,
-      "availability": "verified",
-      "claudeCodeCompatibility": "verified",
-      "capabilities": {
-        "qualityByUseCase": {
-          "implementation": null,
-          "investigation": null,
-          "review": null,
-          "planning": null,
-          "explanation": null
-        },
-        "maxComplexity": null,
-        "contextWindowTokens": null,
-        "toolCalling": true,
-        "reasoningEfforts": [
-          "medium"
-        ]
-      },
-      "cost": {
-        "allowanceWeight": null,
-        "inputUsdPerMillion": null,
-        "outputUsdPerMillion": null
-      },
-      "evidence": {
-        "source": "evaluation",
-        "checkedAt": "2026-10-30",
-        "notes": "Claude Code 2.1.314 through local VibeProxy: medium effort request completed a Bash printf tool call and returned its marker; local router loaded. This is a basic text/tool compatibility check, not a visual-input, quality, capacity or cost benchmark."
-      }
-    },
-    {
-      "id": "claude-sonnet-5-5",
-      "provider": "anthropic",
-      "enabled": true,
-      "availability": "verified",
-      "claudeCodeCompatibility": "verified",
-      "capabilities": {
-        "qualityByUseCase": {
-          "implementation": null,
-          "investigation": null,
-          "review": null,
-          "planning": null,
-          "explanation": null
-        },
-        "maxComplexity": null,
-        "contextWindowTokens": null,
-        "toolCalling": true,
-        "reasoningEfforts": [
-          "medium"
-        ]
-      },
-      "cost": {
-        "allowanceWeight": null,
-        "inputUsdPerMillion": null,
-        "outputUsdPerMillion": null
-      },
-      "evidence": {
-        "source": "evaluation",
-        "checkedAt": "2026-10-30",
-        "notes": "Claude Code 2.1.314 through local VibeProxy: medium effort request completed a Bash printf tool call and returned its marker; local router loaded. This is a basic text/tool compatibility check, not a visual-input, quality, capacity or cost benchmark."
-      }
+      "family": null,
+      "enabled": true
     },
     {
       "id": "claude-opus-5-5",
       "provider": "anthropic",
-      "enabled": true,
-      "availability": "verified",
-      "claudeCodeCompatibility": "verified",
-      "capabilities": {
-        "qualityByUseCase": {
-          "implementation": null,
-          "investigation": null,
-          "review": null,
-          "planning": null,
-          "explanation": null
-        },
-        "maxComplexity": null,
-        "contextWindowTokens": null,
-        "toolCalling": true,
-        "reasoningEfforts": [
-          "medium"
-        ]
-      },
-      "cost": {
-        "allowanceWeight": null,
-        "inputUsdPerMillion": null,
-        "outputUsdPerMillion": null
-      },
-      "evidence": {
-        "source": "evaluation",
-        "checkedAt": "2026-10-30",
-        "notes": "Claude Code 2.1.314 through local VibeProxy: medium effort request completed a Bash printf tool call and returned its marker; local router loaded. This is a basic text/tool compatibility check, not a visual-input, quality, capacity or cost benchmark."
-      }
+      "family": null,
+      "enabled": true
     },
     {
-      "id": "gpt-6.1-sol",
-      "provider": "openai",
-      "enabled": true,
-      "availability": "advertised",
-      "claudeCodeCompatibility": "unverified",
-      "capabilities": {
-        "qualityByUseCase": {
-          "implementation": null,
-          "investigation": null,
-          "review": null,
-          "planning": null,
-          "explanation": null
-        },
-        "maxComplexity": null,
-        "contextWindowTokens": null,
-        "toolCalling": null,
-        "reasoningEfforts": []
-      },
-      "cost": {
-        "allowanceWeight": null,
-        "inputUsdPerMillion": null,
-        "outputUsdPerMillion": null
-      },
-      "evidence": {
-        "source": "unmeasured",
-        "checkedAt": "2026-10-30",
-        "notes": "ID observed in local VibeProxy /v1/models. Inference, harness compatibility, quality and cost have not been evaluated."
-      }
-    },
-    {
-      "id": "gpt-6.1-terra",
-      "provider": "openai",
-      "enabled": true,
-      "availability": "advertised",
-      "claudeCodeCompatibility": "unverified",
-      "capabilities": {
-        "qualityByUseCase": {
-          "implementation": null,
-          "investigation": null,
-          "review": null,
-          "planning": null,
-          "explanation": null
-        },
-        "maxComplexity": null,
-        "contextWindowTokens": null,
-        "toolCalling": null,
-        "reasoningEfforts": []
-      },
-      "cost": {
-        "allowanceWeight": null,
-        "inputUsdPerMillion": null,
-        "outputUsdPerMillion": null
-      },
-      "evidence": {
-        "source": "unmeasured",
-        "checkedAt": "2026-10-30",
-        "notes": "ID observed in local VibeProxy /v1/models. Inference, harness compatibility, quality and cost have not been evaluated."
-      }
+      "id": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "family": null,
+      "enabled": true
     },
     {
       "id": "gpt-6-astra",
       "provider": "openai",
-      "enabled": true,
-      "availability": "verified",
-      "claudeCodeCompatibility": "verified",
-      "capabilities": {
-        "qualityByUseCase": {
-          "implementation": null,
-          "investigation": null,
-          "review": null,
-          "planning": null,
-          "explanation": null
+      "family": null,
+      "enabled": true
+    },
+    {
+      "id": "gpt-6.1-sol",
+      "provider": "openai",
+      "family": null,
+      "enabled": true
+    },
+    {
+      "id": "gpt-6.1-terra",
+      "provider": "openai",
+      "family": null,
+      "enabled": true
+    }
+  ],
+  "environments": [],
+  "availability": [
+    {
+      "id": "availability/legacy/claude-haiku-5-5",
+      "modelId": "claude-haiku-5-5",
+      "status": "verified",
+      "observedAt": null,
+      "validUntil": null,
+      "evidenceId": "legacy/claude-haiku-5-5"
+    },
+    {
+      "id": "availability/legacy/claude-opus-5-5",
+      "modelId": "claude-opus-5-5",
+      "status": "verified",
+      "observedAt": null,
+      "validUntil": null,
+      "evidenceId": "legacy/claude-opus-5-5"
+    },
+    {
+      "id": "availability/legacy/claude-sonnet-5-5",
+      "modelId": "claude-sonnet-5-5",
+      "status": "verified",
+      "observedAt": null,
+      "validUntil": null,
+      "evidenceId": "legacy/claude-sonnet-5-5"
+    },
+    {
+      "id": "availability/legacy/gpt-6-astra",
+      "modelId": "gpt-6-astra",
+      "status": "verified",
+      "observedAt": null,
+      "validUntil": null,
+      "evidenceId": "legacy/gpt-6-astra"
+    },
+    {
+      "id": "availability/legacy/gpt-6.1-sol",
+      "modelId": "gpt-6.1-sol",
+      "status": "advertised",
+      "observedAt": null,
+      "validUntil": null,
+      "evidenceId": "legacy/gpt-6.1-sol"
+    },
+    {
+      "id": "availability/legacy/gpt-6.1-terra",
+      "modelId": "gpt-6.1-terra",
+      "status": "advertised",
+      "observedAt": null,
+      "validUntil": null,
+      "evidenceId": "legacy/gpt-6.1-terra"
+    }
+  ],
+  "configurations": [
+    {
+      "id": "configuration/claude-haiku-5-5/level-medium/unknown",
+      "modelId": "claude-haiku-5-5",
+      "effort": {
+        "kind": "level",
+        "value": "medium"
+      },
+      "requestPath": null
+    },
+    {
+      "id": "configuration/claude-opus-5-5/level-medium/unknown",
+      "modelId": "claude-opus-5-5",
+      "effort": {
+        "kind": "level",
+        "value": "medium"
+      },
+      "requestPath": null
+    },
+    {
+      "id": "configuration/claude-sonnet-5-5/level-medium/unknown",
+      "modelId": "claude-sonnet-5-5",
+      "effort": {
+        "kind": "level",
+        "value": "medium"
+      },
+      "requestPath": null
+    },
+    {
+      "id": "configuration/gpt-6-astra/level-medium/unknown",
+      "modelId": "gpt-6-astra",
+      "effort": {
+        "kind": "level",
+        "value": "medium"
+      },
+      "requestPath": null
+    },
+    {
+      "id": "configuration/gpt-6.1-sol/unknown/unknown",
+      "modelId": "gpt-6.1-sol",
+      "effort": {
+        "kind": "unknown"
+      },
+      "requestPath": null
+    },
+    {
+      "id": "configuration/gpt-6.1-terra/unknown/unknown",
+      "modelId": "gpt-6.1-terra",
+      "effort": {
+        "kind": "unknown"
+      },
+      "requestPath": null
+    }
+  ],
+  "compatibility": [
+    {
+      "id": "compatibility/legacy/configuration%2Fclaude-haiku-5-5%2Flevel-medium%2Funknown",
+      "configurationId": "configuration/claude-haiku-5-5/level-medium/unknown",
+      "environmentId": null,
+      "status": "verified",
+      "toolCalling": true,
+      "imageInput": null,
+      "streaming": null,
+      "continuation": null,
+      "interruptions": null,
+      "effectiveEffortVerified": null,
+      "contextWindowTokens": null,
+      "supportedEfforts": [
+        {
+          "kind": "level",
+          "value": "medium"
+        }
+      ],
+      "evidenceIds": [
+        "legacy/claude-haiku-5-5"
+      ]
+    },
+    {
+      "id": "compatibility/legacy/configuration%2Fclaude-opus-5-5%2Flevel-medium%2Funknown",
+      "configurationId": "configuration/claude-opus-5-5/level-medium/unknown",
+      "environmentId": null,
+      "status": "verified",
+      "toolCalling": true,
+      "imageInput": null,
+      "streaming": null,
+      "continuation": null,
+      "interruptions": null,
+      "effectiveEffortVerified": null,
+      "contextWindowTokens": null,
+      "supportedEfforts": [
+        {
+          "kind": "level",
+          "value": "medium"
+        }
+      ],
+      "evidenceIds": [
+        "legacy/claude-opus-5-5"
+      ]
+    },
+    {
+      "id": "compatibility/legacy/configuration%2Fclaude-sonnet-5-5%2Flevel-medium%2Funknown",
+      "configurationId": "configuration/claude-sonnet-5-5/level-medium/unknown",
+      "environmentId": null,
+      "status": "verified",
+      "toolCalling": true,
+      "imageInput": null,
+      "streaming": null,
+      "continuation": null,
+      "interruptions": null,
+      "effectiveEffortVerified": null,
+      "contextWindowTokens": null,
+      "supportedEfforts": [
+        {
+          "kind": "level",
+          "value": "medium"
+        }
+      ],
+      "evidenceIds": [
+        "legacy/claude-sonnet-5-5"
+      ]
+    },
+    {
+      "id": "compatibility/legacy/configuration%2Fgpt-6-astra%2Flevel-medium%2Funknown",
+      "configurationId": "configuration/gpt-6-astra/level-medium/unknown",
+      "environmentId": null,
+      "status": "verified",
+      "toolCalling": true,
+      "imageInput": null,
+      "streaming": null,
+      "continuation": null,
+      "interruptions": null,
+      "effectiveEffortVerified": null,
+      "contextWindowTokens": null,
+      "supportedEfforts": [
+        {
+          "kind": "level",
+          "value": "medium"
+        }
+      ],
+      "evidenceIds": [
+        "legacy/gpt-6-astra"
+      ]
+    },
+    {
+      "id": "compatibility/legacy/configuration%2Fgpt-6.1-sol%2Funknown%2Funknown",
+      "configurationId": "configuration/gpt-6.1-sol/unknown/unknown",
+      "environmentId": null,
+      "status": "unverified",
+      "toolCalling": null,
+      "imageInput": null,
+      "streaming": null,
+      "continuation": null,
+      "interruptions": null,
+      "effectiveEffortVerified": null,
+      "contextWindowTokens": null,
+      "supportedEfforts": [],
+      "evidenceIds": [
+        "legacy/gpt-6.1-sol"
+      ]
+    },
+    {
+      "id": "compatibility/legacy/configuration%2Fgpt-6.1-terra%2Funknown%2Funknown",
+      "configurationId": "configuration/gpt-6.1-terra/unknown/unknown",
+      "environmentId": null,
+      "status": "unverified",
+      "toolCalling": null,
+      "imageInput": null,
+      "streaming": null,
+      "continuation": null,
+      "interruptions": null,
+      "effectiveEffortVerified": null,
+      "contextWindowTokens": null,
+      "supportedEfforts": [],
+      "evidenceIds": [
+        "legacy/gpt-6.1-terra"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "legacy/claude-haiku-5-5",
+      "source": "legacy-import",
+      "checkedDate": "2026-10-30",
+      "observedAt": null,
+      "environmentId": null,
+      "notes": "Claude Code 2.1.314 through local VibeProxy: medium effort request completed a Bash printf tool call and returned its marker; local router loaded. This is a basic text/tool compatibility check, not a visual-input, quality, capacity or cost benchmark.",
+      "payload": {
+        "id": "claude-haiku-5-5",
+        "provider": "anthropic",
+        "enabled": true,
+        "availability": "verified",
+        "claudeCodeCompatibility": "verified",
+        "capabilities": {
+          "qualityByUseCase": {
+            "implementation": null,
+            "investigation": null,
+            "review": null,
+            "planning": null,
+            "explanation": null
+          },
+          "maxComplexity": null,
+          "contextWindowTokens": null,
+          "toolCalling": true,
+          "reasoningEfforts": [
+            "medium"
+          ]
         },
-        "maxComplexity": null,
-        "contextWindowTokens": null,
-        "toolCalling": true,
-        "reasoningEfforts": [
-          "medium"
-        ]
-      },
-      "cost": {
-        "allowanceWeight": null,
-        "inputUsdPerMillion": null,
-        "outputUsdPerMillion": null
-      },
-      "evidence": {
-        "source": "evaluation",
-        "checkedAt": "2026-10-30",
-        "notes": "Claude Code 2.1.314 through local VibeProxy: medium effort request completed a Bash printf tool call and returned its marker; local router loaded. This is a basic text/tool compatibility check, not a visual-input, quality, capacity or cost benchmark."
+        "cost": {
+          "allowanceWeight": null,
+          "inputUsdPerMillion": null,
+          "outputUsdPerMillion": null
+        },
+        "evidence": {
+          "source": "evaluation",
+          "checkedAt": "2026-10-30",
+          "notes": "Claude Code 2.1.314 through local VibeProxy: medium effort request completed a Bash printf tool call and returned its marker; local router loaded. This is a basic text/tool compatibility check, not a visual-input, quality, capacity or cost benchmark."
+        }
+      }
+    },
+    {
+      "id": "legacy/claude-opus-5-5",
+      "source": "legacy-import",
+      "checkedDate": "2026-10-30",
+      "observedAt": null,
+      "environmentId": null,
+      "notes": "Claude Code 2.1.314 through local VibeProxy: medium effort request completed a Bash printf tool call and returned its marker; local router loaded. This is a basic text/tool compatibility check, not a visual-input, quality, capacity or cost benchmark.",
+      "payload": {
+        "id": "claude-opus-5-5",
+        "provider": "anthropic",
+        "enabled": true,
+        "availability": "verified",
+        "claudeCodeCompatibility": "verified",
+        "capabilities": {
+          "qualityByUseCase": {
+            "implementation": null,
+            "investigation": null,
+            "review": null,
+            "planning": null,
+            "explanation": null
+          },
+          "maxComplexity": null,
+          "contextWindowTokens": null,
+          "toolCalling": true,
+          "reasoningEfforts": [
+            "medium"
+          ]
+        },
+        "cost": {
+          "allowanceWeight": null,
+          "inputUsdPerMillion": null,
+          "outputUsdPerMillion": null
+        },
+        "evidence": {
+          "source": "evaluation",
+          "checkedAt": "2026-10-30",
+          "notes": "Claude Code 2.1.314 through local VibeProxy: medium effort request completed a Bash printf tool call and returned its marker; local router loaded. This is a basic text/tool compatibility check, not a visual-input, quality, capacity or cost benchmark."
+        }
+      }
+    },
+    {
+      "id": "legacy/claude-sonnet-5-5",
+      "source": "legacy-import",
+      "checkedDate": "2026-10-30",
+      "observedAt": null,
+      "environmentId": null,
+      "notes": "Claude Code 2.1.314 through local VibeProxy: medium effort request completed a Bash printf tool call and returned its marker; local router loaded. This is a basic text/tool compatibility check, not a visual-input, quality, capacity or cost benchmark.",
+      "payload": {
+        "id": "claude-sonnet-5-5",
+        "provider": "anthropic",
+        "enabled": true,
+        "availability": "verified",
+        "claudeCodeCompatibility": "verified",
+        "capabilities": {
+          "qualityByUseCase": {
+            "implementation": null,
+            "investigation": null,
+            "review": null,
+            "planning": null,
+            "explanation": null
+          },
+          "maxComplexity": null,
+          "contextWindowTokens": null,
+          "toolCalling": true,
+          "reasoningEfforts": [
+            "medium"
+          ]
+        },
+        "cost": {
+          "allowanceWeight": null,
+          "inputUsdPerMillion": null,
+          "outputUsdPerMillion": null
+        },
+        "evidence": {
+          "source": "evaluation",
+          "checkedAt": "2026-10-30",
+          "notes": "Claude Code 2.1.314 through local VibeProxy: medium effort request completed a Bash printf tool call and returned its marker; local router loaded. This is a basic text/tool compatibility check, not a visual-input, quality, capacity or cost benchmark."
+        }
+      }
+    },
+    {
+      "id": "legacy/gpt-6-astra",
+      "source": "legacy-import",
+      "checkedDate": "2026-10-30",
+      "observedAt": null,
+      "environmentId": null,
+      "notes": "Claude Code 2.1.314 through local VibeProxy: medium effort request completed a Bash printf tool call and returned its marker; local router loaded. This is a basic text/tool compatibility check, not a visual-input, quality, capacity or cost benchmark.",
+      "payload": {
+        "id": "gpt-6-astra",
+        "provider": "openai",
+        "enabled": true,
+        "availability": "verified",
+        "claudeCodeCompatibility": "verified",
+        "capabilities": {
+          "qualityByUseCase": {
+            "implementation": null,
+            "investigation": null,
+            "review": null,
+            "planning": null,
+            "explanation": null
+          },
+          "maxComplexity": null,
+          "contextWindowTokens": null,
+          "toolCalling": true,
+          "reasoningEfforts": [
+            "medium"
+          ]
+        },
+        "cost": {
+          "allowanceWeight": null,
+          "inputUsdPerMillion": null,
+          "outputUsdPerMillion": null
+        },
+        "evidence": {
+          "source": "evaluation",
+          "checkedAt": "2026-10-30",
+          "notes": "Claude Code 2.1.314 through local VibeProxy: medium effort request completed a Bash printf tool call and returned its marker; local router loaded. This is a basic text/tool compatibility check, not a visual-input, quality, capacity or cost benchmark."
+        }
+      }
+    },
+    {
+      "id": "legacy/gpt-6.1-sol",
+      "source": "legacy-import",
+      "checkedDate": "2026-10-30",
+      "observedAt": null,
+      "environmentId": null,
+      "notes": "ID observed in local VibeProxy /v1/models. Inference, harness compatibility, quality and cost have not been evaluated.",
+      "payload": {
+        "id": "gpt-6.1-sol",
+        "provider": "openai",
+        "enabled": true,
+        "availability": "advertised",
+        "claudeCodeCompatibility": "unverified",
+        "capabilities": {
+          "qualityByUseCase": {
+            "implementation": null,
+            "investigation": null,
+            "review": null,
+            "planning": null,
+            "explanation": null
+          },
+          "maxComplexity": null,
+          "contextWindowTokens": null,
+          "toolCalling": null,
+          "reasoningEfforts": []
+        },
+        "cost": {
+          "allowanceWeight": null,
+          "inputUsdPerMillion": null,
+          "outputUsdPerMillion": null
+        },
+        "evidence": {
+          "source": "unmeasured",
+          "checkedAt": "2026-10-30",
+          "notes": "ID observed in local VibeProxy /v1/models. Inference, harness compatibility, quality and cost have not been evaluated."
+        }
+      }
+    },
+    {
+      "id": "legacy/gpt-6.1-terra",
+      "source": "legacy-import",
+      "checkedDate": "2026-10-30",
+      "observedAt": null,
+      "environmentId": null,
+      "notes": "ID observed in local VibeProxy /v1/models. Inference, harness compatibility, quality and cost have not been evaluated.",
+      "payload": {
+        "id": "gpt-6.1-terra",
+        "provider": "openai",
+        "enabled": true,
+        "availability": "advertised",
+        "claudeCodeCompatibility": "unverified",
+        "capabilities": {
+          "qualityByUseCase": {
+            "implementation": null,
+            "investigation": null,
+            "review": null,
+            "planning": null,
+            "explanation": null
+          },
+          "maxComplexity": null,
+          "contextWindowTokens": null,
+          "toolCalling": null,
+          "reasoningEfforts": []
+        },
+        "cost": {
+          "allowanceWeight": null,
+          "inputUsdPerMillion": null,
+          "outputUsdPerMillion": null
+        },
+        "evidence": {
+          "source": "unmeasured",
+          "checkedAt": "2026-10-30",
+          "notes": "ID observed in local VibeProxy /v1/models. Inference, harness compatibility, quality and cost have not been evaluated."
+        }
       }
     }
-  ]
+  ],
+  "approvals": []
 }

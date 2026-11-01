@@ -1,0 +1,402 @@
+{
+  "schemaVersion": 2,
+  "legacy": {
+    "schemaVersion": 1,
+    "models": [
+      {
+        "id": "synthetic-verified/date only",
+        "provider": "anthropic",
+        "enabled": true,
+        "availability": "verified",
+        "claudeCodeCompatibility": "verified",
+        "capabilities": {
+          "qualityByUseCase": {
+            "implementation": null,
+            "investigation": null,
+            "review": 3,
+            "planning": null,
+            "explanation": null
+          },
+          "maxComplexity": null,
+          "contextWindowTokens": 200000,
+          "toolCalling": true,
+          "reasoningEfforts": [
+            "low",
+            "medium"
+          ]
+        },
+        "cost": {
+          "allowanceWeight": 1.5,
+          "inputUsdPerMillion": null,
+          "outputUsdPerMillion": null
+        },
+        "evidence": {
+          "source": "evaluation",
+          "checkedAt": "2026-10-30",
+          "notes": "SYNTHETIC FIXTURE: verified on a date only; notes mention Claude Code 2.1.314 without creating an environment."
+        }
+      },
+      {
+        "id": "synthetic-advertised",
+        "provider": "openai",
+        "enabled": true,
+        "availability": "advertised",
+        "claudeCodeCompatibility": "unverified",
+        "capabilities": {
+          "qualityByUseCase": {
+            "implementation": null,
+            "investigation": null,
+            "review": null,
+            "planning": null,
+            "explanation": null
+          },
+          "maxComplexity": null,
+          "contextWindowTokens": null,
+          "toolCalling": null,
+          "reasoningEfforts": []
+        },
+        "cost": {
+          "allowanceWeight": null,
+          "inputUsdPerMillion": null,
+          "outputUsdPerMillion": null
+        },
+        "evidence": {
+          "source": "unmeasured",
+          "checkedAt": null,
+          "notes": "SYNTHETIC FIXTURE: advertised by discovery; no efforts established."
+        }
+      },
+      {
+        "id": "synthetic-unsupported",
+        "provider": "openai",
+        "enabled": true,
+        "availability": "verified",
+        "claudeCodeCompatibility": "incompatible",
+        "capabilities": {
+          "qualityByUseCase": {
+            "implementation": null,
+            "investigation": null,
+            "review": null,
+            "planning": null,
+            "explanation": null
+          },
+          "maxComplexity": null,
+          "contextWindowTokens": null,
+          "toolCalling": false,
+          "reasoningEfforts": [
+            "high"
+          ]
+        },
+        "cost": {
+          "allowanceWeight": null,
+          "inputUsdPerMillion": null,
+          "outputUsdPerMillion": null
+        },
+        "evidence": {
+          "source": "manual",
+          "checkedAt": "2026-10-29",
+          "notes": "SYNTHETIC FIXTURE: explicitly lacks tool calling."
+        }
+      }
+    ]
+  },
+  "models": [
+    {
+      "id": "synthetic-advertised",
+      "provider": "openai",
+      "family": null,
+      "enabled": true
+    },
+    {
+      "id": "synthetic-unsupported",
+      "provider": "openai",
+      "family": null,
+      "enabled": true
+    },
+    {
+      "id": "synthetic-verified/date only",
+      "provider": "anthropic",
+      "family": null,
+      "enabled": true
+    }
+  ],
+  "environments": [],
+  "availability": [
+    {
+      "id": "availability/legacy/synthetic-advertised",
+      "modelId": "synthetic-advertised",
+      "status": "advertised",
+      "observedAt": null,
+      "validUntil": null,
+      "evidenceId": "legacy/synthetic-advertised"
+    },
+    {
+      "id": "availability/legacy/synthetic-unsupported",
+      "modelId": "synthetic-unsupported",
+      "status": "verified",
+      "observedAt": null,
+      "validUntil": null,
+      "evidenceId": "legacy/synthetic-unsupported"
+    },
+    {
+      "id": "availability/legacy/synthetic-verified%2Fdate%20only",
+      "modelId": "synthetic-verified/date only",
+      "status": "verified",
+      "observedAt": null,
+      "validUntil": null,
+      "evidenceId": "legacy/synthetic-verified%2Fdate%20only"
+    }
+  ],
+  "configurations": [
+    {
+      "id": "configuration/synthetic-advertised/unknown/unknown",
+      "modelId": "synthetic-advertised",
+      "effort": {
+        "kind": "unknown"
+      },
+      "requestPath": null
+    },
+    {
+      "id": "configuration/synthetic-unsupported/level-high/unknown",
+      "modelId": "synthetic-unsupported",
+      "effort": {
+        "kind": "level",
+        "value": "high"
+      },
+      "requestPath": null
+    },
+    {
+      "id": "configuration/synthetic-verified%2Fdate%20only/level-low/unknown",
+      "modelId": "synthetic-verified/date only",
+      "effort": {
+        "kind": "level",
+        "value": "low"
+      },
+      "requestPath": null
+    },
+    {
+      "id": "configuration/synthetic-verified%2Fdate%20only/level-medium/unknown",
+      "modelId": "synthetic-verified/date only",
+      "effort": {
+        "kind": "level",
+        "value": "medium"
+      },
+      "requestPath": null
+    }
+  ],
+  "compatibility": [
+    {
+      "id": "compatibility/legacy/configuration%2Fsynthetic-advertised%2Funknown%2Funknown",
+      "configurationId": "configuration/synthetic-advertised/unknown/unknown",
+      "environmentId": null,
+      "status": "unverified",
+      "toolCalling": null,
+      "imageInput": null,
+      "streaming": null,
+      "continuation": null,
+      "interruptions": null,
+      "effectiveEffortVerified": null,
+      "contextWindowTokens": null,
+      "supportedEfforts": [],
+      "evidenceIds": [
+        "legacy/synthetic-advertised"
+      ]
+    },
+    {
+      "id": "compatibility/legacy/configuration%2Fsynthetic-unsupported%2Flevel-high%2Funknown",
+      "configurationId": "configuration/synthetic-unsupported/level-high/unknown",
+      "environmentId": null,
+      "status": "incompatible",
+      "toolCalling": false,
+      "imageInput": null,
+      "streaming": null,
+      "continuation": null,
+      "interruptions": null,
+      "effectiveEffortVerified": null,
+      "contextWindowTokens": null,
+      "supportedEfforts": [
+        {
+          "kind": "level",
+          "value": "high"
+        }
+      ],
+      "evidenceIds": [
+        "legacy/synthetic-unsupported"
+      ]
+    },
+    {
+      "id": "compatibility/legacy/configuration%2Fsynthetic-verified%252Fdate%2520only%2Flevel-low%2Funknown",
+      "configurationId": "configuration/synthetic-verified%2Fdate%20only/level-low/unknown",
+      "environmentId": null,
+      "status": "verified",
+      "toolCalling": true,
+      "imageInput": null,
+      "streaming": null,
+      "continuation": null,
+      "interruptions": null,
+      "effectiveEffortVerified": null,
+      "contextWindowTokens": 200000,
+      "supportedEfforts": [
+        {
+          "kind": "level",
+          "value": "low"
+        },
+        {
+          "kind": "level",
+          "value": "medium"
+        }
+      ],
+      "evidenceIds": [
+        "legacy/synthetic-verified%2Fdate%20only"
+      ]
+    },
+    {
+      "id": "compatibility/legacy/configuration%2Fsynthetic-verified%252Fdate%2520only%2Flevel-medium%2Funknown",
+      "configurationId": "configuration/synthetic-verified%2Fdate%20only/level-medium/unknown",
+      "environmentId": null,
+      "status": "verified",
+      "toolCalling": true,
+      "imageInput": null,
+      "streaming": null,
+      "continuation": null,
+      "interruptions": null,
+      "effectiveEffortVerified": null,
+      "contextWindowTokens": 200000,
+      "supportedEfforts": [
+        {
+          "kind": "level",
+          "value": "low"
+        },
+        {
+          "kind": "level",
+          "value": "medium"
+        }
+      ],
+      "evidenceIds": [
+        "legacy/synthetic-verified%2Fdate%20only"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "legacy/synthetic-advertised",
+      "source": "legacy-import",
+      "checkedDate": null,
+      "observedAt": null,
+      "environmentId": null,
+      "notes": "SYNTHETIC FIXTURE: advertised by discovery; no efforts established.",
+      "payload": {
+        "id": "synthetic-advertised",
+        "provider": "openai",
+        "enabled": true,
+        "availability": "advertised",
+        "claudeCodeCompatibility": "unverified",
+        "capabilities": {
+          "qualityByUseCase": {
+            "implementation": null,
+            "investigation": null,
+            "review": null,
+            "planning": null,
+            "explanation": null
+          },
+          "maxComplexity": null,
+          "contextWindowTokens": null,
+          "toolCalling": null,
+          "reasoningEfforts": []
+        },
+        "cost": {
+          "allowanceWeight": null,
+          "inputUsdPerMillion": null,
+          "outputUsdPerMillion": null
+        },
+        "evidence": {
+          "source": "unmeasured",
+          "checkedAt": null,
+          "notes": "SYNTHETIC FIXTURE: advertised by discovery; no efforts established."
+        }
+      }
+    },
+    {
+      "id": "legacy/synthetic-unsupported",
+      "source": "legacy-import",
+      "checkedDate": "2026-10-29",
+      "observedAt": null,
+      "environmentId": null,
+      "notes": "SYNTHETIC FIXTURE: explicitly lacks tool calling.",
+      "payload": {
+        "id": "synthetic-unsupported",
+        "provider": "openai",
+        "enabled": true,
+        "availability": "verified",
+        "claudeCodeCompatibility": "incompatible",
+        "capabilities": {
+          "qualityByUseCase": {
+            "implementation": null,
+            "investigation": null,
+            "review": null,
+            "planning": null,
+            "explanation": null
+          },
+          "maxComplexity": null,
+          "contextWindowTokens": null,
+          "toolCalling": false,
+          "reasoningEfforts": [
+            "high"
+          ]
+        },
+        "cost": {
+          "allowanceWeight": null,
+          "inputUsdPerMillion": null,
+          "outputUsdPerMillion": null
+        },
+        "evidence": {
+          "source": "manual",
+          "checkedAt": "2026-10-29",
+          "notes": "SYNTHETIC FIXTURE: explicitly lacks tool calling."
+        }
+      }
+    },
+    {
+      "id": "legacy/synthetic-verified%2Fdate%20only",
+      "source": "legacy-import",
+      "checkedDate": "2026-10-30",
+      "observedAt": null,
+      "environmentId": null,
+      "notes": "SYNTHETIC FIXTURE: verified on a date only; notes mention Claude Code 2.1.314 without creating an environment.",
+      "payload": {
+        "id": "synthetic-verified/date only",
+        "provider": "anthropic",
+        "enabled": true,
+        "availability": "verified",
+        "claudeCodeCompatibility": "verified",
+        "capabilities": {
+          "qualityByUseCase": {
+            "implementation": null,
+            "investigation": null,
+            "review": 3,
+            "planning": null,
+            "explanation": null
+          },
+          "maxComplexity": null,
+          "contextWindowTokens": 200000,
+          "toolCalling": true,
+          "reasoningEfforts": [
+            "low",
+            "medium"
+          ]
+        },
+        "cost": {
+          "allowanceWeight": 1.5,
+          "inputUsdPerMillion": null,
+          "outputUsdPerMillion": null
+        },
+        "evidence": {
+          "source": "evaluation",
+          "checkedAt": "2026-10-30",
+          "notes": "SYNTHETIC FIXTURE: verified on a date only; notes mention Claude Code 2.1.314 without creating an environment."
+        }
+      }
+    }
+  ],
+  "approvals": []
+}

@@ -6,3 +6,13 @@ node_modules/
 *.log
 
 test-results/
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
+
+# Personal notes, workstation records, and unredacted research.
+/local/
+
+# Generated Claude Code declarations and machine-specific project settings.
+/.claude-plugin/types/
+/.claude/settings.local.json

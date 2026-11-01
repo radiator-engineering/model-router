@@ -1,6 +1,10 @@
 import {registerRouterControls, createRouterControls, normalizeRouterMode} from './router-controls.ts'
 import catalogData from '../catalog/model-data.ts'
-import {parseCatalog} from './model-catalog.ts'
+import {parseCatalog,parseCatalogV2} from './model-catalog.ts'
+import {configuredPolicy,runtimeCatalog} from './v2/policy-data.ts'
+import {createHarness,captureLegacyClassifier,boundEngine,nativeIntake,nativeTurnStart,nativeStepPlan,nativeV2Step,nativePrepareSpawn,nativeSpawnStarted,nativeTurnComplete,nativeToolGuard,recordLegacyRequest} from './v2/harness.ts'
+import type {HarnessAdapters} from './v2/harness.ts'
+import {workflowComplete,workflowTurnStart,workflowSpawnGuard,workflowToolGuard} from './v2/review-harness.ts'
 import {recommendTask, DEFAULT_PREFERENCES, taskLabel} from './task-routing.ts'
 /**
  * jev-model-router — Claude Mod
@@ -27,13 +31,14 @@ import {recommendTask, DEFAULT_PREFERENCES, taskLabel} from './task-routing.ts'
  * mistakes do not cost the same, so they do not clear the same confidence bar
  * (see `minUpgradeConfidence` / `minDowngradeConfidence` in policy.ts).
  *
- * The Agent tool has no effort parameter, so a subagent's effort is not ours
- * to set; only its model is.
+ * Legacy agent.spawn changes only model; the narrow spawn API has no effort
+ * field. V2 uses qualified step/registered-definition effort paths separately.
  *
  * The prompt is classified at `prompt.submit`, which runs before the turn
  * starts, and the decision is applied at the turn's first request.
  *
- * Every failure path is fail-open: a classification that errors or runs past
+ * Legacy failures are fail-open; enforced v2 failures hold before dispatch.
+ * A legacy classification that errors or runs past
  * the latency budget leaves the request exactly as the engine built it.
  *
  * The API key comes from the plugin's options (userConfig "typesafeApiKey"
@@ -64,7 +69,9 @@ import {
 } from './policy.ts'
 import type { Decision, Effort, PolicyConfig, Provider, Tier } from './policy.ts'
 
-export const register: Register = (on, options) => {
+export const register: Register = (on, options) => registerWithAdapters(on,options)
+/** Explicit typed I/O boundary for trusted embedding and isolated native tests, never a prompt/JSON switch. */
+export function registerWithAdapters(on:Parameters<Register>[0],options:Parameters<Register>[1],adapters?:HarnessAdapters) {
   const text = (key: string, fallback: string) =>
     typeof options[key] === 'string' && options[key] ? (options[key] as string) : fallback
   const number = (key: string, fallback: number) =>
@@ -116,8 +123,17 @@ export const register: Register = (on, options) => {
   const routeSubagentModel = flag('routeSubagentModel', true)
   const routeMainEffort = flag('routeMainEffort', true)
   const routeMainModel = flag('routeMainModel', false)
-  const controls = createRouterControls({mode:taskMode, mainModel:routeMainModel, mainEffort:routeMainEffort, subagents:routeSubagentModel, classifyTurns:flag('classifyTurns', true)})
+  const controls = createRouterControls({mode:taskMode, mainModel:routeMainModel, mainEffort:routeMainEffort, subagents:routeSubagentModel, classifyTurns:flag('classifyTurns', true)}, options)
   registerRouterControls(on, controls)
+  const v2Catalog=adapters?.catalog??runtimeCatalog(parseCatalogV2(catalogData))
+  const harness=createHarness(controls,{catalog:v2Catalog,policy:adapters?.policy??configuredPolicy(options,v2Catalog),legacyCatalog:catalog,
+    classifier:{provider:active,url,model:modelId,apiKey,deadlineMs:Number.isSafeInteger(timeoutMs)&&timeoutMs>0?Math.min(timeoutMs,600000):800},
+    pluginVersion:null,sourceRevision:null,logDecisions:flag('logDecisions',true),adapters})
+  controls.runtime=harness
+  adapters?.onRuntimeReady?.(harness)
+  on('turn.start',async($,e,next)=>{try{if(!await workflowTurnStart($,harness,e))await nativeTurnStart($,harness,controls,e)}catch(error){$.ui.log(`[router] Turn association failed: ${error instanceof Error?error.message:'unknown association error'}`,{to:'debug'})}return next(e)}).catch(($,e)=>({turnId:e.turnId}))
+  on('turn.complete',async($,e,next)=>{try{if(!await workflowComplete($,harness,e))await nativeTurnComplete($,harness,controls,e)}catch{$.ui.log('[router] Completion metadata unavailable; no review/acceptance is inferred.',{to:'debug'})}return next(e)})
+  on('tool.call',async($,e,next)=>{const deny=(next.origin.plugin&&next.origin.plugin!=='engine'?null:await workflowToolGuard($,harness,e))??await nativeToolGuard($,harness,e,next.origin.plugin);return deny?{deny}:next(e)}).catch(($,e,next)=>next.called||(!e.agentId||!Object.values(harness.workflow?.jobs??{}).some(j=>!j.completion&&(!j.agentId||j.agentId===e.agentId)))&&boundEngine(harness)!=='v2'?next(e):{deny:'unavailable: tool allowance could not be established.'})
   const logDecisions = flag('logDecisions', true)
 
   const policy: PolicyConfig = {
@@ -144,6 +160,10 @@ export const register: Register = (on, options) => {
   let applied: { model?: string; effort?: Effort } | null = null
 
   on('prompt.submit', async ($, e, next) => {
+    const held=await nativeIntake($,harness,e)
+    if(held)return {drop:held}
+    if(boundEngine(harness)==='v2'){pending.put(null);return next(e)}
+    let legacyUsage:unknown=null
     const runtime=controls.current()
     const taskMode=runtime.mode
     const taskEnabled=taskMode==='observe'||taskMode==='custom'
@@ -197,7 +217,7 @@ export const register: Register = (on, options) => {
           }),
           $.clock.sleep(timeoutMs),
         ])
-        if (response && response.ok) decision = readDecision(response.text)
+        if (response && response.ok) {decision = readDecision(response.text);try{legacyUsage=JSON.parse(response.text).usage}catch{}}
         else if (response) $.ui.log(`[jev-model-router] ${active} responded ${response.status}`,{to:'debug'})
         else $.ui.log(`[jev-model-router] classification passed ${timeoutMs}ms; leaving the turn alone`,{to:'debug'})
       } catch (error) {
@@ -229,11 +249,21 @@ export const register: Register = (on, options) => {
       $.ui.log(`[router] classification (recommendation only): ${describeDecision(decision, ms)}`,{to:'debug'})
     }
 
+    captureLegacyClassifier(harness,e.text,(await $.clock.now())-startedAt,legacyUsage)
     pending.put(decision)
     return next(e)
-  })
+  }).catch(($,e,next)=>next.called||(boundEngine(harness)!=='v2'&&!controls.engineError)?next(e):{drop:'unavailable: unsupported policy engine; request held after guard error.'})
 
   on('turn.step', async function* ($, e, next) {
+    const plan=await nativeStepPlan($,harness,controls,e)
+    if(plan.owned){
+      if(plan.message||!plan.assignment){
+        const text=plan.message??'unavailable: assignment association missing.'
+        yield {kind:'text',index:0,text};yield {kind:'stop',stopReason:'end_turn',usage:null}
+        return {turnId:e.turnId,index:e.index,answer:text,toolUses:[],stopReason:'end_turn',usage:null}
+      }
+      return yield* nativeV2Step($,harness,e,plan.assignment,next)
+    }
     const runtime=controls.current()
     const taskMode=runtime.mode
     const taskEnabled=taskMode==='observe'||taskMode==='custom'
@@ -267,6 +297,7 @@ export const register: Register = (on, options) => {
     if (routeMainModel && routing.model) change.model = requestModelId(routing.model)
     if (routeMainEffort && routing.effort) change.effort = routing.effort
 
+    controls.lastApplied={engine:'legacy',assignmentId:e.turnId,model:change.model??e.model,effort:change.effort??e.effort??null}
     appliedTurnId = e.turnId
     applied = Object.keys(change).length > 0 ? change : null
     // A row in the transcript scrolls away; this line stays on screen.
@@ -277,10 +308,28 @@ export const register: Register = (on, options) => {
         ? 'custom' : taskMode === 'custom' && !task.preferredModel && applied ? 'basic fallback' : taskMode
       $.ui.log(`[router] ${taskLabel(decision?.task)} · ${change.model ?? e.model} · effort ${change.effort ?? e.effort ?? 'harness default'} · ${source}${applied ? '' : ' · unchanged'}`)
     }
+    await recordLegacyRequest($,harness,e,change.model??e.model,change.effort??e.effort,taskMode)
     return yield* next({ ...e, ...change })
+  }).catch(async function* ($,e,next) {
+    if(next.called||(boundEngine(harness,e.turnId)!=='v2'&&!controls.engineError))return yield* next(e)
+    const text='unavailable: unsupported policy engine; request held after guard error.'
+    yield {kind:'text',index:0,text}
+    yield {kind:'stop',stopReason:'end_turn',usage:null}
+    return {turnId:e.turnId,index:e.index,answer:text,toolUses:[],stopReason:'end_turn',usage:null}
   })
 
   on('agent.spawn', async ($, e, next) => {
+    const workflowGate=workflowSpawnGuard(harness,e,next.origin.plugin)
+    if(workflowGate==='deny')return {deny:'unavailable: coordinator-only type cannot be reused or altered.'}
+    if(workflowGate==='owned')return next(e)
+    const spawnPlan=await nativePrepareSpawn($,harness,controls,e)
+    if(spawnPlan.deny)return {deny:spawnPlan.deny}
+    if(spawnPlan.owned){
+      const result=await next(spawnPlan.model?{...e,model:spawnPlan.model}:e)
+      await nativeSpawnStarted($,harness,e,result)
+      return result
+    }
+    const forward=async(input:typeof e)=>{const result=await next(input);try{await nativeSpawnStarted($,harness,e,result)}catch{}return result}
     const runtime=controls.current()
     const taskMode=runtime.mode
     const taskEnabled=taskMode==='observe'||taskMode==='custom'
@@ -308,7 +357,7 @@ export const register: Register = (on, options) => {
     }
 
     // A fork inherits its parent's model; `model` is ignored for it.
-    if (!routeSubagentModel || e.fork) return next(e)
+    if (!routeSubagentModel || e.fork) return forward(e)
 
     if (!unusableReported) {
       unusableReported = true
@@ -378,9 +427,9 @@ export const register: Register = (on, options) => {
     const {model, reason} = routing
     if (!model) {
       if (logDecisions) $.ui.log(`[router] ${e.subagentType}: ${taskLabel(decision?.task)} · ${current} · unchanged`)
-      return next(e)
+      return forward(e)
     }
     if (logDecisions) $.ui.log(`[router] ${e.subagentType}: ${taskLabel(decision?.task)} · ${model} · ${taskMode === 'custom' && task.model ? 'custom' : 'basic'}`)
-    return next({ ...e, model })
-  })
+    return forward({ ...e, model })
+  }).catch(($,e,next)=>next.called||(boundEngine(harness)!=='v2'&&!controls.engineError)?next(e):{deny:'unavailable: unsupported policy engine; spawn held after guard error.'})
 }

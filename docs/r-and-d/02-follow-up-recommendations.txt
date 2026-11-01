@@ -1,0 +1,316 @@
+The three follow-ups point toward a simpler redesign: **admit new models into specific roles, evaluate reviewers by the defects they help resolve, and calibrate a small number of routing boundaries—not a universal “difficulty score.”** Those are the three questions listed at the end of the research report. Model Router Redesign for Softw…
+
+Two corrections to that report matter before extending it. **Sonnet supports image input**; its exclusion from visual work was incorrect. And **CLIProxyAPI’s upstream documentation describes usage telemetry and optional quota-provider interfaces**; the report’s blanket claim that the proxy exposes no usage statistics was too strong. What your installed version actually supports remains unverified. [platform.claude.com](https://platform.claude.com/docs/en/models/sonnet-5/overview)
+
+I retrieved the report, but could not retrieve your repository or inspect your workstation’s proxy and Claude settings in this session. Consequently, the recommendations below distinguish documented upstream capabilities from proposed behavior; they do not establish your current implementation, live model inventory, or effective settings. No live model experiments were run.
+
+## 1. How should routing change when new models become available?
+
+### Recommendation: qualify a model for a role, not for a position in a hierarchy
+
+A new release should not automatically become “the architecture model” because it leads a benchmark—or replace an entire family because its name suggests a higher tier.
+
+Instead, treat each candidate as a combination:
+
+> **Exact model identity × effort configuration × proxy translation × harness version × workload conditions.**
+
+This distinction is operationally important. Anthropic explicitly documents that effort levels can be recalibrated between releases: the same named level need not produce the same amount of thinking. OpenAI likewise documents model-dependent effort support. Neither supports interpreting “medium” as a standardized quantity across models. [Claude Platform](https://platform.claude.com/docs/en/build-with-claude/effort)
+
+I recommend this admission process:
+
+| Stage | What must be established | Routing permission |
+|---|---|---|
+| **Discovered** | The proxy advertises an identifier; discovery time and alias information are recorded. | No automatic use. |
+| **Compatible** | The required request, tool, image, streaming, and effort paths work through the installed harness and proxy. | Explicit experimental selection only. |
+| **Locally evaluated** | Results exist for a defined workload and operating budget, including failures. | Eligible for a proposed role. |
+| **Approved for a role** | A policy revision names the role, conditions, effort, and fallback behavior. | Automatic use within those conditions. |
+| **Restricted or retired** | Compatibility, availability, or quality has deteriorated. | Remove affected eligibility without rewriting unrelated policies. |
+
+These are **proposed states**, not observations about the current router.
+
+### Compatibility is more than accepting a request
+
+A useful admission test must distinguish “the endpoint accepted the payload” from “the requested behavior survived translation.”
+
+For example, current OpenAI documentation says GPT-6 Astra requires the Responses API for tool calling. That makes the proxy’s upstream protocol and translation behavior material to your Claude Code setup; an advertised model name alone cannot establish agent compatibility. [OpenAI Developers](https://developers.openai.com/api/docs/guides/deployment-checklist)
+
+The compatibility record should therefore answer:
+
+- What identifier was requested, and what upstream model was actually selected?
+- Was the effort setting translated and forwarded correctly, or merely accepted locally?
+- Did tool calls, tool results, images, interruptions, and continuation survive a complete round trip?
+
+Where upstream identity or effective configuration cannot be observed, record **unknown**, not “verified.” Behavioral tests can establish practical compatibility without proving precisely how much internal computation a model used.
+
+### New models should initially compete for narrow assignments
+
+Consider three hypothetical changes:
+
+**A new Gemini model becomes available.** Give it a specific trial, such as identifying reproducible defects in rendered interfaces. Compare it with the current visual-analysis candidate on screenshot interpretation, interaction-state reasoning, and actionable findings. Do not infer design taste, implementation reliability, or independent-review value from visual-question-answering performance.
+
+**A successor to the strongest Claude model appears.** First compare it with your existing model at the effort levels you would actually use. A maximum-effort improvement does not establish a worthwhile medium-effort replacement. The first justified role might be difficult concurrency investigations rather than everyday execution.
+
+**A cheaper model approaches the current default.** Evaluate completed work, including repairs and validation—not just initial responses. It should receive bounded assignments only where the measured savings survive the cost of correcting its mistakes.
+
+These are proposals for admission, not claims that any particular new release has those strengths.
+
+### Keep availability, evidence, and policy updates separate
+
+I would maintain five distinct records:
+
+| Record | Contains | Must not imply |
+|---|---|---|
+| **Availability** | Advertised identifiers, observation time, recent availability failures | That an advertised model is usable or qualified |
+| **Compatibility** | Tested harness/proxy versions, supported features, effort translation | That the model produces good work |
+| **Evidence** | Exact evaluation configuration, results, limitations, source provenance | That a benchmark ranking authorizes production use |
+| **Preferences** | Your preferred orchestration, execution, and visual-analysis defaults | That those preferences are measured advantages |
+| **Resource policy** | Provider budgets, reserves, restrictions, override rules | That API prices equal subscription consumption |
+
+Epoch’s distinction between benchmark administration and benchmark-review verdicts is useful here: record who ran an evaluation separately from who assessed its methodology. A republished result should retain the same underlying evaluation identifier rather than becoming another independent vote. [Epoch AI](https://epoch.ai/benchmarks/search)
+
+**My proposed update rule:** refresh advertised availability separately from policy approval. New evidence may produce a proposed policy change; it should not silently change defaults.
+
+Manual selection should override a *soft* preference for Claude, but not bypass an incompatibility or explicit hard budget. A pinned model becoming unavailable should produce an explicit failure or an already-authorized fallback—not an undisclosed substitution.
+
+### Keep switching boundaries explicit
+
+For your workflow, I would initially keep the selected model stable through a bounded assignment and reconsider it at an explicit handoff, failed verification, or escalation.
+
+That is a policy proposal, not a claim that every existing hook can perform such a switch. The documented `UserPromptSubmit` contract permits blocking and context injection; `PreToolUse` can replace tool arguments. Those contracts do not, by themselves, establish automatic phase detection or reviewer invocation in your plugin. [Claude](https://code.claude.com/docs/en/hooks)
+
+The router should recommend an assignment. The orchestrator should create and execute it. The proxy should carry out the authorized request and expose transport outcomes.
+
+---
+
+## 2. What failure modes matter in cross-family review?
+
+### Recommendation: use reviews to produce evidence, not votes
+
+The useful question is not:
+
+> “Did a second family agree?”
+
+It is:
+
+> **“Did the reviewer identify a consequential problem that survived verification, or resolve a material uncertainty that the original workflow left open?”**
+
+Research on model-judge panels supports caution about assuming independence. Apple’s study examined nine models from seven families on natural-language inference and preference evaluation and found substantial correlated errors. That is evidence against treating family diversity as independent voting—not a measurement of how well your current models review repository changes. [Apple Machine Learning Research](https://machinelearning.apple.com/research/correlated-llm-evaluation-panels)
+
+Code-review research also documents the opposite failure: reviewers can reject correct implementations and invent unnecessary repairs. The cited study used HumanEval, MBPP, and QuixBugs with five model configurations, not your repositories or current model lineup; its practical implication is to test false alarms as well as missed defects. [Springer Link](https://link.springer.com/article/10.1007/s10515-026-00638-5)
+
+### The main failure modes and how to detect them
+
+The following controls are **proposals for your evaluation and review workflow**.
+
+| Failure mode | What it looks like | Detection and control |
+|---|---|---|
+| **Anchoring on the author** | The reviewer repeats the author’s explanation instead of checking it. | Compare reviews with and without persuasive rationale. Default to withholding rationale, author identity, and claimed confidence. |
+| **Shared blind spots** | Both models miss the same authorization or concurrency defect. | Measure detection on defects missed by the author’s checks. Include controlled defects and real failures with known outcomes. |
+| **Invented requirements** | A reviewer calls a preference or unstated behavior a correctness bug. | Require a requirement reference, invariant, or explicitly labeled assumption. Include correct implementations as controls. |
+| **Insufficient context** | A valid convention looks wrong because the reviewer cannot see a relevant caller or constraint. | Supply a context manifest and permit targeted retrieval. “Insufficient context” must be an acceptable outcome. |
+| **False verification** | “Tests pass” means tests were suggested, not executed. | Separate proposed tests from executed commands and attach results to an exact artifact revision. |
+| **Repair-induced regression** | A fix removes a reported symptom but breaks another requirement. | Run the reproduction and regression suite against both original and repaired artifacts. |
+| **False family diversity** | Different aliases ultimately select the same underlying model, or a fallback changes the reviewer. | Record requested and resolved identities where observable; otherwise mark independence unverified. |
+| **Review loops and churn** | Repeated critiques produce stylistic rewrites without reducing risk. | Bound review and repair passes; require new evidence before further escalation. |
+
+These failure modes suggest that **reviewer selection is a separate problem from author selection**. A good implementation model is not automatically the best reviewer of its own—or another model’s—failure patterns.
+
+### Correct the report’s blinding proposal
+
+The report suggested withholding the original answer from the reviewer. For code review, taken literally, that prevents the reviewer from reviewing the code. Model Router Redesign for Softw…
+
+The better default is:
+
+> **Provide requirements, code/diff, relevant context, and test evidence. Initially withhold the author’s persuasive rationale and self-assessment.**
+
+Use a fresh review context rather than replaying the author’s entire conversation. Give the reviewer access to relevant facts, not the author’s narrative about why the work must be correct.
+
+For unusually consequential decisions, an optional stronger procedure is to have the reviewer establish an invariant checklist before seeing the proposed solution. That costs an additional interaction and should be evaluated separately—not silently added to every review.
+
+### Require a small, inspectable review result
+
+Each substantive finding should contain a requirement or invariant, a location, a consequence, an evidence status, and the smallest useful reproduction or verification step.
+
+The evidence status should distinguish:
+
+**Confirmed defect** — supported by an executed reproduction or a concrete contradiction.
+
+**Plausible risk** — a credible mechanism, but not yet demonstrated.
+
+**Requirement ambiguity** — multiple interpretations remain possible.
+
+**Preference** — a style or design choice without a demonstrated requirement violation.
+
+A valid result can also be **“no supported findings within the inspected scope.”** Do not instruct reviewers to produce a minimum number of defects.
+
+This makes escalation more disciplined. A confirmed failure can justify repair or a stronger specialist. A plausible risk justifies a bounded verification step. An ambiguous requirement calls for an explicit decision; a more expensive model does not make the missing requirement exist.
+
+### Selective triggers, not universal review
+
+My proposed default is to request cross-family review when the work concerns authorization boundaries, destructive migrations, concurrency or idempotency, consequential architecture assumptions, or ambiguous requirements whose interpretation changes the implementation.
+
+Do not automatically review exact mechanical edits, straightforward retrieval, or a bounded change already checked against strong acceptance criteria. Also, do not spend a scarce review call merely to rediscover a deterministic test failure the author can already reproduce.
+
+Your preference for cross-family validation should remain, but capability comes first: a different family that cannot understand the relevant context is not a useful reviewer.
+
+**Example: tenant-aware caching.** Claude implements a cache that passes happy-path tests. The OpenAI reviewer receives the tenant-isolation requirement, diff, relevant callers, and executed test results—but not the author’s claim that the cache is safe. A useful finding is a two-tenant reproduction demonstrating cross-tenant reuse. “Consider security implications” is not sufficient.
+
+My proposed bound is **one review pass, one repair pass, then targeted verification**. Further work requires an unresolved material finding, not mere model disagreement. Required review that cannot run should remain “not completed,” rather than becoming an implicit approval.
+
+---
+
+## 3. How should difficulty thresholds and scarcity policy be calibrated with limited experiments?
+
+### Recommendation: calibrate decisions at boundaries, not a general intelligence score
+
+I would start with four operational dimensions:
+
+| Dimension | Lower-demand condition | Higher-demand condition |
+|---|---|---|
+| **Specification uncertainty** | Desired behavior and constraints are explicit. | Important requirements conflict, are missing, or require interpretation. |
+| **Verification strength** | A trustworthy executable check can decide success. | Success depends substantially on judgment or incomplete tests. |
+| **Execution span** | A bounded change with few dependencies and handoffs. | Cross-component state, long tool sequences, or several dependent decisions. |
+| **Failure consequence** | Easily reversible local mistakes. | Security exposure, data loss, migration hazards, or difficult recovery. |
+
+Modality, required tools, and context fit should first be **eligibility constraints**. Context length, distractors, and dependency depth can then be experimental stressors rather than arbitrary additions to a weighted score.
+
+Crucially, consequence and difficulty are different. A simple authorization change may deserve stronger validation than a difficult but disposable prototype.
+
+### Preserve your preferences as starting hypotheses
+
+The initial policy I would test is:
+
+**Haiku** for exact, bounded, readily checked work; **Sonnet** for well-specified execution; **Opus at medium effort** for orchestration and assignments with greater uncertainty or execution span; **Astra** for visual-analysis assignments where it demonstrates an advantage and for selected independent reviews.
+
+These remain hypotheses. Current Anthropic guidance does recommend starting Sonnet 5.5 at medium effort for well-specified agentic coding and increasing effort for harder or longer assignments, but that is vendor guidance—not validation of your proxy configuration or workload. [Claude Platform](https://platform.claude.com/docs/en/build-with-claude/effort)
+
+An important exception is missing requirements: route toward clarification or explicit assumptions before routing toward more computation.
+
+### Borrow controlled sweeps from ReasonScape—but change the tasks
+
+ReasonScape’s useful methodological contribution is controlled variation of task parameters, per-condition uncertainty, and explicit treatment of truncation. Its synthetic tasks should inform experimental design, not substitute for development work. [ReasonScape](https://reasonscape.com/)
+
+For your pilot, use three development-oriented sweeps:
+
+**Dependency depth:** keep the requested behavior fixed while increasing the number of components whose interactions matter.
+
+**Distractor load:** preserve the relevant evidence while adding plausible but irrelevant files, logs, or prior discussion.
+
+**Specification uncertainty:** vary whether the intended behavior is explicit, inferable from references, or genuinely unresolved.
+
+In the last sweep, the correct behavior may be asking a necessary question or reporting an assumption—not producing a patch immediately.
+
+Use multiple underlying task seeds. Keep related variants together when splitting calibration and holdout data; otherwise, the evaluation can reward familiarity with the same underlying problem.
+
+### A bounded pilot
+
+I would use the following **maximum pilot scope**, beginning with only six paired Claude tasks and expanding only after the instrumentation is useful.
+
+| Phase | Design | Agent attempts |
+|---|---|---:|
+| **Routing replay** | Compare current rules and proposed rules on fixed inputs, without generating solutions. | No model inference |
+| **Claude execution comparison** | 24 cases × Sonnet medium and Opus medium | 48 |
+| **Effort comparison** | Add Opus high on six preselected boundary cases | 6 |
+| **Specialist comparison** | One exact, compatible OpenAI configuration on 12 preselected cases | 12 |
+| **Reviewer comparison** | 12 fixed artifacts × one Claude and one OpenAI reviewer | 24 |
+| **Maximum total** | 66 execution attempts plus 24 reviews | **90** |
+
+An *agent attempt* can contain multiple API requests and tool calls; it is not a single completion.
+
+The 24 execution cases could comprise 12 controlled variants and 12 realistic assignments spanning research/product planning, architecture, UX analysis, implementation, debugging, and verification.
+
+For reviewer calibration, include both known-correct and deliberately defective artifacts, drawn from work authored by both families. Have both reviewers inspect the same artifacts. This permits a paired comparison and prevents a reviewer from appearing successful simply by criticizing everything. Planted defects are useful controls, but results on them must remain separate from findings on naturally occurring defects.
+
+Choose the OpenAI subset **before** seeing Claude’s results. A separate “rescue failed Claude attempts” experiment is useful later, but answers a different question.
+
+Haiku qualification should be a subsequent mechanical-work test rather than another full arm in this first pilot.
+
+### Proposed resource ceilings
+
+For planning purposes, cap each execution attempt at **40,000 cumulative input tokens and 8,000 generated tokens**, and each review at **16,000 input and 3,000 generated tokens**. Generated-token accounting should include reasoning tokens wherever exposed.
+
+Under those proposed ceilings, the full 90-attempt pilot totals approximately:
+
+| Scope | Cumulative input ceiling | Generated-token ceiling |
+|---|---:|---:|
+| All attempts | 3.024 million | 600,000 |
+| OpenAI portion | 672,000 | 132,000 |
+
+These are arithmetic planning ceilings, **not expected consumption or a subscription-percentage estimate**. They are enforceable only to the extent that usage is observable; otherwise, pair conservative estimates with tool-step and wall-time limits.
+
+The results would describe performance under those operating budgets, not maximum model capability. Truncated or budget-exhausted attempts must remain visible. A different budget can change the preferred effort level.
+
+### Separate three different questions
+
+**Classification quality:** Did the router recognize uncertainty, consequences, required capabilities, and explicit overrides?
+
+**Execution quality:** Did the selected configuration complete the work correctly, including requirement checks and regressions?
+
+**Policy quality:** Did the entire execution–review–repair process improve outcomes while respecting resource constraints?
+
+A classifier can match human labels perfectly and still select an inferior model. Conversely, two models can both be adequate, making “exactly match the preferred model label” a poor definition of classifier accuracy.
+
+For execution and policy comparisons, record first-pass success, final success, intervention and repair work, confirmed defects, false review alarms, elapsed time, tool calls, retries, token categories, cache behavior, and scarce-provider use. Official OpenAI selection guidance similarly recommends measuring completion time including review and repair, then varying effort while holding model and inputs fixed. [OpenAI Developers](https://developers.openai.com/api/docs/guides/model-selection)
+
+### Control context and cache conditions
+
+Run comparisons from the same repository snapshot, requirements, tool permissions, and starting context. Measure cold-start and resumed-session conditions separately.
+
+Do not assume that a model switch or session continuation preserves cache benefits. OpenAI’s documentation describes prefix-dependent caching and explicitly notes that session reuse does not guarantee a cache hit. The relevant measurement is the cache behavior your actual harness and proxy expose. [OpenAI Developers](https://developers.openai.com/api/docs/guides/prompt-caching?utm_source=chatgpt.com)
+
+Compare the proposed policy with the current router, always-Sonnet, and always-Opus baselines. Reuse an experimental outcome only when the selected configuration **and its starting conditions** match. Missing counterfactual runs remain missing; routing replay cannot manufacture completion evidence.
+
+### What a small pilot can establish
+
+A pilot can expose broken effort forwarding, severe failure modes, unhelpful reviews, and promising routing boundaries. It cannot establish high reliability across all development work.
+
+For scale: with **zero failures in 24 independent, representative trials**, the exact one-sided 95% upper bound on the failure probability is still approximately **11.7%**, calculated as \(1-0.05^{1/24}\). Related task variants provide less independent evidence than that example assumes.
+
+I would therefore use two gates:
+
+**Pilot gate:** no observed critical regression, no silent override or substitution failures, and an identifiable benefit on the intended assignments. Passing authorizes a constrained rollout—not a general reliability claim.
+
+**Promotion gate:** on a larger held-out workload, meet a predeclared quality non-inferiority margin and demonstrate a material improvement in scarce-provider use or total completion effort. A candidate target might be no more than a five-percentage-point completion-quality loss on routine work and at least a 20% reduction in scarce-provider consumption—but those are proposed acceptance choices, not established safe values. Consequential work should have separate, stricter controls.
+
+Do not import a headline benchmark pass rate as your acceptance target.
+
+---
+
+## Scarcity: what should be calibrated, and what remains a policy choice?
+
+Different provider allowances can support a configurable **Claude-first policy**. They do not establish a fixed token exchange rate, a target OpenAI call share, or an appropriate multiplier on API prices.
+
+I would compare these approaches in order:
+
+| Approach | Benefit | Main limitation | Recommendation |
+|---|---|---|---|
+| **Static Claude preference** | Simple, inspectable, works without quota telemetry | Does not adapt to remaining allowance | Start here |
+| **Locally enforced provider budgets and reserves** | Protects review and escalation capacity | Covers only tracked activity; units may be proxies | Add when accounting is reliable |
+| **Configurable scarcity penalty** | Supports offline trade-off analysis | Creates false precision without meaningful usage units | Keep optional |
+| **Live quota-aware routing** | Can respond to actual remaining resources | Depends on version, provider support, freshness, and scope | Add only after local verification |
+
+A scarcity weight is not something benchmarks can uniquely determine. Experiments can estimate a trade-off between quality, time, and consumption. Your policy must decide how much scarce capacity to protect for later consequential work.
+
+My proposed initial behavior is:
+
+**Normal or unknown allowance:** prefer Claude; permit OpenAI for approved specialist assignments, consequential independent review, and evidence-backed escalation.
+
+**Restricted allowance:** preserve OpenAI for those higher-value roles and stop exploratory or redundant use.
+
+**Confirmed exhaustion:** fail an explicit OpenAI selection or use a preauthorized substitute. Never silently mark an unavailable independent review as completed.
+
+Unknown quota is neither zero quota nor unlimited quota.
+
+Upstream CLIProxyAPI documentation makes local verification especially important: quota endpoints depend on installed providers, management access uses a management credential, and the documented usage-queue GET **removes records**. It should not be polled during a read-only audit. An existing non-consuming collector would be preferable for observation. [Router Help](https://help.router-for.me/management/apiv8)
+
+Also keep retries separate from substitution. The current upstream configuration describes retry rounds across eligible credentials; that does not establish permission to change the requested model. [Router Help](https://help.router-for.me/configuration/options)
+
+## Concrete decision
+
+I recommend adopting the following design direction:
+
+**A small, Claude-first decision tree with explicit capability gates; model-and-effort admission by workload; selective, evidence-producing cross-family review; and versioned policy changes backed by bounded local comparisons.**
+
+Defer learned routing scores, automatic leaderboard-driven changes, and live quota optimization until the underlying observations are trustworthy.
+
+The unresolved local facts are specific: your effective settings and override precedence, exact advertised and resolved model identities, effort translation, installed hook capabilities, non-consuming usage visibility, and actual reviewer benefit. Those—not another broad benchmark ranking—are the next evidence needed to turn this proposal into an implementation-ready design.

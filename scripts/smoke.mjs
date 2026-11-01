@@ -25,7 +25,9 @@ const hash = text => createHash('sha256').update(text).digest('hex');
 const fixturesText = await readFile(path.join(root, 'tests/fixtures/smoke.json'), 'utf8');
 const fixtures = JSON.parse(fixturesText).filter(x=>tasks || !x.taskOnly);
 const {recommendTask} = await import('../hooks/task-routing.ts');
-const catalog = JSON.parse(await readFile(path.join(root,'catalog/models.json'),'utf8'));
+const {parseCatalog} = await import('../hooks/model-catalog.ts');
+// Legacy consumers receive the validated legacy projection, never raw v2 JSON.
+const catalog = parseCatalog(JSON.parse(await readFile(path.join(root,'catalog/models.json'),'utf8')));
 const git = (...a) => execFileSync('git', a, {cwd:root, encoding:'utf8'}).trim();
 const policyHash = hash(await readFile(path.join(root, 'hooks/policy.ts')));
 const startedAt = new Date().toISOString();
@@ -47,15 +49,25 @@ const report = {
   runnerHash:hash(await readFile(fileURLToPath(import.meta.url))),
   tests:[], classifications:[],
 };
-await import('../tests/policy.test.ts');
-await import('../tests/catalog.test.ts');
-await import('../tests/task-routing.test.ts');
-await import('../tests/router-controls.test.ts');
-for (const {name, fn} of cases) {
-  const start = performance.now();
-  try { await fn(); report.tests.push({name, status:'pass', latencyMs:performance.now()-start}); }
-  catch (error) { report.tests.push({name, status:'fail', error:String(error.message), latencyMs:performance.now()-start}); }
+// Each suite must register cases; a runner that never imported a suite is not verification.
+const SUITES = ['policy', 'catalog', 'task-routing', 'router-controls', 'legacy-regression', 'v2-classifier', 'v2-policy', 'v2-pins', 'v2-harness', 'v2-artifacts', 'v2-verification', 'v2-review'];
+report.suites = [];
+for (const suite of SUITES) {
+  const file = `tests/${suite}.test.ts`;
+  const before = cases.length;
+  await import(`../${file}`);
+  for (const c of cases.slice(before)) c.suite = suite;
+  report.suites.push({suite, file, hash:hash(await readFile(path.join(root, file))), cases:cases.length-before});
 }
+for (const {name, fn, suite} of cases) {
+  const start = performance.now();
+  try { await fn(); report.tests.push({name, suite, status:'pass', latencyMs:performance.now()-start}); }
+  catch (error) { report.tests.push({name, suite, status:'fail', error:String(error.message), latencyMs:performance.now()-start}); }
+}
+for (const s of report.suites) if (!s.cases) report.tests.push({name:`${s.suite} registered no cases`, suite:s.suite, status:'fail', latencyMs:0});
+report.fingerprints = {};
+for (const file of ['.claude-plugin/plugin.json', 'types/router-state.d.ts', 'hooks/v2/pins.ts', 'hooks/v2/harness.ts', 'hooks/v2/records.ts', 'hooks/v2/artifacts.ts', 'hooks/v2/verification.ts', 'hooks/v2/review.ts', 'hooks/v2/review-harness.ts', 'hooks/v2/native-review.ts', 'scripts/test-v2-native.mjs', 'scripts/test-v2-live.mjs', 'tests/native-v2/helpers.ts', 'tests/native-v2/contracts.test.ts', 'tests/native-v2/review.test.ts', 'hooks/v2/contract.ts', 'hooks/v2/classifier.ts', 'hooks/v2/policy.ts', 'hooks/v2/policy-data.ts', 'scripts/build-catalog.mjs', 'scripts/test-adapter.mjs', 'scripts/v2-replay-lib.mjs', 'scripts/replay-v2.mjs', 'tests/fixtures/v2-decisions.json', 'tests/fixtures/v2-classification.json', 'tests/fixtures/legacy-regression.json', 'tests/fixtures/catalog-v1-migration.json', 'tests/fixtures/catalog-v2-migrated.json'])
+  report.fingerprints[file] = hash(await readFile(path.join(root, file)));
 if (live) {
   let options = {};
   try {
@@ -106,6 +118,7 @@ if (live) {
   }
 }
 const failed = report.tests.filter(x => x.status !== 'pass');
+for (const t of failed) console.error(`FAIL [${t.suite}] ${t.name}: ${t.error ?? 'no cases registered'}`);
 report.summary = {
   policyPassed:report.tests.length-failed.length, policyTotal:report.tests.length,
   livePassed:report.classifications.filter(x=>x.status==='pass').length,
@@ -141,6 +154,7 @@ if (files.length) {
 const filename = `${id}-${mode}.json`;
 await writeFile(path.join(resultsDir, filename), JSON.stringify(report,null,2)+'\n');
 await writeFile(path.join(resultsDir, `latest-${mode}.txt`), filename+'\n');
+console.log('Suites: '+report.suites.map(s=>`${s.suite} ${s.cases}`).join(', '));
 console.log(`Local tests: ${report.summary.policyPassed}/${report.summary.policyTotal}; live: ${report.summary.livePassed}/${report.summary.liveTotal}`);
 console.log(`Report: ${path.join(resultsDir,filename)}`);
 if (report.comparison) console.log(`Compared with ${report.comparison.previousRun}: ${report.comparison.changedTests.length} changed test results, ${report.comparison.changedClassifications.length} changed decisions.`);
