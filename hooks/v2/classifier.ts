@@ -14,11 +14,20 @@ const CRITERIA: Record<ObservationKey, Record<string, string>> = {
     orchestration: 'Decompose, coordinate, delegate or reconcile work across agents.',
     'visual-analysis': 'Interpret screenshots, visual references or rendered layouts.',
     'file-scout': 'Locate files or gather paths/snippets without interpreting the system.',
-    implementation: 'Create a plan, design or architecture, or change code.',
-    investigation: 'Determine an unknown cause or understand interacting systems.',
+    implementation: 'Create or change code, tests or configuration, including implementing a supplied design. Planning without implementation is planning; running existing commands without code changes is operations.',
+    investigation: 'Diagnose an unknown cause in code, logs or interacting systems before choosing a fix. General external evidence gathering is research; applying a prescribed fix is implementation.',
     review: 'Independently evaluate work for defects or verify its behavior.',
-    'simple-answer': 'Give a short literal answer from supplied or stable facts, or a brief standalone social reply to a greeting or thanks. No teaching, investigation or task execution; short messages alone are not simple answers.',
-    explanation: 'Teach or explain concepts, causes, comparisons or tradeoffs, or summarize.',
+    'simple-answer': 'Give a short literal answer from supplied or stable facts, a tiny exact literal substitution, or a brief standalone social reply to a greeting or thanks. No document drafting, teaching, investigation or task execution; short messages alone are not simple answers.',
+    explanation: 'Teach or explain known concepts, causes, comparisons or tradeoffs. Condensing supplied content is summarization; gathering fresh external evidence is research.',
+    planning: 'Choose a strategy, architecture or actionable plan without implementing it yet. A design document making new decisions is planning, not writing; coordinating agents is orchestration.',
+    research: 'Find and verify external or current evidence and synthesize cited sources. Explaining stable knowledge is explanation; diagnosing a concrete software failure is investigation.',
+    writing: 'Create or edit original non-code prose, emails, copy or documentation. A new architecture/strategy is planning; condensing supplied text is summarization; changing natural language is translation.',
+    summarization: 'Condense supplied content while preserving its facts, without adding new research or findings. Original prose is writing; outputting a fixed schema is extraction.',
+    translation: 'Translate supplied natural-language content while preserving meaning. Teaching language is explanation; implementing application localization is implementation.',
+    extraction: 'Extract, classify or reformat supplied facts into a requested list, schema or structured output without deriving new conclusions. Computing statistics is data-analysis.',
+    'data-analysis': 'Compute or interpret statistics, quantitative trends or supplied datasets. Abstract formulas/proofs are mathematics; extracting existing numbers without analysis is extraction; collecting external sources is research.',
+    mathematics: 'Solve a multi-step mathematical or formal-logic problem, derive a formula or construct a proof. Trivial literal counts are simple-answer; teaching known concepts is explanation; interpreting datasets or statistics is data-analysis.',
+    operations: 'Execute or inspect an existing command, workflow, service or tool without authoring code. Writing code/configuration is implementation; explaining a command without running it is explanation.',
     unknown: UNKNOWN,
   },
   specification: {
@@ -46,10 +55,10 @@ const CRITERIA: Record<ObservationKey, Record<string, string>> = {
   },
 }
 const INSTRUCTIONS: Record<ObservationKey, string> = {
-  role: 'What kind of assignment is this? Classify the assignment itself, not its subject vocabulary. A standalone greeting or thanks is simple-answer. Approvals, confirmations and requests to continue prior work are not social replies; classify the underlying work when supplied, otherwise unknown. Do not infer simplicity from brevity.',
+  role: 'What kind of assignment is this? Classify the assignment itself, not its subject vocabulary. A standalone greeting or thanks is simple-answer. Approvals, confirmations and requests to continue prior work are not social replies; classify the underlying work when supplied, otherwise unknown. Do not infer simplicity from brevity. Classify the primary deliverable: a specific transformation (translation, summarization or extraction) takes precedence over a generic request to write. A document making new architectural decisions is planning regardless of its format.',
   specification: 'How completely is the required behavior specified?',
   verification: 'How strongly can a correct result be verified?',
-  executionSpan: 'How long and interdependent is the work needed to respond? A brief standalone social reply to a greeting or thanks is bounded even when no coding task is requested. A continuation or approval with unspecified prior work is unknown, not bounded just because its text is short.',
+  executionSpan: 'How long and interdependent is the work needed to respond? A single explanation, source-grounded text transformation, short document or standalone social reply to a greeting or thanks is bounded even when no coding task is requested; do not mark non-coding replies unknown merely because there is no code. A continuation or approval with unspecified prior work is unknown, not bounded just because its text is short.',
   consequence: 'What is the effect of carrying out this task incorrectly?',
 }
 

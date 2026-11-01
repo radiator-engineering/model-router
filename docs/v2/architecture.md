@@ -61,6 +61,8 @@ type Observation<T> = {
 type TaskRole =
   | 'implementation' | 'investigation' | 'review' | 'orchestration'
   | 'visual-analysis' | 'file-scout' | 'simple-answer' | 'explanation'
+  | 'planning' | 'research' | 'writing' | 'summarization'
+  | 'translation' | 'extraction' | 'data-analysis' | 'mathematics' | 'operations'
 
 type ClassifierOutput = {
   role: Observation<TaskRole>

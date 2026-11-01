@@ -35,6 +35,10 @@ The supporting documents have narrower responsibilities:
 
 Status: **Configured native v2 integration, November 1, 2026.** These documents do not grant model approvals or authorize model experiments. The brief owns selected product/architecture choices, the decision contract governs routing semantics, runtime contracts define stored data and authority-bearing inputs, and validation records the evidence for each enabled path. Resolve contradictions explicitly before implementation.
 
+## Role coverage and model choices
+
+V2 now covers explanation, planning, research, writing, source transformations, quantitative/mathematical analysis, operations and the existing development roles. See the [complete routing table](usage/task-routing.md#v2-role-coverage) and [source-backed option-count/role research](r-and-d/04-jev-options-and-role-coverage.md). Terra and Luna have basic native text/tool probe evidence; Fable remains opt-in and currently requires usage credits.
+
 ## Research inputs
 
 [Research and development](r-and-d/README.md) contains public copies of the two supplied research files. Personal resource details have been generalized; untouched originals remain in ignored `/local/`. Benchmark, pricing, and vendor claims remain source material for validation. They do not automatically become routing rules.

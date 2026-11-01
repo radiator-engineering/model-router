@@ -158,8 +158,8 @@ function evaluateConfigured(c:Candidate, role:CandidateCheck['role'],s:PolicySna
   const failed:CandidateCheck['failed']=[]
   const fail=(check:CheckName,reason:ReasonCode,detail:string)=>failed.push({check,reason,detail})
   const model=catalog.models.find(m=>m.id===c.model),profile=catalog.legacy.models.find(m=>m.id===c.model)
-  if(!model||!profile)fail('identity','compatibility_unknown','model has no configured profile')
-  else if(!model.enabled||!profile.enabled)fail('identity','model_disabled','model is disabled')
+  if(!model)fail('identity','compatibility_unknown','model has no configured identity')
+  else if(!model.enabled||profile?.enabled===false)fail('identity','model_disabled','model is disabled')
   if(model&&s.resources.restrictedProviders.includes(model.provider))fail('resources','budget_denied','provider is restricted')
   if(s.resources.hardBudget?.accounting==='unavailable')fail('resources','accounting_unknown','explicit hard budget has no accounting')
   else if(s.resources.hardBudget&&!s.resources.hardBudget.permits)fail('resources','budget_denied','explicit hard budget denies attempt')
@@ -167,9 +167,17 @@ function evaluateConfigured(c:Candidate, role:CandidateCheck['role'],s:PolicySna
   const latest=Math.max(...timed.map(a=>at(a.observedAt!)))
   const unavailable=timed.some(a=>at(a.observedAt!)===latest&&a.status==='unavailable')
   if(s.resources.exhaustedModels.includes(c.model??'')||unavailable)fail('availability','model_unavailable','model is unavailable')
-  else if(profile?.availability!=='verified')fail('availability','availability_unknown','model is not configured as available')
-  if(profile?.claudeCodeCompatibility!=='verified')fail('compatibility','compatibility_unknown','harness compatibility is not configured')
-  if(s.requirements.tools&&profile?.capabilities.toolCalling!==true)fail('capability',profile?.capabilities.toolCalling===false?'capability_missing':'compatibility_unknown','configured model does not declare tool calling')
+  else if(profile?.availability!=='verified'&&!timed.some(a=>at(a.observedAt!)===latest&&a.status==='verified'&&(a.validUntil===null||at(s.now)<at(a.validUntil))))fail('availability','availability_unknown','model is not configured as available')
+  // Native probes qualify only their exact pair and observed harness version, not the legacy snapshot or workload quality.
+  const native=catalog.compatibility.filter(x=>x.configurationId===c.id&&x.environmentId===null&&x.evidenceIds.some(id=>{
+    const e=catalog.evidence.find(e=>e.id===id),p=e?.payload
+    return e?.source==='evaluation'&&e.observedAt!==null&&at(e.observedAt)<=at(s.now)&&isObject(p)&&p.kind==='native-configuration-probe'&&p.passed===true&&p.modelId===c.model&&c.effort.kind==='level'&&p.requestedEffort===c.effort.value&&Array.isArray(p.observedModels)&&p.observedModels.length===1&&p.observedModels[0]===c.model&&typeof p.harnessVersion==='string'&&p.harnessVersion===s.environment.harnessVersion
+  }))
+  const nativeVerified=native.length>0&&native.every(x=>x.status==='verified'&&x.supportedEfforts.some(e=>canonicalEffort(e)===canonicalEffort(c.effort)))
+  if(native.some(x=>x.status==='incompatible'))fail('compatibility','capability_missing','native configuration is incompatible')
+  else if(profile?.claudeCodeCompatibility!=='verified'&&!nativeVerified)fail('compatibility','compatibility_unknown','harness compatibility is not configured')
+  const toolCalling=native.length?native.every(x=>x.toolCalling===true)?true:native.some(x=>x.toolCalling===false)?false:null:profile?.capabilities.toolCalling
+  if(s.requirements.tools&&toolCalling!==true)fail('capability',toolCalling===false?'capability_missing':'compatibility_unknown','configured model does not declare tool calling')
   // An untouched effort is owned by the host; never invent a level for it.
   const hostEffort=!s.controls.changeEffort&&c.effort.kind==='unknown'
   if(!hostEffort&&(c.effort.kind!=='level'||!['low','medium','high','xhigh','max'].includes(c.effort.value)))fail('effort','effort_unsupported','requested effort is not declared in the model profile')

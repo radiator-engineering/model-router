@@ -1,7 +1,8 @@
 import {expect,test} from 'claude-code/testing'
 import {readFileSync} from 'node:fs'
 import {v2Questions,v2RequestBody,normalizeV2Response} from '../hooks/v2/classifier.ts'
-import {OBSERVATION_KEYS,allowedValues,confident,validateClassifierOutput} from '../hooks/v2/contract.ts'
+import {OBSERVATION_KEYS,TASK_ROLES,allowedValues,confident,validateClassifierOutput} from '../hooks/v2/contract.ts'
+import {ROLES} from '../hooks/task-routing.ts'
 const answer=(value:string,confidence:unknown=.95)=>({choice:value,confidence})
 const full=(over:Record<string,unknown>={})=>JSON.stringify({answers:{role:answer('implementation'),specification:answer('explicit'),verification:answer('executable'),executionSpan:answer('bounded'),consequence:answer('reversible'),...over}})
 const norm=(text:string)=>{const o=normalizeV2Response(text);if(o)expect(validateClassifierOutput(o)).toEqual([]);return o}
@@ -20,6 +21,15 @@ test('lightweight communication reuses simple-answer without treating approvals 
  expect(q.executionSpan.instructions).toContain('greeting or thanks is bounded')
  expect(q.executionSpan.instructions).toContain('unspecified prior work is unknown')
  expect(norm(full({role:answer('unknown',1)}))!.role).toEqual({value:'unknown',confidence:null})
+})
+test('v2-only roles cover the taxonomy exactly without changing legacy labels',()=>{
+ const q=v2Questions() as any
+ expect(Object.keys(q.role.criteria).sort()).toEqual([...TASK_ROLES,'unknown'].sort())
+ expect(ROLES.length).toBe(8);expect(TASK_ROLES.length).toBe(17)
+ for(const role of TASK_ROLES){expect(norm(full({role:answer(role)}))!.role.value).toBe(role);expect(q.role.criteria[role].length>30).toBe(true)}
+ expect(q.role.instructions).toContain('primary deliverable')
+ expect(q.role.criteria.writing).toContain('planning')
+ expect(q.role.criteria.implementation).toContain('operations')
 })
 test('request bodies follow each backend shape and keep context optional',()=>{
  const t=JSON.parse(v2RequestBody('typesafe',{prompt:'p'},'jev-latest'))
@@ -79,6 +89,7 @@ test('classification development fixtures are well formed and grouped',()=>{
  const f=JSON.parse(readFileSync(new URL('./fixtures/v2-classification.json',import.meta.url),'utf8'))
  expect(new Set(f.cases.map((c:any)=>c.id)).size).toBe(f.cases.length)
  expect(new Set(f.cases.map((c:any)=>c.group)).size>1).toBe(true)
+ for(const role of TASK_ROLES)expect(f.cases.some((c:any)=>c.expected.role===role)).toBe(true)
  for(const c of f.cases){
   expect(typeof c.prompt==='string'&&c.prompt.length>0).toBe(true)
   expect(Object.keys(c.expected)).toEqual([...OBSERVATION_KEYS])

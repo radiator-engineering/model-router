@@ -195,6 +195,12 @@
   },
   "models": [
     {
+      "id": "claude-fable-5-1",
+      "provider": "anthropic",
+      "family": "claude",
+      "enabled": true
+    },
+    {
       "id": "claude-haiku-5-5",
       "provider": "anthropic",
       "family": null,
@@ -216,6 +222,12 @@
       "id": "gpt-6-astra",
       "provider": "openai",
       "family": null,
+      "enabled": true
+    },
+    {
+      "id": "gpt-6-luna",
+      "provider": "openai",
+      "family": "gpt",
       "enabled": true
     },
     {
@@ -280,9 +292,42 @@
       "observedAt": null,
       "validUntil": null,
       "evidenceId": "legacy/gpt-6.1-terra"
+    },
+    {
+      "id": "availability/native/2026-11-01/claude-fable-5-1/high",
+      "modelId": "claude-fable-5-1",
+      "status": "unavailable",
+      "observedAt": "2026-11-01T09:40:09.203Z",
+      "validUntil": null,
+      "evidenceId": "native/2026-11-01/claude-fable-5-1/high"
+    },
+    {
+      "id": "availability/native/2026-11-01/gpt-6-luna/low",
+      "modelId": "gpt-6-luna",
+      "status": "verified",
+      "observedAt": "2026-11-01T09:40:07.281Z",
+      "validUntil": null,
+      "evidenceId": "native/2026-11-01/gpt-6-luna/low"
+    },
+    {
+      "id": "availability/native/2026-11-01/gpt-6.1-terra/medium",
+      "modelId": "gpt-6.1-terra",
+      "status": "verified",
+      "observedAt": "2026-11-01T09:40:01.999Z",
+      "validUntil": null,
+      "evidenceId": "native/2026-11-01/gpt-6.1-terra/medium"
     }
   ],
   "configurations": [
+    {
+      "id": "configuration/claude-fable-5-1/level-high/unknown",
+      "modelId": "claude-fable-5-1",
+      "effort": {
+        "kind": "level",
+        "value": "high"
+      },
+      "requestPath": null
+    },
     {
       "id": "configuration/claude-haiku-5-5/level-medium/unknown",
       "modelId": "claude-haiku-5-5",
@@ -320,10 +365,28 @@
       "requestPath": null
     },
     {
+      "id": "configuration/gpt-6-luna/level-low/unknown",
+      "modelId": "gpt-6-luna",
+      "effort": {
+        "kind": "level",
+        "value": "low"
+      },
+      "requestPath": null
+    },
+    {
       "id": "configuration/gpt-6.1-sol/unknown/unknown",
       "modelId": "gpt-6.1-sol",
       "effort": {
         "kind": "unknown"
+      },
+      "requestPath": null
+    },
+    {
+      "id": "configuration/gpt-6.1-terra/level-medium/unknown",
+      "modelId": "gpt-6.1-terra",
+      "effort": {
+        "kind": "level",
+        "value": "medium"
       },
       "requestPath": null
     },
@@ -457,6 +520,50 @@
       "supportedEfforts": [],
       "evidenceIds": [
         "legacy/gpt-6.1-terra"
+      ]
+    },
+    {
+      "id": "compatibility/native/2026-11-01/gpt-6-luna/low",
+      "configurationId": "configuration/gpt-6-luna/level-low/unknown",
+      "environmentId": null,
+      "status": "verified",
+      "toolCalling": true,
+      "imageInput": null,
+      "streaming": null,
+      "continuation": null,
+      "interruptions": null,
+      "effectiveEffortVerified": null,
+      "contextWindowTokens": null,
+      "supportedEfforts": [
+        {
+          "kind": "level",
+          "value": "low"
+        }
+      ],
+      "evidenceIds": [
+        "native/2026-11-01/gpt-6-luna/low"
+      ]
+    },
+    {
+      "id": "compatibility/native/2026-11-01/gpt-6.1-terra/medium",
+      "configurationId": "configuration/gpt-6.1-terra/level-medium/unknown",
+      "environmentId": null,
+      "status": "verified",
+      "toolCalling": true,
+      "imageInput": null,
+      "streaming": null,
+      "continuation": null,
+      "interruptions": null,
+      "effectiveEffortVerified": null,
+      "contextWindowTokens": null,
+      "supportedEfforts": [
+        {
+          "kind": "level",
+          "value": "medium"
+        }
+      ],
+      "evidenceIds": [
+        "native/2026-11-01/gpt-6.1-terra/medium"
       ]
     }
   ],
@@ -695,6 +802,64 @@
           "checkedAt": "2026-10-30",
           "notes": "ID observed in local VibeProxy /v1/models. Inference, harness compatibility, quality and cost have not been evaluated."
         }
+      }
+    },
+    {
+      "id": "native/2026-11-01/claude-fable-5-1/high",
+      "source": "evaluation",
+      "checkedDate": "2026-11-01",
+      "observedAt": "2026-11-01T09:40:09.203Z",
+      "environmentId": null,
+      "notes": "Claude Code 2.1.316 through existing configured provider/proxy. HTTP 429: usage credits are required for this model. No credential, account, billing or alternate-route changes attempted.",
+      "payload": {
+        "kind": "native-configuration-probe",
+        "modelId": "claude-fable-5-1",
+        "harnessVersion": "2.1.316",
+        "requestedEffort": "high",
+        "observedModels": [],
+        "proxyVersion": null,
+        "passed": false,
+        "reportSha256": "25a443894b249c3c9d246018efd8d9c168057cb816c7b537d59172ded6f5ba5f"
+      }
+    },
+    {
+      "id": "native/2026-11-01/gpt-6-luna/low",
+      "source": "evaluation",
+      "checkedDate": "2026-11-01",
+      "observedAt": "2026-11-01T09:40:07.281Z",
+      "environmentId": null,
+      "notes": "Claude Code 2.1.316 through existing configured provider/proxy. Completed a governed Bash printf tool round trip and returned the marker; requested model identity appeared in CLI usage. Basic text/tool compatibility only, not workload quality or observed serving effort.",
+      "payload": {
+        "kind": "native-configuration-probe",
+        "modelId": "gpt-6-luna",
+        "harnessVersion": "2.1.316",
+        "requestedEffort": "low",
+        "observedModels": [
+          "gpt-6-luna"
+        ],
+        "proxyVersion": null,
+        "passed": true,
+        "reportSha256": "0628369cbd6185fb9921d1a7ea2e88265c09a5bc3e53f974db9b7c20b3b03fc6"
+      }
+    },
+    {
+      "id": "native/2026-11-01/gpt-6.1-terra/medium",
+      "source": "evaluation",
+      "checkedDate": "2026-11-01",
+      "observedAt": "2026-11-01T09:40:01.999Z",
+      "environmentId": null,
+      "notes": "Claude Code 2.1.316 through existing configured provider/proxy. Completed a governed Bash printf tool round trip and returned the marker; requested model identity appeared in CLI usage. Basic text/tool compatibility only, not workload quality or observed serving effort.",
+      "payload": {
+        "kind": "native-configuration-probe",
+        "modelId": "gpt-6.1-terra",
+        "harnessVersion": "2.1.316",
+        "requestedEffort": "medium",
+        "observedModels": [
+          "gpt-6.1-terra"
+        ],
+        "proxyVersion": null,
+        "passed": true,
+        "reportSha256": "77c14096e78d31433cd18e483078a15174e97af88371d739c48413d3b34b66cf"
       }
     }
   ],

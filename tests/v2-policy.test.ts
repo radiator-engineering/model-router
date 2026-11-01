@@ -69,9 +69,57 @@ test('unknown and low-confidence roles never become a lightweight default',()=>{
  s.classification.output.role=o('simple-answer',.79)
  expect(decide(s,policy,catalog).outcome).toBe('preserve')
 })
-test('explanation without a configured rule preserves rather than inventing a lower tier',()=>{
+test('explanations now have an explicit Sonnet rule instead of preserving an uncovered role',()=>{
  const s=prodBase();s.classification={status:'ok',output:{role:o('explanation'),specification:o('inferable'),verification:o('judgment'),executionSpan:o('bounded'),consequence:o('reversible')}}
- const d=decide(s,POLICY,production.catalog);expect(d.outcome).toBe('preserve');expect(d.reasons).toEqual(['no_matching_rule'])
+ const d=decide(s,POLICY,production.catalog);expect(d.outcome).toBe('select');expect(d.ruleId).toBe('explanation');expect(d.configuration?.model).toBe('claude-sonnet-5-5')
+})
+const roleSnapshot=(role:string)=>{
+ const s=prodBase();s.now='2026-11-02T00:00:00Z';s.environment={id:null,harnessVersion:'2.1.316',proxyVersion:null,requestPath:null}
+ s.current={model:'claude-opus-5-5',effort:'medium',modelOrigin:'inherited',effortOrigin:'inherited'};s.controls.changeModel=true;s.controls.changeEffort=true
+ s.classification={status:'ok',output:{role:o(role),specification:o('unknown',null),verification:o('judgment'),executionSpan:o('bounded'),consequence:o('reversible')}}
+ return s
+}
+test('new role rules use explicit configured models without granting empirical approval',()=>{
+ const catalog=runtimeCatalog(production.catalog),policy=configuredPolicy({},catalog)
+ for(const [role,model,effort] of [['explanation','claude-sonnet-5-5','medium'],['planning','claude-opus-5-5','medium'],['research','gpt-6.1-terra','medium'],['writing','gpt-6.1-terra','medium'],['summarization','gpt-6-luna','low'],['translation','gpt-6-luna','low'],['extraction','gpt-6-luna','low'],['data-analysis','claude-sonnet-5-5','medium'],['mathematics','claude-sonnet-5-5','medium'],['operations','gpt-6.1-terra','medium'],['investigation','claude-sonnet-5-5','medium'],['review','claude-sonnet-5-5','medium']]){
+  const s=roleSnapshot(role),d=decide(s,policy,catalog)
+  expect(d.configuration?.model).toBe(model);expect(d.configuration?.effort).toEqual({kind:'level',value:effort});expect(d.qualification).toBe('configured')
+  expect(d.candidates.every(c=>c.approvalId===null&&c.limits===null)).toBe(true)
+  s.classification.output.role.confidence=.79;expect(decide(s,policy,catalog).outcome).toBe('preserve')
+ }
+})
+test('native configuration evidence is exact-pair, observed, version-bound and does not rewrite legacy',()=>{
+ const catalog=runtimeCatalog(production.catalog),policy=configuredPolicy({},catalog),s=roleSnapshot('writing')
+ const legacy=JSON.stringify(production.catalog.legacy)
+ expect(decide(s,policy,catalog).configuration?.model).toBe('gpt-6.1-terra')
+ for(const version of [null,'2.1.317']){const bad=structuredClone(s);bad.environment.harnessVersion=version;expect(decide(bad,policy,catalog).outcome).toBe('preserve')}
+ const future=structuredClone(s);future.now='2026-10-31T00:00:00Z';expect(decide(future,policy,catalog).outcome).toBe('preserve')
+ const wrong=structuredClone(catalog);for(const e of wrong.evidence)if((e.payload as any)?.modelId==='gpt-6.1-terra')(e.payload as any).observedModels=['different-model']
+ expect(decide(s,policy,wrong).outcome).toBe('preserve')
+ const effortMismatch=structuredClone(catalog);for(const e of effortMismatch.evidence)if((e.payload as any)?.modelId==='gpt-6.1-terra')(e.payload as any).requestedEffort='high'
+ expect(decide(s,policy,effortMismatch).outcome).toBe('preserve')
+ const fixed=roleSnapshot('extraction');fixed.controls.changeEffort=false
+ expect(decide(fixed,policy,catalog).configuration?.model).toBe('claude-opus-5-5')
+ expect(JSON.stringify(production.catalog.legacy)).toBe(legacy)
+})
+test('long-horizon Fable remains opt-in and unavailable credits never become a successful model switch',()=>{
+ const catalog=runtimeCatalog(production.catalog),s=roleSnapshot('planning');s.classification.output.executionSpan=o('extended')
+ const normal=decide(s,configuredPolicy({},catalog),catalog);expect(normal.configuration?.model).toBe('claude-opus-5-5')
+ const policy=configuredPolicy({longHorizonModel:'claude-fable-5-1'},catalog)
+ const proposed=policy.rules.find(r=>r.id==='broad-or-orchestration')!;expect(proposed.primary[0]).toContain('claude-fable-5-1/level-high')
+ expect(decide(s,policy,catalog).outcome).toBe('preserve')
+ s.pins=[{field:'model',value:'claude-fable-5-1',scope:'session',purpose:'execution',source:'router-command',experimental:false}]
+ const pinned=decide(s,policy,catalog);expect(pinned.outcome).toBe('unavailable');expect(pinned.reasons.includes('model_unavailable')).toBe(true)
+})
+test('new roles retain consequential-work precedence, fixed switches and explicit resource restrictions',()=>{
+ const catalog=runtimeCatalog(production.catalog),policy=configuredPolicy({},catalog)
+ for(const role of ['operations','writing','extraction','planning']){
+  const s=roleSnapshot(role);s.classification.output.consequence=o('consequential')
+  expect(decide(s,policy,catalog).ruleId).toBe('consequential-work')
+  s.controls.changeModel=false;s.controls.changeEffort=false;expect(decide(s,policy,catalog).outcome).toBe('preserve')
+ }
+ const s=roleSnapshot('writing');s.pins=[{field:'model',value:'gpt-6.1-terra',scope:'session',purpose:'execution',source:'router-command',experimental:false}];s.resources.restrictedProviders=['openai']
+ expect(decide(s,policy,catalog).outcome).toBe('unavailable')
 })
 test('same-priority overlapping rules make the policy invalid and block dispatch',()=>{
  const policy=structuredClone(synthetic.policy);policy.rules[2].priority=policy.rules[3].priority;policy.rules[2].roles=['implementation']

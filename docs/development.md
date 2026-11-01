@@ -69,6 +69,7 @@ Live runs send the fixed fixture prompts to the configured classifier and consum
 ```sh
 node scripts/smoke.mjs --live
 node scripts/smoke.mjs --live --tasks
+node scripts/smoke.mjs --live --v2   # Classify v2 development fixtures; no task execution
 ```
 
 The runner reads the configured TypeSafe key from user settings or `JEV_API_KEY`; `JEV_MODEL` can pin the classifier model. These runs evaluate classification, not the work produced by the selected execution models. They do not send repository contents as prompts or call Claude/OpenAI execution models.
@@ -119,8 +120,14 @@ node scripts/test-v2-live.mjs --confirm-live --tool-loop
 node scripts/test-v2-live.mjs --confirm-live --subagent
 node scripts/test-v2-live.mjs --confirm-live --subagent --subagent-effort
 node scripts/test-v2-live.mjs --confirm-live --greeting
+node scripts/test-v2-live.mjs --confirm-live --role explanation
+node scripts/test-v2-live.mjs --confirm-live --role writing
+node scripts/test-v2-live.mjs --confirm-live --role extraction
+node scripts/test-v2-live.mjs --confirm-live --role operations
 ```
 
 Each probe has a $1 CLI budget and 90-second process deadline, with only its required tools allowed. The effort probe begins its child at high and requires routed low-effort evidence for its simple answer. The greeting probe sends `Yo` from GPT/high and requires a Haiku/low request, reported Haiku usage and a nonempty reply. A tool-loop preservation can be valid; it must not be reported as a model switch. Summaries and private raw/debug logs stay under ignored `test-results/`.
 
 For interactive verification, launch `claude --plugin-dir "$MODEL_ROUTER_DIR"`, select v2 and enable main routing, stage a next model pin, run one harmless `printf` tool loop, then check status for consumed intent. Enroll a toy manifest and exercise review/status, bounded repair if needed, user-inspected scope confirmation, independent verification and explicit acceptance. Never have the repair model self-attest scope. Exit the owned session normally; do not change credentials or proxy settings.
+
+V2 live classification reports separate expected-role accuracy, high-confidence coverage and unexpected unknowns; do not count a confidence-gated wrong label as correct. `--tasks` remains the legacy classifier lane and cannot be combined with `--v2`. Authentication/permission/quota failures stop the v2 classification lane instead of retrying every fixture. Role CLI probes assert actual model/effort dispatch, not completed-work quality; most have no tools, and operations permits only one harmless `printf`. Use bounded, identical-starting-state task comparisons before claiming model superiority.
