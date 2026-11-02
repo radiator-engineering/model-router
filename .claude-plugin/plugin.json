@@ -15,6 +15,12 @@
     "routing"
   ],
   "userConfig": {
+    "enabled": {
+      "type": "boolean",
+      "title": "Enable model router",
+      "description": "Master switch. Off stops all router classification, routing, logging and candidate workflows; host requests pass through unchanged. Routing preferences are retained.",
+      "default": true
+    },
     "policyEngine": {
       "type": "string",
       "title": "Routing policy engine",

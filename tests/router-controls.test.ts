@@ -5,8 +5,8 @@ import {recordHooks} from '../scripts/test-adapter.mjs'
 import {emptyPinState} from '../hooks/v2/pins.ts'
 import {V2_MODEL_DEFAULTS} from '../hooks/v2/policy-data.ts'
 import type {RouterSettings} from '../hooks/router-controls.ts'
-import {register} from '../hooks/jev-model-router.ts'
-const initial:RouterSettings={mode:'custom',mainModel:false,mainEffort:false,subagents:true,classifyTurns:true}
+import {register,registerWithAdapters} from '../hooks/jev-model-router.ts'
+const initial:RouterSettings={enabled:true,mode:'custom',mainModel:false,mainEffort:false,subagents:true,classifyTurns:true}
 function setup(saved?:unknown){
  const handlers:any={};const store=new Map<string,unknown>();if(saved!==undefined)store.set('model-router.defaults.v1',saved)
  const registered:any[]=[];const choices:string[]=[];const asks:any[]=[];const timers:any[]=[];const opened:any[]=[];let menu=false
@@ -371,4 +371,118 @@ test('repair and scope-confirmed verification require exact composer command syn
  expect(parseRouterCommand('verify cand_x --confirm-scope')).toEqual({kind:'verify',candidateId:'cand_x',confirmScope:true})
  expect(parseRouterCommand('verify cand_x --unknown')).toEqual({kind:'error'})
  expect(parseRouterCommand('candidate status cand_x')).toEqual({kind:'candidate-status',candidateId:'cand_x'})
+})
+
+test('master commands preserve preferences and require composer provenance',async()=>{
+ const h=setup()
+ expect(parseRouterCommand('off')).toEqual({kind:'change',patch:{enabled:false}})
+ expect(parseRouterCommand('on')).toEqual({kind:'change',patch:{enabled:true}})
+ expect(parseRouterCommand('off now')).toEqual({kind:'error'})
+ await h.run('off','plugin');expect(h.controls.current()).toEqual(initial)
+ expect((await h.run('off')).text).toContain('stopped')
+ expect(h.controls.current()).toEqual({...initial,enabled:false});expect(h.store.size).toBe(0)
+ await h.run('on');expect(h.controls.current()).toEqual(initial)
+})
+test('saved disabled defaults reload and old saves preserve the master plugin option',async()=>{
+ const h=setup();await h.run('off');await h.run('save')
+ const restored=setup(h.store.get('model-router.defaults.v1'))
+ await restored.handlers['session.start'](restored.$,{},async()=>({}))
+ expect(restored.controls.current().enabled).toBe(false)
+ await restored.run('reset');expect(restored.controls.current()).toEqual(initial)
+ const {enabled,...old}=initial
+ const legacy=setup(old);legacy.controls.initial.enabled=false;legacy.controls.state.enabled=false
+ await legacy.handlers['session.start'](legacy.$,{},async()=>({}))
+ expect(legacy.controls.current().enabled).toBe(false)
+ const malformed=setup({...initial,enabled:'false'})
+ await malformed.handlers['session.start'](malformed.$,{},async()=>({}))
+ expect(malformed.controls.current()).toEqual(initial)
+})
+test('native master switch is visible, persists, honors denial and rejects plugin writes',async()=>{
+ const h=v2Setup()
+ expect(manifest.userConfig.enabled.default).toBe(true)
+ const row=await h.handlers['config.describe'](h.$,{key:'jev-model-router.enabled',provider:{plugin:'jev-model-router@inline'}},async(e:any)=>e)
+ expect(row.label).toBe('Router · Enable model router')
+ await h.set('enabled',false,'plugin');expect(h.controls.current().enabled).toBe(true)
+ await h.set('enabled','false');expect(h.controls.current().enabled).toBe(true)
+ h.locked.add('enabled');await h.set('enabled',false);expect(h.controls.current().enabled).toBe(true)
+ h.locked.delete('enabled');await h.set('enabled',false)
+ expect(h.controls.current().enabled).toBe(false)
+ expect((h.store.get('model-router.defaults.v1') as RouterSettings).enabled).toBe(false)
+ const reload=v2Setup({enabled:false},h.store,h.settings);await reload.start()
+ expect(reload.controls.current().enabled).toBe(false)
+ await reload.set('enabled',true);expect(reload.controls.current().enabled).toBe(true)
+})
+test('master launch and managed settings override stale saved defaults',async()=>{
+ const h=v2Setup({},new Map([['model-router.defaults.v1',{...initial,enabled:false}]]),{user:{},policy:userOptions({enabled:false}),flag:userOptions({enabled:true})})
+ await h.start();expect(h.controls.current().enabled).toBe(false)
+ const flag=v2Setup({},new Map([['model-router.defaults.v1',initial]]),{user:{},policy:{},flag:userOptions({enabled:false})})
+ await flag.start();expect(flag.controls.current().enabled).toBe(false)
+})
+test('disabled entry points pass host events unchanged without any router I/O in every engine',async()=>{
+ for(const policyEngine of ['legacy','v2-shadow','v2','invalid'])for(const provider of ['builtin','typesafe']){
+  const handlers:any={},errors:any={}
+  register(recordHooks(handlers,errors) as any,{enabled:false,policyEngine,provider,typesafeApiKey:'fake'} as any)
+  const $={} // Any attempted classification, metadata read, telemetry or guard would fail.
+  for(const name of ['prompt.submit','turn.start','turn.complete','agent.spawn','tool.call']){
+   const e={text:'Task',turnId:'t',model:'host-model',tool:'Read'}
+   expect(await handlers[name]($,e,async(x:any)=>x)).toBe(e)
+  }
+  const step={turnId:'t',index:0,model:'host-model',effort:'high'};let forwarded:any
+  for await(const _ of handlers['turn.step']($,step,async function*(e:any){forwarded=e;yield e})){}
+  expect(forwarded).toBe(step)
+  expect((await handlers['tool.call']($,{tool:'mcp__jev-model-router__candidate_checkpoint'},async()=>{throw Error('checkpoint dispatched')})).deny).toContain('stopped')
+  for(const name of ['prompt.submit','agent.spawn','tool.call']){
+   const next:any=async(e:any)=>e;next.called=false
+   expect(await errors[name]($,step,next)).toBe(step)
+  }
+ }
+})
+test('disabled session skips harness initialization and workflow commands do no work',async()=>{
+ const h=v2Setup({enabled:false,policyEngine:'v2',reviewMode:'automatic'},undefined,undefined,true)
+ await h.start()
+ expect(h.calls.files).toBe(0);expect(h.calls.writes).toBe(0)
+ for(const command of ['candidate register manifest.json','review candidate','repair candidate','verify candidate','accept candidate'])expect((await h.run(command)).text).toContain('stopped')
+ expect(h.calls.http+h.calls.model+h.calls.spawn+h.calls.files+h.calls.writes).toBe(0)
+})
+test('stopping invalidates v2 assignments and aborts controlled workflow work',async()=>{
+ const h=v2Setup({policyEngine:'v2'},undefined,undefined,true)
+ // Capture the actual entry-point runtime, including its registered controls.
+ const handlers:any={};let runtime:any
+ registerWithAdapters(recordHooks(handlers) as any,{policyEngine:'v2'} as any,{onRuntimeReady:r=>{runtime=r}})
+ const controller=new AbortController()
+ runtime.workflow={controllers:new Map([['review',controller]])}
+ runtime.assignments.old={complete:false,cancelled:false}
+ runtime.pending.push({text:'stale',origin:'composer'})
+ await handlers['command.run'](h.$,{command:'router',args:'off',origin:{kind:'composer'}},async()=>({}))
+ expect(controller.signal.aborted).toBe(true);expect(runtime.assignments.old.cancelled).toBe(true);expect(runtime.pending.length).toBe(0)
+ expect(runtime.controls.current().enabled).toBe(false)
+})
+function stoppableLegacy(){
+ const handlers:any={};let calls=0,resolve:any
+ register(recordHooks(handlers) as any,{typesafeApiKey:'fake',routeMainModel:true,routeMainEffort:true} as any)
+ const response={ok:true,text:JSON.stringify({answers:{tier:{choice:'fast',confidence:1},effort:{score:0,confidence:1},risky:{noul:0}}})}
+ const $:any={ui:{log:()=>{},status:()=>{}},clock:{now:async()=>0,sleep:()=>new Promise(()=>{})},http:{fetch:()=>{calls++;return new Promise(r=>{resolve=()=>r(response)})}}}
+ const run=(args:string)=>handlers['command.run']($,{command:'router',args,origin:{kind:'composer'}},async()=>({}))
+ const step=async(index=0)=>{const e={turnId:'t',index,model:'sonnet',effort:'high'};let forwarded:any;for await(const _ of handlers['turn.step']($,e,async function*(x:any){forwarded=x;yield x})){}return forwarded}
+ return {handlers,$,run,step,get calls(){return calls},finish:()=>resolve()}
+}
+test('stop ignores an in-flight legacy classification even if enabled again before it finishes',async()=>{
+ const h=stoppableLegacy(),prompt=h.handlers['prompt.submit'](h.$,{text:'Task'},async(e:any)=>e)
+ for(let i=0;i<30&&!h.calls;i++)await Promise.resolve()
+ expect(h.calls).toBe(1)
+ await h.run('off');await h.run('on');h.finish();await prompt
+ expect((await h.step()).model).toBe('sonnet')
+ const fresh=h.handlers['prompt.submit'](h.$,{text:'Fresh task'},async(e:any)=>e)
+ for(let i=0;i<30&&h.calls<2;i++)await Promise.resolve()
+ expect(h.calls).toBe(2)
+ h.finish();await fresh
+ expect((await h.step()).model).toBe('claude-haiku-5-5')
+})
+test('stop drops cached turn overrides and resumes with the existing preferences',async()=>{
+ const h=stoppableLegacy(),prompt=h.handlers['prompt.submit'](h.$,{text:'Task'},async(e:any)=>e)
+ for(let i=0;i<30&&!h.calls;i++)await Promise.resolve()
+ expect(h.calls).toBe(1)
+ h.finish();await prompt;expect((await h.step()).model).toBe('claude-haiku-5-5')
+ await h.run('off');expect((await h.step(1)).model).toBe('sonnet')
+ await h.run('on');expect((await h.step(2)).model).toBe('sonnet')
 })

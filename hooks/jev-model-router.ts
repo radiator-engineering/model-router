@@ -123,7 +123,7 @@ export function registerWithAdapters(on:Parameters<Register>[0],options:Paramete
   const routeSubagentModel = flag('routeSubagentModel', true)
   const routeMainEffort = flag('routeMainEffort', true)
   const routeMainModel = flag('routeMainModel', false)
-  const controls = createRouterControls({mode:taskMode, mainModel:routeMainModel, mainEffort:routeMainEffort, subagents:routeSubagentModel, classifyTurns:flag('classifyTurns', true)}, options)
+  const controls = createRouterControls({enabled:flag('enabled',true),mode:taskMode, mainModel:routeMainModel, mainEffort:routeMainEffort, subagents:routeSubagentModel, classifyTurns:flag('classifyTurns', true)}, options)
   registerRouterControls(on, controls)
   const v2Catalog=adapters?.catalog??runtimeCatalog(parseCatalogV2(catalogData))
   const harness=createHarness(controls,{catalog:v2Catalog,policy:adapters?.policy??configuredPolicy(options,v2Catalog),legacyCatalog:catalog,
@@ -131,9 +131,33 @@ export function registerWithAdapters(on:Parameters<Register>[0],options:Paramete
     pluginVersion:null,sourceRevision:null,logDecisions:flag('logDecisions',true),adapters})
   controls.runtime=harness
   adapters?.onRuntimeReady?.(harness)
-  on('turn.start',async($,e,next)=>{try{if(!await workflowTurnStart($,harness,e))await nativeTurnStart($,harness,controls,e)}catch(error){$.ui.log(`[router] Turn association failed: ${error instanceof Error?error.message:'unknown association error'}`,{to:'debug'})}return next(e)}).catch(($,e)=>({turnId:e.turnId}))
-  on('turn.complete',async($,e,next)=>{try{if(!await workflowComplete($,harness,e))await nativeTurnComplete($,harness,controls,e)}catch{$.ui.log('[router] Completion metadata unavailable; no review/acceptance is inferred.',{to:'debug'})}return next(e)})
-  on('tool.call',async($,e,next)=>{const deny=(next.origin.plugin&&next.origin.plugin!=='engine'?null:await workflowToolGuard($,harness,e))??await nativeToolGuard($,harness,e,next.origin.plugin);return deny?{deny}:next(e)}).catch(($,e,next)=>next.called||(!e.agentId||!Object.values(harness.workflow?.jobs??{}).some(j=>!j.completion&&(!j.agentId||j.agentId===e.agentId)))&&boundEngine(harness)!=='v2'?next(e):{deny:'unavailable: tool allowance could not be established.'})
+  on('turn.start',async($,e,next)=>{
+    if(!controls.state.enabled)return next(e)
+    const activation=controls.activation
+    try {
+      const owned=await workflowTurnStart($,harness,e)
+      if(controls.state.enabled&&activation===controls.activation&&!owned)await nativeTurnStart($,harness,controls,e)
+    }catch(error){if(controls.state.enabled)$.ui.log(`[router] Turn association failed: ${error instanceof Error?error.message:'unknown association error'}`,{to:'debug'})}
+    return next(e)
+  }).catch(($,e)=>({turnId:e.turnId}))
+  on('turn.complete',async($,e,next)=>{
+    if(!controls.state.enabled)return next(e)
+    const activation=controls.activation
+    try {
+      const owned=await workflowComplete($,harness,e)
+      if(controls.state.enabled&&activation===controls.activation&&!owned)await nativeTurnComplete($,harness,controls,e)
+    }catch{if(controls.state.enabled)$.ui.log('[router] Completion metadata unavailable; no review/acceptance is inferred.',{to:'debug'})}
+    return next(e)
+  })
+  on('tool.call',async($,e,next)=>{
+    if(!controls.state.enabled)return next(e)
+    const activation=controls.activation
+    let deny=next.origin.plugin&&next.origin.plugin!=='engine'?null:await workflowToolGuard($,harness,e)
+    if(!controls.state.enabled||activation!==controls.activation)return next(e)
+    deny??=await nativeToolGuard($,harness,e,next.origin.plugin)
+    if(!controls.state.enabled||activation!==controls.activation)return next(e)
+    return deny?{deny}:next(e)
+  }).catch(($,e,next)=>next.called||!controls.state.enabled||(!e.agentId||!Object.values(harness.workflow?.jobs??{}).some(j=>!j.completion&&(!j.agentId||j.agentId===e.agentId)))&&boundEngine(harness)!=='v2'?next(e):{deny:'unavailable: tool allowance could not be established.'})
   const logDecisions = flag('logDecisions', true)
 
   const policy: PolicyConfig = {
@@ -156,11 +180,20 @@ export function registerWithAdapters(on:Parameters<Register>[0],options:Paramete
   // never loaded are otherwise told apart only by the absence of later lines,
   // and absence is not evidence: the policy leaves most turns alone anyway.
   let announced = false
+  let appliedActivation = controls.activation
   let appliedTurnId: string | undefined
   let applied: { model?: string; effort?: Effort } | null = null
 
+  const syncActivation=()=>{
+    if(appliedActivation!==controls.activation){pending.put(null);applied=null;appliedTurnId=undefined;appliedActivation=controls.activation}
+  }
+
   on('prompt.submit', async ($, e, next) => {
+    if(!controls.state.enabled)return next(e)
+    const activation=controls.activation
+    syncActivation()
     const held=await nativeIntake($,harness,e)
+    if(!controls.state.enabled||activation!==controls.activation)return next(e)
     if(held)return {drop:held}
     if(boundEngine(harness)==='v2'){pending.put(null);return next(e)}
     let legacyUsage:unknown=null
@@ -206,6 +239,7 @@ export function registerWithAdapters(on:Parameters<Register>[0],options:Paramete
     }
 
     const startedAt = await $.clock.now()
+    if(!controls.state.enabled||activation!==controls.activation)return next(e)
     let decision: Decision | null = null
     if (active) {
       try {
@@ -218,10 +252,10 @@ export function registerWithAdapters(on:Parameters<Register>[0],options:Paramete
           $.clock.sleep(timeoutMs),
         ])
         if (response && response.ok) {decision = readDecision(response.text);try{legacyUsage=JSON.parse(response.text).usage}catch{}}
-        else if (response) $.ui.log(`[jev-model-router] ${active} responded ${response.status}`,{to:'debug'})
-        else $.ui.log(`[jev-model-router] classification passed ${timeoutMs}ms; leaving the turn alone`,{to:'debug'})
+        else if (response&&controls.state.enabled&&activation===controls.activation) $.ui.log(`[jev-model-router] ${active} responded ${response.status}`,{to:'debug'})
+        else if(controls.state.enabled&&activation===controls.activation) $.ui.log(`[jev-model-router] classification passed ${timeoutMs}ms; leaving the turn alone`,{to:'debug'})
       } catch (error) {
-        $.ui.log(`[jev-model-router] classification failed: ${String(error)}`,{to:'debug'})
+        if(controls.state.enabled&&activation===controls.activation)$.ui.log(`[jev-model-router] classification failed: ${String(error)}`,{to:'debug'})
       }
     } else {
       // No backend: the engine's own small-model classifier answers the same
@@ -238,24 +272,27 @@ export function registerWithAdapters(on:Parameters<Register>[0],options:Paramete
           }
         }
       } catch (error) {
-        $.ui.log(`[jev-model-router] built-in classifier failed: ${String(error)}`,{to:'debug'})
+        if(controls.state.enabled&&activation===controls.activation)$.ui.log(`[jev-model-router] built-in classifier failed: ${String(error)}`,{to:'debug'})
       }
     }
 
     // What the decision model actually answered, whatever the policy then
     // does with it. This is the line that proves the classification ran.
-    if (logDecisions) {
-      const ms = (await $.clock.now()) - startedAt
-      $.ui.log(`[router] classification (recommendation only): ${describeDecision(decision, ms)}`,{to:'debug'})
-    }
+    const elapsed=(await $.clock.now())-startedAt
+    if(!controls.state.enabled||activation!==controls.activation)return next(e)
+    if (logDecisions) $.ui.log(`[router] classification (recommendation only): ${describeDecision(decision, elapsed)}`,{to:'debug'})
 
-    captureLegacyClassifier(harness,e.text,(await $.clock.now())-startedAt,legacyUsage)
+    captureLegacyClassifier(harness,e.text,elapsed,legacyUsage)
     pending.put(decision)
     return next(e)
-  }).catch(($,e,next)=>next.called||(boundEngine(harness)!=='v2'&&!controls.engineError)?next(e):{drop:'unavailable: unsupported policy engine; request held after guard error.'})
+  }).catch(($,e,next)=>next.called||!controls.state.enabled||(boundEngine(harness)!=='v2'&&!controls.engineError)?next(e):{drop:'unavailable: unsupported policy engine; request held after guard error.'})
 
   on('turn.step', async function* ($, e, next) {
+    if(!controls.state.enabled)return yield* next(e)
+    const activation=controls.activation
+    syncActivation()
     const plan=await nativeStepPlan($,harness,controls,e)
+    if(!controls.state.enabled||activation!==controls.activation)return yield* next(e)
     if(plan.owned){
       if(plan.message||!plan.assignment){
         const text=plan.message??'unavailable: assignment association missing.'
@@ -309,9 +346,10 @@ export function registerWithAdapters(on:Parameters<Register>[0],options:Paramete
       $.ui.log(`[router] ${taskLabel(decision?.task)} · ${change.model ?? e.model} · effort ${change.effort ?? e.effort ?? 'harness default'} · ${source}${applied ? '' : ' · unchanged'}`)
     }
     await recordLegacyRequest($,harness,e,change.model??e.model,change.effort??e.effort,taskMode)
+    if(!controls.state.enabled||activation!==controls.activation)return yield* next(e)
     return yield* next({ ...e, ...change })
   }).catch(async function* ($,e,next) {
-    if(next.called||(boundEngine(harness,e.turnId)!=='v2'&&!controls.engineError))return yield* next(e)
+    if(next.called||!controls.state.enabled||(boundEngine(harness,e.turnId)!=='v2'&&!controls.engineError))return yield* next(e)
     const text='unavailable: unsupported policy engine; request held after guard error.'
     yield {kind:'text',index:0,text}
     yield {kind:'stop',stopReason:'end_turn',usage:null}
@@ -319,10 +357,13 @@ export function registerWithAdapters(on:Parameters<Register>[0],options:Paramete
   })
 
   on('agent.spawn', async ($, e, next) => {
+    if(!controls.state.enabled)return next(e)
+    const activation=controls.activation
     const workflowGate=workflowSpawnGuard(harness,e,next.origin.plugin)
     if(workflowGate==='deny')return {deny:'unavailable: coordinator-only type cannot be reused or altered.'}
     if(workflowGate==='owned')return next(e)
     const spawnPlan=await nativePrepareSpawn($,harness,controls,e)
+    if(!controls.state.enabled||activation!==controls.activation)return next(e)
     if(spawnPlan.deny)return {deny:spawnPlan.deny}
     if(spawnPlan.owned){
       const result=await next(spawnPlan.model?{...e,model:spawnPlan.model}:e)
@@ -365,6 +406,7 @@ export function registerWithAdapters(on:Parameters<Register>[0],options:Paramete
     }
 
     const startedAt = await $.clock.now()
+    if(!controls.state.enabled||activation!==controls.activation)return next(e)
     let decision: Decision | null = null
     if (active) {
       try {
@@ -382,10 +424,10 @@ export function registerWithAdapters(on:Parameters<Register>[0],options:Paramete
           $.clock.sleep(timeoutMs),
         ])
         if (response && response.ok) decision = readDecision(response.text)
-        else if (response) $.ui.log(`[jev-model-router] ${active} responded ${response.status}`,{to:'debug'})
-        else $.ui.log(`[jev-model-router] classification passed ${timeoutMs}ms; leaving the subagent alone`,{to:'debug'})
+        else if (response&&controls.state.enabled&&activation===controls.activation) $.ui.log(`[jev-model-router] ${active} responded ${response.status}`,{to:'debug'})
+        else if(controls.state.enabled&&activation===controls.activation) $.ui.log(`[jev-model-router] classification passed ${timeoutMs}ms; leaving the subagent alone`,{to:'debug'})
       } catch (error) {
-        $.ui.log(`[jev-model-router] classification failed: ${String(error)}`,{to:'debug'})
+        if(controls.state.enabled&&activation===controls.activation)$.ui.log(`[jev-model-router] classification failed: ${String(error)}`,{to:'debug'})
       }
     } else {
       try {
@@ -400,12 +442,14 @@ export function registerWithAdapters(on:Parameters<Register>[0],options:Paramete
           }
         }
       } catch (error) {
-        $.ui.log(`[jev-model-router] built-in classifier failed: ${String(error)}`,{to:'debug'})
+        if(controls.state.enabled&&activation===controls.activation)$.ui.log(`[jev-model-router] built-in classifier failed: ${String(error)}`,{to:'debug'})
       }
     }
 
+    if(!controls.state.enabled||activation!==controls.activation)return next(e)
     if (logDecisions) {
       const ms = (await $.clock.now()) - startedAt
+      if(!controls.state.enabled||activation!==controls.activation)return next(e)
       $.ui.log(`[jev-model-router] jev (${e.subagentType}): ${describeDecision(decision, ms)}`,{to:'debug'})
     }
 
@@ -431,5 +475,5 @@ export function registerWithAdapters(on:Parameters<Register>[0],options:Paramete
     }
     if (logDecisions) $.ui.log(`[router] ${e.subagentType}: ${taskLabel(decision?.task)} · ${model} · ${taskMode === 'custom' && task.model ? 'custom' : 'basic'}`)
     return forward({ ...e, model })
-  }).catch(($,e,next)=>next.called||(boundEngine(harness)!=='v2'&&!controls.engineError)?next(e):{deny:'unavailable: unsupported policy engine; spawn held after guard error.'})
+  }).catch(($,e,next)=>next.called||!controls.state.enabled||(boundEngine(harness)!=='v2'&&!controls.engineError)?next(e):{deny:'unavailable: unsupported policy engine; spawn held after guard error.'})
 }

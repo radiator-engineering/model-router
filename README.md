@@ -120,6 +120,10 @@ Run `/router` to open the native config screen:
 - Successful menu changes save shared defaults immediately. Escape retains them. Direct commands such as `/router main-model off` are session-only unless saved; those overrides currently reset on plugin reload.
 - `/router status` shows the effective runtime settings.
 
+Use `/router off` to stop the router for this session, and `/router on` to resume with your routing preferences. To keep it off across sessions, turn **Enable model router** off in `/router` or `/config` (the `enabled` plugin option).
+
+While stopped, the router makes no new classifier calls, changes no model or effort, emits no per-turn logs, and runs no candidate workflows. Host requests pass through unchanged in every policy engine. Pending routing decisions are discarded; requests already dispatched cannot be undone.
+
 For manual model selection, turn **Main model routing off**, then choose from `/model`. Turn **Main effort routing off** too if you want to control reasoning effort yourself. Enter in `/model` saves a default; `s` selects a model for the current session.
 
 Classification and recommendation logs describe suggestions. The main result log and router status distinguish changes applied to the request from requests left unchanged. See [Router controls](docs/usage/router-controls.md) for direct commands and persistence details.

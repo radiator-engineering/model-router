@@ -11,6 +11,7 @@ import {DEFAULT_REVIEW_POLICY_JSON,validateReviewPolicyJson} from './v2/native-r
 import {V2_MODEL_DEFAULTS} from './v2/policy-data.ts'
 
 export interface RouterSettings {
+  enabled: boolean
   mode: 'basic' | 'custom' | 'observe'
   mainModel: boolean
   mainEffort: boolean
@@ -40,6 +41,7 @@ const ENGINES = ['legacy', 'v2-shadow', 'v2']
 const REVIEW_MODES = ['off', 'recommend', 'automatic']
 const V2_FIELDS = ['policyEngine', 'routeSubagentEffort', 'reviewMode', 'persistentModelPin', 'persistentEffortPin', 'verificationChecksJson', 'v2ShadowClassifier', 'reviewPolicyJson'] as const
 export const ROUTER_TOGGLES = [
+  {key:'enabled',label:'Enable model router',description:'Master switch for all routing, classification, logging and candidate workflows. Turn off to use the host directly; routing preferences are retained.'},
   {key:'mainModel',label:'Main model routing',description:'Allow the router to change the model in the main conversation.'},
   {key:'mainEffort',label:'Main effort routing',description:'Allow the router to adjust the main conversation’s reasoning effort.'},
   {key:'subagents',label:'Subagent routing',description:'Choose models for delegated tasks using task type and your preferences.'},
@@ -53,13 +55,13 @@ export function normalizeRouterMode(value:unknown):RouterSettings['mode'] {
 const STORE_KEY = 'model-router.defaults.v1'
 export function validSettings(input: unknown): input is RouterSettings {
   if (!isObject(input)) return false
-  return ['basic','custom','observe','off','apply'].includes(input.mode as string) && ['mainModel','mainEffort','subagents','classifyTurns'].every(k=>typeof input[k]==='boolean')
+  return (input.enabled===undefined||typeof input.enabled==='boolean') && ['basic','custom','observe','off','apply'].includes(input.mode as string) && ['mainModel','mainEffort','subagents','classifyTurns'].every(k=>typeof input[k]==='boolean')
 }
 export function routerStatus(s:RouterSettings):string {
   const yes=(v:boolean)=>v?'on':'off'
-  return `Model router\nClassifier: Jev\nMode: ${s.mode}\nMain model routing: ${yes(s.mainModel)}\nMain effort routing: ${yes(s.mainEffort)}\nSubagent routing: ${yes(s.subagents)}\nPer-turn classification/logging: ${yes(s.classifyTurns)}`
+  return `Model router: ${yes(s.enabled)}${s.enabled?'':' (stopped; preferences below are inactive)'}\nClassifier: Jev\nMode: ${s.mode}\nMain model routing: ${yes(s.mainModel)}\nMain effort routing: ${yes(s.mainEffort)}\nSubagent routing: ${yes(s.subagents)}\nPer-turn classification/logging: ${yes(s.classifyTurns)}`
 }
-export const ROUTER_HELP = '/router opens the menu. Commands: status; mode [basic|custom|observe]; main-model on|off; main-effort on|off; subagents on|off; classify-turns on|off; save; reset; engine legacy|v2-shadow|v2; review-mode off|recommend|automatic; subagent-effort on|off; pin model <exact-id> | pin effort <level> [--scope next|session|persistent]; unpin model|effort [--scope next|session|persistent]; candidate register <manifest-path>; review [candidate-id]; repair <candidate-id>; verify <candidate-id> [--confirm-scope]; candidate status <candidate-id>; accept <candidate-id>. Legacy changes apply immediately; save/reset manage legacy defaults. V2 routes permitted model/effort fields; context and ordinary execution limits belong to the host; shadow keeps legacy execution active. Candidate review/acceptance require current evidence and separate authorization. Persistent pins use native /config defaults; execution pins never choose a reviewer.'
+export const ROUTER_HELP = '/router opens the menu. Commands: on; off (stop all router activity); status; mode [basic|custom|observe]; main-model on|off; main-effort on|off; subagents on|off; classify-turns on|off; save; reset; engine legacy|v2-shadow|v2; review-mode off|recommend|automatic; subagent-effort on|off; pin model <exact-id> | pin effort <level> [--scope next|session|persistent]; unpin model|effort [--scope next|session|persistent]; candidate register <manifest-path>; review [candidate-id]; repair <candidate-id>; verify <candidate-id> [--confirm-scope]; candidate status <candidate-id>; accept <candidate-id>. Legacy changes apply immediately; save/reset manage legacy defaults. V2 routes permitted model/effort fields; context and ordinary execution limits belong to the host; shadow keeps legacy execution active. Candidate review/acceptance require current evidence and separate authorization. Persistent pins use native /config defaults; execution pins never choose a reviewer.'
 const KEYS = {'main-model':'mainModel','main-effort':'mainEffort',subagents:'subagents','classify-turns':'classifyTurns'} as const
 export type RouterAction = {kind:'status'|'menu'|'mode-menu'|'save'|'reset'|'help'|'error'} |
   {kind:'change'; patch:Partial<RouterSettings>} | {kind:'v2-change'; field:keyof V2Settings; value:string|boolean} |
@@ -69,6 +71,7 @@ export function parseRouterCommand(args:string): RouterAction {
   const tokens=args.trim().split(/\s+/).filter(Boolean)
   const [name, arg, val] = tokens
   if (!name) return {kind:'menu'}
+  if(tokens.length===1&&(name==='on'||name==='off'))return {kind:'change',patch:{enabled:name==='on'}}
   if(tokens.length===1&&name==='mode')return {kind:'mode-menu'}
   if (tokens.length===1 && ['status','save','reset','help'].includes(name)) return {kind:name as 'status'|'save'|'reset'|'help'}
   if(name==='pin'||name==='unpin') {
@@ -136,6 +139,12 @@ export function createRouterControls(initial:RouterSettings, options:Readonly<Re
   const controls={
     initial:{...initial},state:{...initial},current:()=>({...controls.state}),v2,generation:0,pinQueue:Promise.resolve() as Promise<unknown>,runtime:undefined as HarnessState|undefined,
     engineError: options.policyEngine!==undefined&&!validV2('policyEngine',options.policyEngine)?'Invalid policy engine; request held.':null as string|null,
+    activation:0,
+    update:(patch:Partial<RouterSettings>)=>{
+      const changed=patch.enabled!==undefined&&patch.enabled!==controls.state.enabled
+      controls.state={...controls.state,...patch}
+      if(changed){controls.activation++;controls.lastApplied=null;if(controls.runtime)invalidateHarness(controls.runtime)}
+    },
     currentV2:()=>({...controls.v2}),
     pins:{conversationId:null,pins:null,pinError:null,persistent:[],authorityError:'Trusted settings have not been read.',checksSource:null,checksJson:EMPTY_CHECKS} as RouterPinStatus,
     lastApplied:null as {engine:'legacy';assignmentId:string;model:string;effort:string|number|null}|null,
@@ -153,7 +162,7 @@ function detailedStatus(controls:ReturnType<typeof createRouterControls>):string
   const v2=controls.v2.policyEngine==='v2'&&controls.runtime?.conversationId===s.conversationId?controls.runtime?.records.findLast(r=>r.appliedEngine==='v2'&&r.applied!==null):undefined
   const applied=v2?.applied
   const requestText=v2&&applied?`v2 ${applied.model}/${applied.effort.kind==='level'||applied.effort.kind==='budget'?applied.effort.value:'host default'} for ${v2.assignmentId}; serving identity ${v2.observed.model??'unknown'}`:request?`${request.engine} ${request.model}/${request.effort??'default'} for ${request.assignmentId}; serving identity unknown`:'unknown'
-  return routerStatus(controls.state)+`\nPolicy engine: ${controls.v2.policyEngine}${unavailableEngine(controls)?' — unavailable':controls.v2.policyEngine==='v2-shadow'?' — legacy execution; shadow proposals only':controls.v2.policyEngine==='v2'?' — model/effort routing; execution limits managed by host':' (legacy active)'}\nReview mode: ${controls.v2.reviewMode} (checkpoint, scope and finite authorization required)\nSubagent effort routing: ${controls.v2.routeSubagentEffort?'on':'off'} (not applied by legacy)\nConversation: ${s.conversationId??'unknown'}\nExecution pins (staged, not applied by legacy): model ${describe('model')}; effort ${describe('effort')}\nNext execution assignment: ${next}\nUnverified stored intent: ${(s.pins?.pins??[]).filter(p=>p.origin==='unknown').map(p=>`${p.field}=${p.value} (${p.scope}, origin unknown)`).join('; ')||'none'}\nNative pin origin: unknown/unmapped; no reviewer pin is inferred\nFixed fields (routing switches only; native origin constraints unverified): main model ${controls.state.mainModel?'mutable':'fixed'}, main effort ${controls.state.mainEffort?'mutable':'fixed'}, subagent model ${controls.state.subagents?'mutable':'fixed'}, subagent effort ${controls.v2.routeSubagentEffort?'mutable':'fixed'}\nTrusted checks: ${s.authorityError?'unavailable':s.checksSource??'none configured'} (not executed)\nLast router-applied request: ${requestText}${s.pinError?'\nPin state unavailable: '+s.pinError:''}${s.authorityError?'\nSettings authority unavailable: '+s.authorityError:''}${resolved.conflict?'\nclarify: conflicting '+resolved.conflict.field+' pins':''}`
+  return routerStatus(controls.state)+`\nPolicy engine: ${controls.v2.policyEngine}${!controls.state.enabled?' — inactive':unavailableEngine(controls)?' — unavailable':controls.v2.policyEngine==='v2-shadow'?' — legacy execution; shadow proposals only':controls.v2.policyEngine==='v2'?' — model/effort routing; execution limits managed by host':' (legacy active)'}\nReview mode: ${controls.v2.reviewMode} (checkpoint, scope and finite authorization required)\nSubagent effort routing: ${controls.v2.routeSubagentEffort?'on':'off'} (not applied by legacy)\nConversation: ${s.conversationId??'unknown'}\nExecution pins (staged, not applied by legacy): model ${describe('model')}; effort ${describe('effort')}\nNext execution assignment: ${next}\nUnverified stored intent: ${(s.pins?.pins??[]).filter(p=>p.origin==='unknown').map(p=>`${p.field}=${p.value} (${p.scope}, origin unknown)`).join('; ')||'none'}\nNative pin origin: unknown/unmapped; no reviewer pin is inferred\nFixed fields (routing switches only; native origin constraints unverified): main model ${controls.state.mainModel?'mutable':'fixed'}, main effort ${controls.state.mainEffort?'mutable':'fixed'}, subagent model ${controls.state.subagents?'mutable':'fixed'}, subagent effort ${controls.v2.routeSubagentEffort?'mutable':'fixed'}\nTrusted checks: ${s.authorityError?'unavailable':s.checksSource??'none configured'} (not executed)\nLast router-applied request: ${requestText}${s.pinError?'\nPin state unavailable: '+s.pinError:''}${s.authorityError?'\nSettings authority unavailable: '+s.authorityError:''}${resolved.conflict?'\nclarify: conflicting '+resolved.conflict.field+' pins':''}`
 }
 
 // Host calls stay in top-level typed adapters so the Mods loader can inspect them.
@@ -211,14 +220,14 @@ export function registerRouterControls(on:Parameters<Register>[0],controls:Retur
   on('session.start',async($,e,next)=>{
     try {
       const saved=await $.store.get(STORE_KEY)
-      if(validSettings(saved)) controls.state={mode:normalizeRouterMode(saved.mode),mainModel:saved.mainModel,mainEffort:saved.mainEffort,subagents:saved.subagents,classifyTurns:saved.classifyTurns}
+      if(validSettings(saved)) controls.update({enabled:saved.enabled??controls.initial.enabled,mode:normalizeRouterMode(saved.mode),mainModel:saved.mainModel,mainEffort:saved.mainEffort,subagents:saved.subagents,classifyTurns:saved.classifyTurns})
     } catch { $.ui.log('[router] Could not read saved defaults; using plugin options.') }
     try {
       for(const row of await nativeRows($)) {
         const field=routerField(row.key,row.provider?.plugin)
-        if(field&&controls.runtime?.config.logDecisions)$.ui.log(`[router:control] ${field}=${String(row.value)} (initial=${String(controls.initial[field])})`,{to:'debug'})
+        if(field&&controls.state.enabled&&controls.runtime?.config.logDecisions)$.ui.log(`[router:control] ${field}=${String(row.value)} (initial=${String(controls.initial[field])})`,{to:'debug'})
         if(field==='mode'&&['basic','custom','observe','off','apply'].includes(row.value as string))controls.state.mode=normalizeRouterMode(row.value)
-        else if(field&&field!=='mode'&&typeof row.value==='boolean')controls.state={...controls.state,[field]:row.value}
+        else if(field&&field!=='mode'&&typeof row.value==='boolean')controls.update({[field]:row.value})
         const key=v2Field(row.key,row.provider?.plugin)
         if(key&&['policyEngine','routeSubagentEffort','reviewMode'].includes(key)&&validV2(key,row.value)){
           Object.assign(controls.v2,{[key]:row.value});if(key==='policyEngine')controls.engineError=null
@@ -231,19 +240,19 @@ export function registerRouterControls(on:Parameters<Register>[0],controls:Retur
       for(const [key,field] of Object.entries(CONFIG_FIELDS)){
         const value=Object.hasOwn(policy,key)?policy[key]:flag[key]
         if(field==='mode'&&['basic','custom','observe','off','apply'].includes(value as string))controls.state.mode=normalizeRouterMode(value)
-        else if(field!=='mode'&&typeof value==='boolean')controls.state={...controls.state,[field]:value}
+        else if(field!=='mode'&&typeof value==='boolean')controls.update({[field]:value})
       }
     }catch{/* Do not infer launch authority when the source or managed precedence is unavailable. */}
-    try {const g=controls.generation,id=await identity($);await ordered(()=>load($,controls,id,g))}catch{controls.pins.pinError='Conversation identity or pin state unavailable.'}
-    if(controls.runtime?.config.logDecisions)$.ui.log(`[router:controls] initial=${JSON.stringify(controls.initial)} effective=${JSON.stringify(controls.state)}`,{to:'debug'})
-    await $.command.register({name:'router',description:'Model routing menu, v2 controls and purpose-aware pins',argumentHint:'[status | pin | unpin | engine | review-mode | subagent-effort | candidate | review | accept | save | reset]'})
+    if(controls.state.enabled)try {const g=controls.generation,id=await identity($);await ordered(()=>load($,controls,id,g))}catch{controls.pins.pinError='Conversation identity or pin state unavailable.'}
+    if(controls.state.enabled&&controls.runtime?.config.logDecisions)$.ui.log(`[router:controls] initial=${JSON.stringify(controls.initial)} effective=${JSON.stringify(controls.state)}`,{to:'debug'})
+    await $.command.register({name:'router',description:'Model routing menu, v2 controls and purpose-aware pins',argumentHint:'[on | off | status | pin | unpin | engine | review-mode | subagent-effort | candidate | review | accept | save | reset]'})
     const result=await next(e)
-    if(controls.runtime)try{await initializeHarness($,controls.runtime)}catch{$.ui.log('[router] Runtime metadata unavailable; enforced v2 remains held.',{to:'debug'})}
+    if(controls.state.enabled&&controls.runtime)try{await initializeHarness($,controls.runtime)}catch{$.ui.log('[router] Runtime metadata unavailable; enforced v2 remains held.',{to:'debug'})}
     if(controls.runtime)try{await $.tool.register({name:'candidate_checkpoint',description:'Request an explicit checkpoint for an already user-enrolled candidate. Runs only with automatic mode AND separate trusted per-candidate/stage authorization; never enrolls scope or grants itself permission.',inputSchema:{type:'object',additionalProperties:false,properties:{candidateId:{type:'string'},stage:{enum:['full','repair','targeted']}},required:['candidateId','stage']}})}catch{$.ui.log('[router] Workflow checkpoint tool unavailable on this surface; model/effort routing remains active.',{to:'debug'})}
     return result
   })
   on('session.end',async($,e,next)=>{
-    if(controls.runtime){invalidateHarness(controls.runtime);controls.runtime.initialized=false;try{await saveRuntime($,controls.runtime)}catch{}}
+    if(controls.runtime){invalidateHarness(controls.runtime);controls.runtime.initialized=false;if(controls.state.enabled)try{await saveRuntime($,controls.runtime)}catch{}}
     controls.generation++
     controls.pins={conversationId:null,pins:null,pinError:null,persistent:[],authorityError:'Settings not read for the new conversation.',checksSource:null,checksJson:EMPTY_CHECKS}
     controls.lastApplied=null
@@ -262,6 +271,7 @@ export function registerRouterControls(on:Parameters<Register>[0],controls:Retur
     }
     if(e.origin?.kind!=='composer')return {text:'unavailable: run /router yourself in the composer to change settings, pins or candidates.'}
     if(action.kind==='candidate'||action.kind==='review'||action.kind==='accept'||action.kind==='repair'||action.kind==='verify'||action.kind==='candidate-status') {
+      if(!controls.state.enabled)return {text:'Model router is stopped. Use /router on before running candidate workflows.'}
       if(!controls.runtime)return {text:'unavailable: candidate enrollment, review and acceptance require the phase-6 coordinator; no file, check, reviewer or acceptance action was started.'}
       try {
         const g=controls.generation,id=await identity($)
@@ -308,9 +318,9 @@ export function registerRouterControls(on:Parameters<Register>[0],controls:Retur
         Object.assign(controls.v2,{[action.field]:action.value});if(action.field==='policyEngine')controls.engineError=null
         return {text:detailedStatus(controls)+'\nV2 session control staged for future assignment boundaries; /config manages saved defaults. No automatic review is authorized by this change.'}
       }
-      if(action.kind==='change'){controls.state={...controls.state,...action.patch};return {text:routerStatus(controls.state)+'\nSession updated. Use /router save to persist.'}}
-      if(action.kind==='save'){await $.store.set(STORE_KEY,controls.state);return {text:routerStatus(controls.state)+'\nSaved legacy defaults for future sessions; v2 saved defaults are managed in /config.'}}
-      if(action.kind==='reset'){await $.store.delete(STORE_KEY);controls.state={...controls.initial};return {text:routerStatus(controls.state)+'\nRestored legacy plugin options and removed saved defaults. Pins are unchanged; use unpin at their scope.'}}
+      if(action.kind==='change'){controls.update(action.patch);return {text:routerStatus(controls.state)+(action.patch.enabled===undefined?'\nSession updated. Use /router save to persist.':'\nSession updated. Use Enable model router in /router to save the default.')}}
+      if(action.kind==='save'){await $.store.set(STORE_KEY,controls.state);return {text:routerStatus(controls.state)+'\nSaved defaults cache; native /config and explicit launch/managed values take precedence. V2 saved defaults are managed in /config.'}}
+      if(action.kind==='reset'){await $.store.delete(STORE_KEY);controls.update(controls.initial);return {text:routerStatus(controls.state)+'\nRestored legacy plugin options and removed saved defaults. Pins are unchanged; use unpin at their scope.'}}
       await $.state.set(menuState,true)
       $.clock.after(0,()=>{
         $.ui.invalidate('config.describe')
@@ -322,6 +332,7 @@ export function registerRouterControls(on:Parameters<Register>[0],controls:Retur
     }
   }).catch(($,e,next)=>next.called?next(e):{text:'unavailable: router control outcome is unknown; inspect status/config. No workflow was started by this error handler.'})
   on('tool.call',{tool:'mcp__jev-model-router__candidate_checkpoint'},async($,e)=>{
+    if(!controls.state.enabled)return {deny:'Model router is stopped. Use /router on before running candidate workflows.'}
     if(!controls.runtime)return {deny:'Workflow coordinator unavailable.'}
     const args=e as unknown as {candidateId:unknown;stage:unknown}
     if(!isId(args.candidateId)||!['full','repair','targeted'].includes(args.stage as string))return {deny:'Invalid candidate checkpoint.'}
@@ -356,17 +367,18 @@ export function registerRouterControls(on:Parameters<Register>[0],controls:Retur
     }
     const field=routerField(e.key,e.provider?.plugin)
     if(!field)return next(e)
+    if(field==='enabled'&&(e.origin?.kind!=='composer'||typeof e.value!=='boolean'))return {deny:'Only a verified composer action can change the router master switch to on or off.'}
     const result=await next(e)
     if(result.deny!==undefined)return result
     const value=result.value
     if(field==='mode'?!['basic','custom','observe','off','apply'].includes(value as string):typeof value!=='boolean')return result
-    controls.state={...controls.state,[field]:field==='mode'?normalizeRouterMode(value):value}
+    controls.update({[field]:field==='mode'?normalizeRouterMode(value):value})
     try{await $.store.set(STORE_KEY,controls.state)}catch{$.ui.log('[router] Native setting saved; legacy defaults cache could not be updated.')}
     return result
   }).catch(($,e,next)=>next.called?next(e):{deny:'Router configuration unavailable after a control error.'})
 }
 
-const CONFIG_FIELDS:Record<string,keyof RouterSettings>={taskRoutingMode:'mode',routeMainModel:'mainModel',routeMainEffort:'mainEffort',routeSubagentModel:'subagents',classifyTurns:'classifyTurns'}
+const CONFIG_FIELDS:Record<string,keyof RouterSettings>={enabled:'enabled',taskRoutingMode:'mode',routeMainModel:'mainModel',routeMainEffort:'mainEffort',routeSubagentModel:'subagents',classifyTurns:'classifyTurns'}
 export function routerField(key:string,plugin?:string):keyof RouterSettings|null {
   if(plugin?.split('@')[0]!=='jev-model-router')return null
   const field=key.slice(key.lastIndexOf('.')+1)

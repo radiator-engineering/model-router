@@ -136,7 +136,9 @@ export async function beginAssignment(state:HarnessState,input:AssignmentInput,p
     originalPins:null,boundPins:null,pinBindingId:input.id,stepEffortPermission:!!input.agentId&&v2.routeSubagentEffort,startedAt,generation,cancelled:false,complete:false,prepared:false,applied:null,dispatched:[],allowedToolIds:[],toolCalls:0,
     reservationAcquired:false,substitutionDispatched:false}
   state.assignments[a.id]=a
+  if(!legacy.enabled){a.cancelled=true;return a}
   a.startedAt=await ports.now()
+  if(!state.controls.current().enabled||generation!==state.generation){a.cancelled=true;return a}
   if(!input.agentId)state.currentMain=a.id
   if(engine==='legacy'){a.prepared=true;await ports.save();return a}
   a.originalPins=await ports.pinState()
@@ -145,6 +147,7 @@ export async function beginAssignment(state:HarnessState,input:AssignmentInput,p
   if(generation!==state.generation||state.conversationId!==await ports.conversationId()){a.cancelled=true;return a}
   // Whether a live shadow classifier is authorized is supplied by the trusted facts adapter, not merged options.
   const facts=await ports.facts({model:'',...(input.agentId?{agentId:input.agentId}:{})})
+  if(!state.controls.current().enabled||generation!==state.generation){a.cancelled=true;return a}
   const allowed=input.matched&&(engine==='v2'?facts.routingAvailable:facts.shadowClassifierOptIn)
   if(allowed){
     const timeout:ClassificationResult={status:'timeout',output:null,elapsedMs:state.config.classifier.deadlineMs}
@@ -354,7 +357,9 @@ export async function nativeIntake($:EngineInterface,state:HarnessState,e:Prompt
   return null
 }
 export async function nativeTurnStart($:EngineInterface,state:HarnessState,controls:ReturnType<typeof createRouterControls>,e:TurnStartInput):Promise<void> {
+  const activation=controls.activation
   await initializeHarness($,state)
+  if(!controls.state.enabled||activation!==controls.activation)return
   const ports=portsFor($,state,controls)
   if(e.agentId){
     const matches=Object.values(state.provisional).filter(p=>p.agentId===e.agentId&&!p.uncertain)
@@ -405,6 +410,7 @@ export async function nativeStepPlan($:EngineInterface,state:HarnessState,contro
 export async function* nativeV2Step($:EngineInterface,state:HarnessState,e:TurnStepInput,a:AssignmentState,next:(e:TurnStepInput)=>AsyncGenerator<TurnStepChunk,TurnStepResult>):AsyncGenerator<TurnStepChunk,TurnStepResult> {
   const changes=requestChanges(a)
   const identity=await activeConversation($,state)
+  if(!state.controls.current().enabled)return yield* next(e)
   if(!changes||a.cancelled||a.complete||a.generation!==state.generation||identity!==state.conversationId){
     const text='unavailable: effective model/effort or activation is unknown.'
     yield {kind:'text',index:0,text};yield {kind:'stop',stopReason:'end_turn',usage:null}

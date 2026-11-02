@@ -81,3 +81,25 @@ test('trusted shadow opt-in adds only a proposal classifier, not v2 application'
  await f.initialize();await start($);await drain($.turn.step(step))
  expect(f.calls.http).toBe(2);expect(model).toBe('syn-opus');expect(f.calls.spawn+f.calls.tools).toBe(0)
 })
+test('master off bypasses v2 association, classification and spawn guards; on resumes new turns',async($,on)=>{
+ const f=await setup($,on);const requests:any[]=[]
+ on('turn.step',async function*(_,e){requests.push(e);return {turnId:e.turnId,index:e.index,answer:'ok',toolUses:[],stopReason:'end_turn',usage:null}})
+ on('agent.spawn',()=>({model:'syn-opus',agentId:'host-agent'}))
+ await f.initialize();await $.command.run(command('off'))
+ await start($);await drain($.turn.step({...step,model:'host-model',effort:'high'}))
+ const spawn=await $.agent.spawn({prompt:'work',subagentType:'general-purpose'})
+ expect(spawn.agentId).toBe('host-agent');expect(f.calls.http).toBe(0)
+ expect(requests.map(e=>[e.model,e.effort])).toEqual([['host-model','high']])
+ const review=await $.command.run(command('review candidate'));expect(review.text!.includes('stopped')).toBe(true)
+ await $.command.run(command('on'));await start($);await drain($.turn.step(step))
+ expect(requests[1].model).toBe('syn-haiku');expect(f.calls.http).toBe(1)
+})
+test('disabled startup leaves native requests and stored router evidence untouched',async($,on)=>{
+ const f=await setup($,on);const requests:any[]=[]
+ f.rows.push({key:'jev-model-router.enabled',value:false,provider:{plugin:'jev-model-router',tier:'plugin'}})
+ on('turn.step',async function*(_,e){requests.push(e);return {turnId:e.turnId,index:e.index,answer:'ok',toolUses:[],stopReason:'end_turn',usage:null}})
+ await f.initialize();expect(f.store.size).toBe(0)
+ await start($);await drain($.turn.step(step))
+ expect(requests[0].model).toBe('syn-opus');expect(f.calls.http).toBe(0);expect(f.store.size).toBe(0)
+ const status=await $.command.run(command('status'));expect(status.text!.includes('Model router: off')).toBe(true)
+})

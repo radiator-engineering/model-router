@@ -13,7 +13,7 @@ const clone=<T>(v:T):T=>structuredClone(v)
 const input:AssignmentInput={id:'turn',text:'private prompt; never store',parentId:null,lineageId:'lineage',purpose:'execution',stage:null,kind:'user',matched:true}
 export function harnessFixture(engine:'legacy'|'v2-shadow'|'v2'='v2') {
  const sample=clone(saved.cases[0].snapshot)
- const controls=createRouterControls({mode:'observe',mainModel:true,mainEffort:true,subagents:true,classifyTurns:true},{policyEngine:engine})
+ const controls=createRouterControls({enabled:true,mode:'observe',mainModel:true,mainEffort:true,subagents:true,classifyTurns:true},{policyEngine:engine})
  controls.pins.pins=emptyPinState('conversation');controls.pins.authorityError=null
  const state=createHarness(controls,{...clone(saved.synthetic),classifier:{provider:null,url:'',model:'',apiKey:'private-key',deadlineMs:800},pluginVersion:'fixture',sourceRevision:null})
  state.conversationId='conversation'
@@ -180,4 +180,15 @@ test('separately authorized subagent effort is resolved at the canonical first r
  await evaluateStep(f.state,a,{model:'syn-haiku',effort:'high',agentId:'child-agent',index:0},f.ports)
  expect(a.snapshot!.controls.changeModel).toBe(false);expect(a.snapshot!.controls.changeEffort).toBe(true)
  expect(a.applied!.effort).toEqual({kind:'level',value:'medium'});expect(await prepareDispatch(f.state,a,0,f.ports)).toBe(true)
+})
+test('stopping while request facts are loading prevents a new classifier call',async()=>{
+ const f=harnessFixture();f.controls.runtime=f.state
+ let finish!:(v:any)=>void
+ f.ports.facts=()=>new Promise(resolve=>{finish=resolve})
+ const starting=beginAssignment(f.state,f.input,f.ports)
+ for(let i=0;i<30&&!finish;i++)await Promise.resolve()
+ expect(typeof finish).toBe('function')
+ f.controls.update({enabled:false});f.controls.update({enabled:true})
+ finish(f.facts);const a=await starting
+ expect(a.cancelled).toBe(true);expect(f.calls.classify).toBe(0)
 })

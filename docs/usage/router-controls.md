@@ -2,6 +2,10 @@
 
 Run `/router` to open Claude Code’s native configuration screen filtered to this plugin. Down focuses a setting; Space or Enter toggles a boolean, and Mode opens the native enum selector. Successful changes save immediately; Escape closes the screen without undoing them. `/config` normally shows all settings.
 
+`/router off` stops all router classification, routing, per-turn logging and candidate workflows for this session. `/router on` resumes routing on new turns with the same preferences. While stopped, main requests, subagent spawns and ordinary tool calls pass through unchanged, including in v2 and shadow mode. Router commands and the menu remain available. Pending routing decisions are invalidated and controlled review completions receive cancellation; requests already sent to a provider cannot be undone.
+
+For a saved default, turn **Enable model router** off in `/router` or `/config`, or set the plugin option `enabled` to `false`. The default is `true`. Native settings and explicit launch/managed values take precedence over the legacy `/router save` cache. The legacy `mode off` alias still means Basic routing; use `/router off` to stop everything.
+
 `/router status` prints effective switches, engine, pins and the last forwarded router request. Requested model/effort and observable serving identity are separate; unknown metadata stays unknown. Assignment-bound controls affect new assignments, not an active tool loop. Hot reload restores session controls from configured defaults; inspect status after editing plugin code.
 
 Direct commands remain available: `main-model on|off`, `main-effort on|off`, `subagents on|off`, `classify-turns on|off`, and `mode basic|custom|observe`. They change this session; `/router save` stores **legacy** defaults and `/router reset` restores plugin options. Neither erases pins. Native `/config` manages saved v2 defaults.
