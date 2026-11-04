@@ -13,7 +13,7 @@ const clone=<T>(v:T):T=>structuredClone(v)
 const input:AssignmentInput={id:'turn',text:'private prompt; never store',parentId:null,lineageId:'lineage',purpose:'execution',stage:null,kind:'user',matched:true}
 export function harnessFixture(engine:'legacy'|'v2-shadow'|'v2'='v2') {
  const sample=clone(saved.cases[0].snapshot)
- const controls=createRouterControls({enabled:true,mode:'observe',mainModel:true,mainEffort:true,subagents:true,classifyTurns:true},{policyEngine:engine})
+ const controls=createRouterControls({enabled:true,providerPreset:'mixed',mode:'observe',mainModel:true,mainEffort:true,subagents:true,classifyTurns:true},{policyEngine:engine})
  controls.pins.pins=emptyPinState('conversation');controls.pins.authorityError=null
  const state=createHarness(controls,{...clone(saved.synthetic),classifier:{provider:null,url:'',model:'',apiKey:'private-key',deadlineMs:800},pluginVersion:'fixture',sourceRevision:null})
  state.conversationId='conversation'

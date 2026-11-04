@@ -6,7 +6,7 @@ import {emptyPinState} from '../hooks/v2/pins.ts'
 import {V2_MODEL_DEFAULTS} from '../hooks/v2/policy-data.ts'
 import type {RouterSettings} from '../hooks/router-controls.ts'
 import {register,registerWithAdapters} from '../hooks/jev-model-router.ts'
-const initial:RouterSettings={enabled:true,mode:'custom',mainModel:false,mainEffort:false,subagents:true,classifyTurns:true}
+const initial:RouterSettings={enabled:true,providerPreset:'mixed',mode:'custom',mainModel:false,mainEffort:false,subagents:true,classifyTurns:true}
 function setup(saved?:unknown){
  const handlers:any={};const store=new Map<string,unknown>();if(saved!==undefined)store.set('model-router.defaults.v1',saved)
  const registered:any[]=[];const choices:string[]=[];const asks:any[]=[];const timers:any[]=[];const opened:any[]=[];let menu=false
@@ -485,4 +485,32 @@ test('stop drops cached turn overrides and resumes with the existing preferences
  h.finish();await prompt;expect((await h.step()).model).toBe('claude-haiku-5-5')
  await h.run('off');expect((await h.step(1)).model).toBe('sonnet')
  await h.run('on');expect((await h.step(2)).model).toBe('sonnet')
+})
+
+test('provider preset supports session commands and saved native settings', async()=>{
+ const h=v2Setup()
+ await h.start()
+ expect((await h.run('preset gpt')).text).toContain('Provider preset: gpt')
+ expect(h.controls.current()).toEqual({...initial,mode:'observe',mainEffort:true,providerPreset:'gpt'})
+ await h.run('preset claude','plugin');expect(h.controls.current().providerPreset).toBe('gpt')
+ await h.set('providerPreset','unknown');expect(h.controls.current().providerPreset).toBe('gpt')
+ await h.set('providerPreset','claude');await h.start()
+ expect(h.controls.current().providerPreset).toBe('claude')
+ await h.run('preset mixed');expect(h.controls.current().providerPreset).toBe('mixed')
+ expect(h.values.providerPreset).toBe('claude')
+})
+
+test('legacy routing changes provider for the next turn and keeps the active turn model', async()=>{
+ const h=stoppableLegacy()
+ const classify=async()=>{
+  const calls=h.calls
+  const prompt=h.handlers['prompt.submit'](h.$,{text:'Small task'},async(e:any)=>e)
+  for(let i=0;i<30&&h.calls===calls;i++)await Promise.resolve()
+  expect(h.calls).toBe(calls+1);h.finish();await prompt
+ }
+ await h.run('preset gpt');await classify()
+ expect((await h.step()).model).toBe('gpt-6-luna')
+ await h.run('preset claude')
+ expect((await h.step(1)).model).toBe('gpt-6-luna')
+ await classify();expect((await h.step()).model).toBe('claude-haiku-5-5')
 })

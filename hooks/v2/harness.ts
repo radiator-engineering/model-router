@@ -9,6 +9,7 @@ import type {Provider} from '../policy.ts'
 import {normalizeV2Response, v2RequestBody} from './classifier.ts'
 import {decide} from './policy.ts'
 import type {PolicyData} from './policy-data.ts'
+import type {ProviderPreset} from '../provider-preset.ts'
 import {effortTokenOf, fingerprint, canonicalJson, isObject} from './contract.ts'
 import type {ClassifierOutput, EffortToken, PolicyDecision, PolicySnapshot, Purpose} from './contract.ts'
 import {bindAssignmentPins, parsePinState, releaseAssignmentPins} from './pins.ts'
@@ -46,6 +47,7 @@ export interface AssignmentInput {
 }
 export interface AssignmentState {
   id:string; agentId:string|null; engine:Engine; legacyMode:RouterSettings['mode']
+  providerPreset?:ProviderPreset
   input:Omit<AssignmentInput,'text'>
   classification:ClassificationResult
   legacyStats?:{elapsedMs:number|null;usage:unknown}
@@ -79,6 +81,7 @@ export interface HarnessAdapters {
 }
 export interface HarnessConfig {
   catalog:CatalogV2;policy:PolicyData;legacyCatalog?:CatalogV2['legacy']
+  providerPolicies?:Partial<Record<ProviderPreset,PolicyData>>
   classifier:{provider:Provider|null;url:string;model:string;apiKey:string;deadlineMs:number}
   logDecisions?:boolean
   pluginVersion:string|null; sourceRevision:string|null; sourceFingerprint?:string|null; adapters?:HarnessAdapters
@@ -130,7 +133,7 @@ export async function beginAssignment(state:HarnessState,input:AssignmentInput,p
   if(Object.values(state.assignments).filter(a=>!a.complete).length>=64)throw Error('active assignment limit reached')
   const generation=state.generation,v2=state.controls.currentV2(),legacy=state.controls.current(),engine=v2.policyEngine,startedAt=0
   const text=input.text,identity={id:input.id,agentId:input.agentId,parentId:input.parentId,lineageId:input.lineageId,purpose:input.purpose,stage:input.stage,kind:input.kind,matched:input.matched}
-  const a:AssignmentState={id:input.id,agentId:input.agentId??null,engine,legacyMode:legacy.mode,input:identity,
+  const a:AssignmentState={id:input.id,agentId:input.agentId??null,engine,legacyMode:legacy.mode,providerPreset:legacy.providerPreset,input:identity,
     controlSnapshot:{changeModel:input.agentId?legacy.subagents:legacy.mainModel,changeEffort:input.agentId?v2.routeSubagentEffort:legacy.mainEffort,reviewMode:v2.reviewMode},
     classification:{status:input.matched?'invalid':'unmatched',output:null,elapsedMs:null},snapshot:null,decision:null,record:null,
     originalPins:null,boundPins:null,pinBindingId:input.id,stepEffortPermission:!!input.agentId&&v2.routeSubagentEffort,startedAt,generation,cancelled:false,complete:false,prepared:false,applied:null,dispatched:[],allowedToolIds:[],toolCalls:0,
@@ -189,7 +192,8 @@ export async function evaluateStep(state:HarnessState,a:AssignmentState,request:
   if(binding?.unknownOrigins.includes('effort'))s.current.effortOrigin='unknown'
   if(s.fallback)s.fallback.used=Math.max(s.fallback.used,state.lineageSubstitutions[s.assignment.lineageId]??0)
   if(!facts.routingAvailable){s.current.modelOrigin='unknown';s.current.effortOrigin='unknown'}
-  let d=decide(s,state.config.policy,state.config.catalog)
+  const policy=state.config.providerPolicies?.[a.providerPreset??'mixed']??state.config.policy
+  let d=decide(s,policy,state.config.catalog)
   if(a.cancelled||a.generation!==state.generation||state.conversationId!==await ports.conversationId())d=blocked(d,'assignment cancelled or conversation changed')
   else if(a.applied){
     if(firstChildStep&&a.stepEffortPermission&&a.applied.effort.kind==='unknown'&&d.configuration?.model===a.applied.model&&d.configuration.effort.kind!=='unknown')a.applied.effort=structuredClone(d.configuration.effort)
@@ -319,7 +323,7 @@ export async function initializeHarness($:EngineInterface,state:HarnessState):Pr
     const metadata=JSON.parse(await $.fs.read(`${$.plugin.root}/.claude-plugin/plugin.json`))
     if(typeof metadata.version==='string')state.config.pluginVersion=metadata.version
     const sources=[]
-    for(const path of ['.claude-plugin/plugin.json','hooks/jev-model-router.ts','hooks/router-controls.ts','hooks/policy.ts','hooks/task-routing.ts','hooks/model-catalog.ts','hooks/v2/harness.ts','hooks/v2/records.ts','hooks/v2/pins.ts','hooks/v2/policy.ts','hooks/v2/policy-data.ts','hooks/v2/contract.ts','hooks/v2/classifier.ts','hooks/v2/artifacts.ts','hooks/v2/verification.ts','hooks/v2/review.ts','hooks/v2/review-harness.ts','hooks/v2/native-review.ts','catalog/models.json','catalog/model-data.ts'])sources.push([path,await $.fs.read(`${$.plugin.root}/${path}`)])
+    for(const path of ['.claude-plugin/plugin.json','hooks/jev-model-router.ts','hooks/router-controls.ts','hooks/policy.ts','hooks/task-routing.ts','hooks/model-catalog.ts','hooks/v2/harness.ts','hooks/v2/records.ts','hooks/v2/pins.ts','hooks/v2/policy.ts','hooks/v2/policy-data.ts','hooks/provider-preset.ts','hooks/v2/contract.ts','hooks/v2/classifier.ts','hooks/v2/artifacts.ts','hooks/v2/verification.ts','hooks/v2/review.ts','hooks/v2/review-harness.ts','hooks/v2/native-review.ts','catalog/models.json','catalog/model-data.ts'])sources.push([path,await $.fs.read(`${$.plugin.root}/${path}`)])
     state.config.sourceFingerprint=await sha256(new TextEncoder().encode(JSON.stringify(sources)))
     const revision=await $.process.run(['git','rev-parse','HEAD'],{cwd:$.plugin.root,timeoutMs:10000,env:{GIT_NO_LAZY_FETCH:'1',GIT_OPTIONAL_LOCKS:'0'}})
     if(revision.exitCode===0&&/^[a-f0-9]{40,64}$/.test(revision.stdout.trim()))state.config.sourceRevision=revision.stdout.trim()

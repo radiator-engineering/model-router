@@ -91,7 +91,7 @@ export MODEL_ROUTER_DIR="$PWD"
 CLAUDE_CODE_ENABLE_FUNCTION_HOOKS=1 command claude --plugin-dir "$MODEL_ROUTER_DIR"
 ```
 
-Configure the Jev provider in Claude Code’s native `/config` screen. TypeSafe is preferred when its key is present; Vercel AI Gateway is also supported. Without either key, the built-in classifier supplies Basic tier decisions; Custom task preferences require task classification from Jev. Keep credentials in user settings, outside this repository.
+After launch, use `/model` to select a model you can access. Use `/config` to configure the Jev backend if you have a TypeSafe or Vercel AI Gateway key. Without a key, Claude Code’s built-in classifier supplies legacy tier decisions. Keep credentials in user settings outside this repository. See [first-time configuration](docs/usage/router-controls.md#first-time-configuration).
 
 ### Use with VibeProxy
 
@@ -112,21 +112,16 @@ The sync script adds conversation models advertised by VibeProxy to the native `
 
 Run the sync script before launch when connected models change. You can add it to your own shell launcher to refresh the list on every launch.
 
-## Controls
+## Configure routing
 
-Run `/router` to open the native config screen:
+1. Run `/router` to open the router settings. Use the arrow keys to select a setting. Press Space or Enter to change it. Menu changes save immediately.
+2. Choose **Provider preset**. Use `mixed` for your usual preferences or choose `claude` or `gpt` if you have access to one provider. In that case, select a model from the same provider in `/model` for requests the router leaves as they are.
+3. Choose what the router can change. By default, it can change main reasoning effort and subagent models. Turn on **Main model routing** if you want it to choose the main model too.
+4. Run `/router status` to check the effective settings. To try a change for this session, use `/router preset claude`, `/router preset gpt`, or `/router preset mixed`.
 
-- Down selects a setting. Space or Enter changes it; Mode uses the native choice selector.
-- Successful menu changes save shared defaults immediately. Escape retains them. Direct commands such as `/router main-model off` are session-only unless saved; those overrides currently reset on plugin reload.
-- `/router status` shows the effective runtime settings.
+Run `/router off` to stop classification, routing, decision logs, and candidate workflows for this session. Claude Code continues with its own settings. Run `/router on` to resume. To keep the router off across sessions, turn off **Enable model router** in `/router`.
 
-Use `/router off` to stop the router for this session, and `/router on` to resume with your routing preferences. To keep it off across sessions, turn **Enable model router** off in `/router` or `/config` (the `enabled` plugin option).
-
-While stopped, the router makes no new classifier calls, changes no model or effort, emits no per-turn logs, and runs no candidate workflows. Host requests pass through unchanged in every policy engine. Pending routing decisions are discarded; requests already dispatched cannot be undone.
-
-For manual model selection, turn **Main model routing off**, then choose from `/model`. Turn **Main effort routing off** too if you want to control reasoning effort yourself. Enter in `/model` saves a default; `s` selects a model for the current session.
-
-Classification and recommendation logs describe suggestions. The main result log and router status distinguish changes applied to the request from requests left unchanged. See [Router controls](docs/usage/router-controls.md) for direct commands and persistence details.
+See [Router controls](docs/usage/router-controls.md) for setting defaults, JSON configuration, and model and effort controls.
 
 ## Customize
 

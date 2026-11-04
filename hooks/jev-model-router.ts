@@ -6,6 +6,8 @@ import {createHarness,captureLegacyClassifier,boundEngine,nativeIntake,nativeTur
 import type {HarnessAdapters} from './v2/harness.ts'
 import {workflowComplete,workflowTurnStart,workflowSpawnGuard,workflowToolGuard} from './v2/review-harness.ts'
 import {recommendTask, DEFAULT_PREFERENCES, taskLabel} from './task-routing.ts'
+import {isProviderPreset, presetModel} from './provider-preset.ts'
+import type {ProviderPreset} from './provider-preset.ts'
 /**
  * jev-model-router — Claude Mod
  *
@@ -118,15 +120,16 @@ export function registerWithAdapters(on:Parameters<Register>[0],options:Paramete
     simpleAnswer: text('simpleAnswerModel', DEFAULT_PREFERENCES.simpleAnswer),
     fileScout: text('fileScoutModel', DEFAULT_PREFERENCES.fileScout),
   }
-  const recommendation = (decision: Decision | null) => recommendTask(decision?.task ?? null, catalog, preferences, taskThreshold, (decision?.risky ?? 0) > 0.7)
   const timeoutMs = number('timeoutMs', 800)
   const routeSubagentModel = flag('routeSubagentModel', true)
   const routeMainEffort = flag('routeMainEffort', true)
   const routeMainModel = flag('routeMainModel', false)
-  const controls = createRouterControls({enabled:flag('enabled',true),mode:taskMode, mainModel:routeMainModel, mainEffort:routeMainEffort, subagents:routeSubagentModel, classifyTurns:flag('classifyTurns', true)}, options)
+  const providerPreset=isProviderPreset(options.providerPreset)?options.providerPreset:'mixed'
+  const controls = createRouterControls({enabled:flag('enabled',true),providerPreset,mode:taskMode, mainModel:routeMainModel, mainEffort:routeMainEffort, subagents:routeSubagentModel, classifyTurns:flag('classifyTurns', true)}, options)
   registerRouterControls(on, controls)
   const v2Catalog=adapters?.catalog??runtimeCatalog(parseCatalogV2(catalogData))
   const harness=createHarness(controls,{catalog:v2Catalog,policy:adapters?.policy??configuredPolicy(options,v2Catalog),legacyCatalog:catalog,
+    providerPolicies:adapters?.policy?undefined:{claude:configuredPolicy(options,v2Catalog,'claude'),gpt:configuredPolicy(options,v2Catalog,'gpt')},
     classifier:{provider:active,url,model:modelId,apiKey,deadlineMs:Number.isSafeInteger(timeoutMs)&&timeoutMs>0?Math.min(timeoutMs,600000):800},
     pluginVersion:null,sourceRevision:null,logDecisions:flag('logDecisions',true),adapters})
   controls.runtime=harness
@@ -168,6 +171,19 @@ export function registerWithAdapters(on:Parameters<Register>[0],options:Paramete
     },
     minUpgradeConfidence: number('minUpgradeConfidence', 0.3),
     minDowngradeConfidence: number('minDowngradeConfidence', 0.6),
+  }
+
+  function routeTask(decision:Decision|null,current:{model:string;effort?:string|number},preset:ProviderPreset) {
+    const modelFor=(model:string,fallback:string)=>presetModel(model,fallback,preset,v2Catalog.models)
+    const tiers={fast:modelFor(policy.tiers.fast,'haiku'),balanced:modelFor(policy.tiers.balanced,'sonnet'),deep:modelFor(policy.tiers.deep,'opus')}
+    const rolePreferences={...preferences}
+    for(const role of Object.keys(rolePreferences) as (keyof typeof rolePreferences)[]) {
+      rolePreferences[role]=modelFor(preferences[role],DEFAULT_PREFERENCES[role])
+    }
+    return {
+      routing:route(decision,current,{...policy,tiers}),
+      task:recommendTask(decision?.task??null,catalog,rolePreferences,taskThreshold,(decision?.risky??0)>0.7),
+    }
   }
 
   // The classification waiting for the turn that reads its prompt, and what
@@ -316,8 +332,7 @@ export function registerWithAdapters(on:Parameters<Register>[0],options:Paramete
     }
 
     const decision = pending.take()
-    const routing = route(decision, { model: e.model, effort: e.effort }, policy)
-    const task = recommendation(decision)
+    const {routing,task}=routeTask(decision,{model:e.model,effort:e.effort},runtime.providerPreset)
     if (taskEnabled && logDecisions) $.ui.log(`[router] task ${taskMode} recommendation: ${decision?.task?.role ?? 'unknown'}/${decision?.task?.implementationCategory ?? 'unknown'} → ${task.model ?? 'original tier policy'}${task.effort ? ` · effort ${task.effort}` : ''}; ${task.reason}`,{to:'debug'})
     if (taskMode === 'custom' && task.preferredModel && !task.model && (decision?.risky ?? 0) <= 0.7) {
       routing.model = null; routing.effort = null; routing.reason = task.reason
@@ -457,8 +472,7 @@ export function registerWithAdapters(on:Parameters<Register>[0],options:Paramete
     // would inherit the parent's, so that is what a change is measured from.
     // The Agent tool takes no effort, so only the model is ours to set here.
     const current = e.model ?? e.parentModel
-    const routing = route(decision, { model: current }, policy)
-    const task = recommendation(decision)
+    const {routing,task}=routeTask(decision,{model:current},runtime.providerPreset)
     if (taskEnabled && logDecisions) $.ui.log(`[router] task ${taskMode} recommendation: ${decision?.task?.role ?? 'unknown'}/${decision?.task?.implementationCategory ?? 'unknown'} → ${task.model ?? 'original tier policy'}${task.effort ? ` · effort ${task.effort}` : ''}; ${task.reason}`,{to:'debug'})
     // agent.spawn has no effort control: do not claim medium orchestration here.
     if (taskMode === 'custom' && task.preferredModel && (!task.model || task.effort) && (decision?.risky ?? 0) <= 0.7) {

@@ -14,6 +14,7 @@ import {fingerprint,isObject} from './contract.ts'
 import {normalizeUsage} from './records.ts'
 import type {UsageRecord,ConsumptionStage} from './records.ts'
 import type {PolicySnapshot,PolicyDecision} from './contract.ts'
+import {presetModel} from '../provider-preset.ts'
 
 /** Code-only trusted facts, not candidate JSON, a model reply or merged plugin options. */
 export interface WorkflowAdapters {
@@ -42,6 +43,9 @@ async function persist($:EngineInterface,r:HarnessState,w:WorkflowState) {
 async function configuration($:EngineInterface,r:HarnessState,candidateId?:string) {
  if(r.controls.pins.authorityError)throw Error('trusted settings provenance unavailable')
  const nativePolicy=parseReviewPolicy(r.controls.pins.reviewPolicyJson??DEFAULT_REVIEW_POLICY_JSON)
+ const {providerPreset}=r.controls.current()
+ nativePolicy.reviewer.model=presetModel(nativePolicy.reviewer.model,'opus',providerPreset,r.config.catalog.models)
+ nativePolicy.repair.model=presetModel(nativePolicy.repair.model,'sonnet',providerPreset,r.config.catalog.models)
  const cfg=r.config.catalog.configurations.find(c=>c.modelId===nativePolicy.reviewer.model&&c.effort.kind==='level'&&c.effort.value===nativePolicy.reviewer.effort)
  const author=r.currentMain?r.assignments[r.currentMain]:null
  const authorModel=author?.record?.observed.model??author?.record?.applied?.model??null
@@ -59,7 +63,8 @@ async function configuration($:EngineInterface,r:HarnessState,candidateId?:strin
  if(candidateId)standing.authorFamily=r.workflow?.enrollments[candidateId]?.authorFamily??null
  const root=await $.session.cwd()
  const current=r.currentMain?r.assignments[r.currentMain]:null
- const config:ArtifactConfiguration={repositoryRoot:root,policyRevision:`${r.config.policy.policyRevision}/${r.controls.currentV2().policyEngine}/${fingerprint(r.config.catalog)}/${fingerprint({distinctFamily:standing.distinctFamily,authorFamily:standing.authorFamily})}`,
+ const policyRevision=r.config.providerPolicies?.[providerPreset]?.policyRevision??r.config.policy.policyRevision
+ const config:ArtifactConfiguration={repositoryRoot:root,policyRevision:`${policyRevision}/${r.controls.currentV2().policyEngine}/${fingerprint(r.config.catalog)}/${fingerprint({distinctFamily:standing.distinctFamily,authorFamily:standing.authorFamily})}`,
   reviewerConfigurationId:standing.reviewerConfigurationId,checkConfigurationHash:hash,requiredCheckIds:standing.requiredCheckIds,
   requireReview:standing.requireReview||current?.snapshot?.requirements.requireReview===true,trustedCheckIds:definitions?.checks.map(c=>c.id)??[]}
  return {config,definitions,standing,nativePolicy}

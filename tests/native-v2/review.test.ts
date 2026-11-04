@@ -97,6 +97,18 @@ test('model checkpoint cannot authorize its own automatic reviewer budget',async
  const result=await $.command.run({...command(id+' full'),command:'native-checkpoint'})
  expect(result.text!.includes('blocked')).toBe(true);expect(requests).toBe(0)
 })
+
+test('GPT preset selects the bounded reviewer before dispatch',async($,on)=>{
+ const f=await setup($,on),models:string[]=[]
+ on('model.complete',(_,e)=>{
+  models.push(e.model!)
+  return {value:{isAnswered:true,text:'{"findings":[]}',usage:{input_tokens:1,output_tokens:4,cache_read_input_tokens:0,cache_creation_input_tokens:0}}}
+ })
+ await f.initialize();await $.command.run({...command(''),command:'native-default-workflow'})
+ await $.command.run(command('preset gpt'))
+ const id=await enroll($);await $.command.run(command('review '+id));await f.clock.settle()
+ expect(models).toEqual(['gpt-6-astra'])
+})
 test('completion-backed repair cannot write outside original material finding paths',async($,on)=>{
  const f=await setup($,on);let count=0
  const finding={id:'F',requirementId:'R',invariant:'I',path:'artifact',location:'line 1',consequence:'Wrong content',evidenceStatus:'confirmed-defect',verificationStep:'Read artifact'}

@@ -3,6 +3,8 @@ import {TASK_ROLES} from './contract.ts'
 import type {Dimension, Purpose, TaskRole} from './contract.ts'
 import type {CatalogV2} from '../model-catalog.ts'
 import {DEFAULT_PREFERENCES} from '../task-routing.ts'
+import {presetModel} from '../provider-preset.ts'
+import type {ProviderPreset} from '../provider-preset.ts'
 
 export interface WorkloadRule {
   id:string
@@ -72,13 +74,16 @@ export function runtimeCatalog(catalog:CatalogV2):CatalogV2 {
   return {...catalog,models:catalog.models.map(m=>({...m,family:m.family??families[m.id]??null})),configurations}
 }
 /** Reuse configured model preferences; a missing pair does not invalidate unrelated roles. */
-export function configuredPolicy(options:Readonly<Record<string,unknown>>,catalog:CatalogV2):PolicyData {
+export function configuredPolicy(options:Readonly<Record<string,unknown>>,catalog:CatalogV2,preset:ProviderPreset='mixed'):PolicyData {
   const p:PolicyData=structuredClone(POLICY)
+  if(preset!=='mixed')p.policyRevision+=`/${preset}`
   const defaults:Record<string,string>={...V2_MODEL_DEFAULTS,mechanicalModel:DEFAULT_PREFERENCES.mechanical,simpleAnswerModel:DEFAULT_PREFERENCES.simpleAnswer,fileScoutModel:DEFAULT_PREFERENCES.fileScout,orchestrationModel:DEFAULT_PREFERENCES.orchestration,designLedModel:DEFAULT_PREFERENCES.designLed,visualAnalysisModel:DEFAULT_PREFERENCES.visualAnalysis,specifiedModel:DEFAULT_PREFERENCES.specified}
   const keys:Record<string,string>={'consequential-work':'designLedModel','mechanical-exact':'mechanicalModel','simple-answer':'simpleAnswerModel','file-scout':'fileScoutModel','broad-or-orchestration':'longHorizonModel','visual-specialist':'visualAnalysisModel','specified-execution':'specifiedModel',orchestration:'orchestrationModel','implementation-default':'specifiedModel',explanation:'explanationModel',analysis:'analysisModel',planning:'planningModel',research:'researchModel',writing:'writingModel','structured-text':'structuredTextModel',operations:'operationsModel'}
   p.rules=p.rules.map(r=>{
-    const key=keys[r.id]!,model=typeof options[key]==='string'&&options[key]?options[key] as string:defaults[key]!
-    const levels=r.id==='simple-answer'?['low','medium']:r.id==='structured-text'?['low']:key==='longHorizonModel'&&model==='claude-fable-5-1'?['high']:['medium']
+    const key=keys[r.id]!,defaultModel=defaults[key]!
+    const preferred=typeof options[key]==='string'&&options[key]?options[key] as string:defaultModel
+    const model=presetModel(preferred,defaultModel,preset,catalog.models)
+    const levels=preset==='gpt'&&model==='gpt-6-luna'?['low']:r.id==='simple-answer'?['low','medium']:r.id==='structured-text'?['low']:key==='longHorizonModel'&&model==='claude-fable-5-1'?['high']:['medium']
     const cfg=levels.map(level=>catalog.configurations.find(c=>c.modelId===model&&c.effort.kind==='level'&&c.effort.value===level)).find(Boolean)
     return {...r,primary:cfg?[cfg.id]:[],preference:null}
   }).filter(r=>r.primary.length)

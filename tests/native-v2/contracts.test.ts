@@ -103,3 +103,21 @@ test('disabled startup leaves native requests and stored router evidence untouch
  expect(requests[0].model).toBe('syn-opus');expect(f.calls.http).toBe(0);expect(f.store.size).toBe(0)
  const status=await $.command.run(command('status'));expect(status.text!.includes('Model router: off')).toBe(true)
 })
+
+test('provider presets switch native v2 targets without changing an active assignment',async($,on)=>{
+ const f=await setup($,on),requests:string[]=[]
+ on('turn.step',async function*(_,e){requests.push(e.model);return {turnId:e.turnId,index:e.index,answer:'ok',toolUses:[],stopReason:'end_turn',usage:null}})
+ await f.clock.advance(48*60*60*1000);await f.initialize()
+ await $.command.run({...command(''),command:'native-default-workflow'})
+ f.setClassification({role:{choice:'writing',confidence:.99},specification:{choice:'unknown'},verification:{choice:'judgment',confidence:.9},executionSpan:{choice:'bounded',confidence:.99},consequence:{choice:'reversible',confidence:.9}})
+ await $.command.run(command('preset claude'));await start($)
+ const input={...step,model:'claude-haiku-5-5'}
+ await drain($.turn.step(input))
+ await $.command.run(command('preset gpt'));await drain($.turn.step({...input,index:1}))
+ await $.turn.complete({turnId:'turn',answer:'ok',durationMs:1,isAborted:false,reason:'answer'})
+ await $.prompt.submit({text:'Write a short memo',wait:false,origin:{kind:'composer'}})
+ await $.turn.start({turnId:'new-turn',text:'Write a short memo'})
+ await drain($.turn.step({...input,turnId:'new-turn'}))
+ expect(requests).toEqual(['claude-sonnet-5-5','claude-sonnet-5-5','gpt-6.1-terra'])
+ expect(f.calls.http).toBe(2)
+})

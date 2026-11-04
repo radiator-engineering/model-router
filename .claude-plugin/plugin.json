@@ -21,6 +21,13 @@
       "description": "Master switch. Off stops all router classification, routing, logging and candidate workflows; host requests pass through unchanged. Routing preferences are retained.",
       "default": true
     },
+    "providerPreset": {
+      "type": "string",
+      "title": "Provider preset",
+      "description": "Use mixed model preferences, or choose Claude or GPT for routed tasks and review workers. Existing routing permissions and pins still apply.",
+      "default": "mixed",
+      "options": ["mixed", "claude", "gpt"]
+    },
     "policyEngine": {
       "type": "string",
       "title": "Routing policy engine",

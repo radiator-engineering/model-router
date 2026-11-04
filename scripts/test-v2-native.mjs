@@ -39,6 +39,7 @@ export const register:Register=(on,options)=>{
  })
  on('command.run',{command:'native-default-workflow'},async()=>{
   runtime.config.catalog=runtimeCatalog(parseCatalogV2(production));runtime.config.policy=configuredPolicy({},runtime.config.catalog)
+  runtime.config.providerPolicies={claude:configuredPolicy({},runtime.config.catalog,'claude'),gpt:configuredPolicy({},runtime.config.catalog,'gpt')}
   if(runtime.config.adapters){delete runtime.config.adapters.workflow;delete runtime.config.adapters.facts}
   return {text:'native default workflow active'}
  })

@@ -36,7 +36,7 @@ try {
   commit = git('rev-parse', 'HEAD'); dirty = Boolean(git('status', '--porcelain'));
 } catch { /* A source snapshot may have no git metadata; leave it unknown. */ }
 const fingerprints = {};
-for (const file of ['.claude-plugin/plugin.json', 'catalog/models.json', 'hooks/model-catalog.ts', 'hooks/policy.ts', 'hooks/task-routing.ts', 'hooks/v2/contract.ts', 'hooks/v2/pins.ts', 'hooks/v2/classifier.ts', 'hooks/v2/policy.ts', 'hooks/v2/policy-data.ts', 'scripts/replay-v2.mjs', 'scripts/v2-replay-lib.mjs', 'tests/fixtures/v2-decisions.json'])
+for (const file of ['.claude-plugin/plugin.json', 'catalog/models.json', 'hooks/model-catalog.ts', 'hooks/policy.ts', 'hooks/task-routing.ts', 'hooks/v2/contract.ts', 'hooks/v2/pins.ts', 'hooks/v2/classifier.ts', 'hooks/v2/policy.ts', 'hooks/v2/policy-data.ts','hooks/provider-preset.ts', 'scripts/replay-v2.mjs', 'scripts/v2-replay-lib.mjs', 'tests/fixtures/v2-decisions.json'])
   fingerprints[file] = createHash('sha256').update(await readFile(path.join(root, file))).digest('hex');
 const plugin = JSON.parse(await readFile(path.join(root, '.claude-plugin/plugin.json'), 'utf8'));
 const report = {

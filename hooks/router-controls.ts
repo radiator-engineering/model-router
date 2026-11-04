@@ -8,10 +8,13 @@ import type {HarnessState} from './v2/harness.ts'
 import {initializeHarness,invalidateHarness,saveRuntime} from './v2/harness.ts'
 import {workflowCommand,workflowCheckpoint} from './v2/review-harness.ts'
 import {DEFAULT_REVIEW_POLICY_JSON,validateReviewPolicyJson} from './v2/native-review.ts'
+import {isProviderPreset} from './provider-preset.ts'
+import type {ProviderPreset} from './provider-preset.ts'
 import {V2_MODEL_DEFAULTS} from './v2/policy-data.ts'
 
 export interface RouterSettings {
   enabled: boolean
+  providerPreset: ProviderPreset
   mode: 'basic' | 'custom' | 'observe'
   mainModel: boolean
   mainEffort: boolean
@@ -53,15 +56,15 @@ export function normalizeRouterMode(value:unknown):RouterSettings['mode'] {
   return 'observe'
 }
 const STORE_KEY = 'model-router.defaults.v1'
-export function validSettings(input: unknown): input is RouterSettings {
+export function validSettings(input: unknown): input is Omit<RouterSettings,'enabled'|'providerPreset'> & Partial<Pick<RouterSettings,'enabled'|'providerPreset'>> {
   if (!isObject(input)) return false
-  return (input.enabled===undefined||typeof input.enabled==='boolean') && ['basic','custom','observe','off','apply'].includes(input.mode as string) && ['mainModel','mainEffort','subagents','classifyTurns'].every(k=>typeof input[k]==='boolean')
+  return (input.enabled===undefined||typeof input.enabled==='boolean') && (input.providerPreset===undefined||isProviderPreset(input.providerPreset)) && ['basic','custom','observe','off','apply'].includes(input.mode as string) && ['mainModel','mainEffort','subagents','classifyTurns'].every(k=>typeof input[k]==='boolean')
 }
 export function routerStatus(s:RouterSettings):string {
   const yes=(v:boolean)=>v?'on':'off'
-  return `Model router: ${yes(s.enabled)}${s.enabled?'':' (stopped; preferences below are inactive)'}\nClassifier: Jev\nMode: ${s.mode}\nMain model routing: ${yes(s.mainModel)}\nMain effort routing: ${yes(s.mainEffort)}\nSubagent routing: ${yes(s.subagents)}\nPer-turn classification/logging: ${yes(s.classifyTurns)}`
+  return `Model router: ${yes(s.enabled)}${s.enabled?'':' (stopped; preferences below are inactive)'}\nProvider preset: ${s.providerPreset}\nClassifier: Jev\nMode: ${s.mode}\nMain model routing: ${yes(s.mainModel)}\nMain effort routing: ${yes(s.mainEffort)}\nSubagent routing: ${yes(s.subagents)}\nPer-turn classification/logging: ${yes(s.classifyTurns)}`
 }
-export const ROUTER_HELP = '/router opens the menu. Commands: on; off (stop all router activity); status; mode [basic|custom|observe]; main-model on|off; main-effort on|off; subagents on|off; classify-turns on|off; save; reset; engine legacy|v2-shadow|v2; review-mode off|recommend|automatic; subagent-effort on|off; pin model <exact-id> | pin effort <level> [--scope next|session|persistent]; unpin model|effort [--scope next|session|persistent]; candidate register <manifest-path>; review [candidate-id]; repair <candidate-id>; verify <candidate-id> [--confirm-scope]; candidate status <candidate-id>; accept <candidate-id>. Legacy changes apply immediately; save/reset manage legacy defaults. V2 routes permitted model/effort fields; context and ordinary execution limits belong to the host; shadow keeps legacy execution active. Candidate review/acceptance require current evidence and separate authorization. Persistent pins use native /config defaults; execution pins never choose a reviewer.'
+export const ROUTER_HELP = '/router opens the menu. Commands: on; off (stop all router activity); status; preset mixed|claude|gpt; mode [basic|custom|observe]; main-model on|off; main-effort on|off; subagents on|off; classify-turns on|off; save; reset; engine legacy|v2-shadow|v2; review-mode off|recommend|automatic; subagent-effort on|off; pin model <exact-id> | pin effort <level> [--scope next|session|persistent]; unpin model|effort [--scope next|session|persistent]; candidate register <manifest-path>; review [candidate-id]; repair <candidate-id>; verify <candidate-id> [--confirm-scope]; candidate status <candidate-id>; accept <candidate-id>. Legacy changes apply immediately; save/reset manage legacy defaults. V2 routes permitted model/effort fields; context and ordinary execution limits belong to the host; shadow keeps legacy execution active. Candidate review/acceptance require current evidence and separate authorization. Persistent pins use native /config defaults; execution pins never choose a reviewer.'
 const KEYS = {'main-model':'mainModel','main-effort':'mainEffort',subagents:'subagents','classify-turns':'classifyTurns'} as const
 export type RouterAction = {kind:'status'|'menu'|'mode-menu'|'save'|'reset'|'help'|'error'} |
   {kind:'change'; patch:Partial<RouterSettings>} | {kind:'v2-change'; field:keyof V2Settings; value:string|boolean} |
@@ -88,6 +91,7 @@ export function parseRouterCommand(args:string): RouterAction {
   if(name==='verify'&&(tokens.length===2||tokens.length===3&&val==='--confirm-scope'))return {kind:'verify',candidateId:arg!,confirmScope:val==='--confirm-scope'}
   if(name==='accept'&&tokens.length===2)return {kind:'accept',candidateId:arg!}
   if (tokens.length!==2||arg===undefined) return {kind:'error'}
+  if(name==='preset'&&isProviderPreset(arg))return {kind:'change',patch:{providerPreset:arg}}
   if (name==='mode' && ['basic','custom','observe','off','apply'].includes(arg)) return {kind:'change',patch:{mode:normalizeRouterMode(arg)}}
   const key=Object.hasOwn(KEYS,name)?KEYS[name as keyof typeof KEYS]:undefined
   if(key && ['on','off'].includes(arg)) return {kind:'change',patch:{[key]:arg==='on'}}
@@ -220,14 +224,14 @@ export function registerRouterControls(on:Parameters<Register>[0],controls:Retur
   on('session.start',async($,e,next)=>{
     try {
       const saved=await $.store.get(STORE_KEY)
-      if(validSettings(saved)) controls.update({enabled:saved.enabled??controls.initial.enabled,mode:normalizeRouterMode(saved.mode),mainModel:saved.mainModel,mainEffort:saved.mainEffort,subagents:saved.subagents,classifyTurns:saved.classifyTurns})
+      if(validSettings(saved)) controls.update({enabled:saved.enabled??controls.initial.enabled,providerPreset:saved.providerPreset??controls.initial.providerPreset,mode:normalizeRouterMode(saved.mode),mainModel:saved.mainModel,mainEffort:saved.mainEffort,subagents:saved.subagents,classifyTurns:saved.classifyTurns})
     } catch { $.ui.log('[router] Could not read saved defaults; using plugin options.') }
     try {
       for(const row of await nativeRows($)) {
         const field=routerField(row.key,row.provider?.plugin)
         if(field&&controls.state.enabled&&controls.runtime?.config.logDecisions)$.ui.log(`[router:control] ${field}=${String(row.value)} (initial=${String(controls.initial[field])})`,{to:'debug'})
-        if(field==='mode'&&['basic','custom','observe','off','apply'].includes(row.value as string))controls.state.mode=normalizeRouterMode(row.value)
-        else if(field&&field!=='mode'&&typeof row.value==='boolean')controls.update({[field]:row.value})
+        const patch=field&&routerSettingPatch(field,row.value)
+        if(patch)controls.update(patch)
         const key=v2Field(row.key,row.provider?.plugin)
         if(key&&['policyEngine','routeSubagentEffort','reviewMode'].includes(key)&&validV2(key,row.value)){
           Object.assign(controls.v2,{[key]:row.value});if(key==='policyEngine')controls.engineError=null
@@ -239,13 +243,13 @@ export function registerRouterControls(on:Parameters<Register>[0],controls:Retur
       const flag=trustedOptions((await $.settings.read({source:'flag'}))??{},Object.keys(CONFIG_FIELDS)),policy=trustedOptions(await $.settings.read({source:'policy'}),Object.keys(CONFIG_FIELDS))
       for(const [key,field] of Object.entries(CONFIG_FIELDS)){
         const value=Object.hasOwn(policy,key)?policy[key]:flag[key]
-        if(field==='mode'&&['basic','custom','observe','off','apply'].includes(value as string))controls.state.mode=normalizeRouterMode(value)
-        else if(field!=='mode'&&typeof value==='boolean')controls.update({[field]:value})
+        const patch=routerSettingPatch(field,value)
+        if(patch)controls.update(patch)
       }
     }catch{/* Do not infer launch authority when the source or managed precedence is unavailable. */}
     if(controls.state.enabled)try {const g=controls.generation,id=await identity($);await ordered(()=>load($,controls,id,g))}catch{controls.pins.pinError='Conversation identity or pin state unavailable.'}
     if(controls.state.enabled&&controls.runtime?.config.logDecisions)$.ui.log(`[router:controls] initial=${JSON.stringify(controls.initial)} effective=${JSON.stringify(controls.state)}`,{to:'debug'})
-    await $.command.register({name:'router',description:'Model routing menu, v2 controls and purpose-aware pins',argumentHint:'[on | off | status | pin | unpin | engine | review-mode | subagent-effort | candidate | review | accept | save | reset]'})
+    await $.command.register({name:'router',description:'Model routing menu, v2 controls and purpose-aware pins',argumentHint:'[on | off | status | preset | pin | unpin | engine | review-mode | subagent-effort | candidate | review | accept | save | reset]'})
     const result=await next(e)
     if(controls.state.enabled&&controls.runtime)try{await initializeHarness($,controls.runtime)}catch{$.ui.log('[router] Runtime metadata unavailable; enforced v2 remains held.',{to:'debug'})}
     if(controls.runtime)try{await $.tool.register({name:'candidate_checkpoint',description:'Request an explicit checkpoint for an already user-enrolled candidate. Runs only with automatic mode AND separate trusted per-candidate/stage authorization; never enrolls scope or grants itself permission.',inputSchema:{type:'object',additionalProperties:false,properties:{candidateId:{type:'string'},stage:{enum:['full','repair','targeted']}},required:['candidateId','stage']}})}catch{$.ui.log('[router] Workflow checkpoint tool unavailable on this surface; model/effort routing remains active.',{to:'debug'})}
@@ -318,7 +322,11 @@ export function registerRouterControls(on:Parameters<Register>[0],controls:Retur
         Object.assign(controls.v2,{[action.field]:action.value});if(action.field==='policyEngine')controls.engineError=null
         return {text:detailedStatus(controls)+'\nV2 session control staged for future assignment boundaries; /config manages saved defaults. No automatic review is authorized by this change.'}
       }
-      if(action.kind==='change'){controls.update(action.patch);return {text:routerStatus(controls.state)+(action.patch.enabled===undefined?'\nSession updated. Use /router save to persist.':'\nSession updated. Use Enable model router in /router to save the default.')}}
+      if(action.kind==='change'){
+        controls.update(action.patch)
+        const savedControl=action.patch.providerPreset!==undefined?'Provider preset':action.patch.enabled!==undefined?'Enable model router':null
+        return {text:routerStatus(controls.state)+(savedControl?`\nSession updated. Use ${savedControl} in /router to save the default.`:'\nSession updated. Use /router save to persist.')}
+      }
       if(action.kind==='save'){await $.store.set(STORE_KEY,controls.state);return {text:routerStatus(controls.state)+'\nSaved defaults cache; native /config and explicit launch/managed values take precedence. V2 saved defaults are managed in /config.'}}
       if(action.kind==='reset'){await $.store.delete(STORE_KEY);controls.update(controls.initial);return {text:routerStatus(controls.state)+'\nRestored legacy plugin options and removed saved defaults. Pins are unchanged; use unpin at their scope.'}}
       await $.state.set(menuState,true)
@@ -348,6 +356,7 @@ export function registerRouterControls(on:Parameters<Register>[0],controls:Retur
     if(simpleAnswer)return next({...e,label:'Router · Simple answers & chat model',description:'Saved default model for simple answers and standalone greetings/thanks. V2 prefers low effort when configured. Continuations and approvals are not chat; routing switches and pins still apply. Native menu edits save defaults, not session-only overrides.',isHidden:false})
     if(v2)return next({...e,label:`Router · ${v2}`,description:'V2 routes configured model/effort preferences; context and ordinary execution limits are host-managed. Shadow classification is separately opt-in. Acceptance requires current evidence; review mode alone grants no spend. Persistent pins are execution-purpose; checks trust only user/managed-policy sources.',isHidden:false})
     if(!field)return next(e)
+    if(field==='providerPreset')return next({...e,label:'Router · Provider preset',description:'Mixed uses your existing model preferences. Claude and GPT select models from one provider for future routing and review work.',isHidden:false})
     const row=ROUTER_TOGGLES.find(row=>row.key===field)
     return next({...e,label:row?`Router · ${row.label}`:'Router · Mode',description:row?.description??'Basic: fast/balanced/deep routing. Custom: our task preferences with Basic fallback. Observe: Basic still routes; only logs what Custom would pick. All respect routing switches. Customize hooks/task-routing.ts and catalog/models.json; run node scripts/build-catalog.mjs after editing.',isHidden:false})
   })
@@ -368,17 +377,23 @@ export function registerRouterControls(on:Parameters<Register>[0],controls:Retur
     const field=routerField(e.key,e.provider?.plugin)
     if(!field)return next(e)
     if(field==='enabled'&&(e.origin?.kind!=='composer'||typeof e.value!=='boolean'))return {deny:'Only a verified composer action can change the router master switch to on or off.'}
+    if(field==='providerPreset'&&(e.origin?.kind!=='composer'||!isProviderPreset(e.value)))return {deny:'Only a verified composer action can select Mixed, Claude or GPT.'}
     const result=await next(e)
     if(result.deny!==undefined)return result
-    const value=result.value
-    if(field==='mode'?!['basic','custom','observe','off','apply'].includes(value as string):typeof value!=='boolean')return result
-    controls.update({[field]:field==='mode'?normalizeRouterMode(value):value})
+    const patch=routerSettingPatch(field,result.value)
+    if(!patch)return result
+    controls.update(patch)
     try{await $.store.set(STORE_KEY,controls.state)}catch{$.ui.log('[router] Native setting saved; legacy defaults cache could not be updated.')}
     return result
   }).catch(($,e,next)=>next.called?next(e):{deny:'Router configuration unavailable after a control error.'})
 }
 
-const CONFIG_FIELDS:Record<string,keyof RouterSettings>={enabled:'enabled',taskRoutingMode:'mode',routeMainModel:'mainModel',routeMainEffort:'mainEffort',routeSubagentModel:'subagents',classifyTurns:'classifyTurns'}
+const CONFIG_FIELDS:Record<string,keyof RouterSettings>={enabled:'enabled',providerPreset:'providerPreset',taskRoutingMode:'mode',routeMainModel:'mainModel',routeMainEffort:'mainEffort',routeSubagentModel:'subagents',classifyTurns:'classifyTurns'}
+function routerSettingPatch(field:keyof RouterSettings,value:unknown):Partial<RouterSettings>|null {
+  if(field==='mode')return ['basic','custom','observe','off','apply'].includes(value as string)?{mode:normalizeRouterMode(value)}:null
+  if(field==='providerPreset')return isProviderPreset(value)?{providerPreset:value}:null
+  return typeof value==='boolean'?{[field]:value}:null
+}
 export function routerField(key:string,plugin?:string):keyof RouterSettings|null {
   if(plugin?.split('@')[0]!=='jev-model-router')return null
   const field=key.slice(key.lastIndexOf('.')+1)

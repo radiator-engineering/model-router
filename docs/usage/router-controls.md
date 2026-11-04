@@ -1,14 +1,69 @@
 # Router controls
 
-Run `/router` to open Claude Code’s native configuration screen filtered to this plugin. Down focuses a setting; Space or Enter toggles a boolean, and Mode opens the native enum selector. Successful changes save immediately; Escape closes the screen without undoing them. `/config` normally shows all settings.
+## First-time configuration
 
-`/router off` stops all router classification, routing, per-turn logging and candidate workflows for this session. `/router on` resumes routing on new turns with the same preferences. While stopped, main requests, subagent spawns and ordinary tool calls pass through unchanged, including in v2 and shadow mode. Router commands and the menu remain available. Pending routing decisions are invalidated and controlled review completions receive cancellation; requests already sent to a provider cannot be undone.
+1. Select a working model in `/model`. Claude Code uses it when the router preserves the request. If you use VibeProxy, connect the provider and refresh the model picker first. See [VibeProxy setup](../../README.md#use-with-vibeproxy).
+2. Open `/config` and find **Backend** (`provider`). Leave it on `auto` to use TypeSafe when a TypeSafe key is present, Vercel AI Gateway when only a gateway key is present, or the built-in classifier when neither key is present. Set `typesafeApiKey` or `gatewayApiKey` in user settings if you use an external backend. The built-in classifier supplies legacy tier decisions. Task classification for Custom and v2 requires Jev.
+3. Open `/router` and choose **Provider preset** for the models that will do the work. Choose **Mixed** for the usual role preferences, or match the preset and `/model` to the single provider you can access.
+4. Enable the routing switches you want. Start with the defaults below. Turn on **Main model routing** to let the router choose the main model. To try v2, configure Jev and follow [V2 controls and pins](#v2-controls-and-pins).
+5. Run `/router status` to confirm the effective preset, engine, and switches. After a task, check the last router-applied request for the model and effort the router forwarded.
 
-For a saved default, turn **Enable model router** off in `/router` or `/config`, or set the plugin option `enabled` to `false`. The default is `true`. Native settings and explicit launch/managed values take precedence over the legacy `/router save` cache. The legacy `mode off` alias still means Basic routing; use `/router off` to stop everything.
+| Setting | Plugin option | Default | Effect |
+|---|---|---|---|
+| Enable model router | `enabled` | On | Runs the router across all engines. |
+| Provider preset | `providerPreset` | `mixed` | Uses mixed preferences or selects Claude or GPT for routed work. |
+| Routing policy engine | `policyEngine` | `legacy` | Chooses legacy, v2 shadow, or v2. |
+| Task routing mode | `taskRoutingMode` | `observe` | Chooses Basic, Custom, or Observe for legacy routing. |
+| Main model routing | `routeMainModel` | Off | Allows changes to the main model. |
+| Main effort routing | `routeMainEffort` | On | Allows changes to main reasoning effort. |
+| Subagent routing | `routeSubagentModel` | On | Allows model changes when a subagent starts. |
+| Allow v2 subagent effort routing | `routeSubagentEffort` | Off | Allows effort changes on the first qualified v2 subagent request. |
+| Per-turn logging | `classifyTurns` | On | Lets legacy classify for recommendations even with both main routing switches off. |
+| Log decisions | `logDecisions` | On | Shows routing decisions. Set it in `/config`. |
 
-`/router status` prints effective switches, engine, pins and the last forwarded router request. Requested model/effort and observable serving identity are separate; unknown metadata stays unknown. Assignment-bound controls affect new assignments, not an active tool loop. Hot reload restores session controls from configured defaults; inspect status after editing plugin code.
+## Save or try a setting
 
-Direct commands remain available: `main-model on|off`, `main-effort on|off`, `subagents on|off`, `classify-turns on|off`, and `mode basic|custom|observe`. They change this session; `/router save` stores **legacy** defaults and `/router reset` restores plugin options. Neither erases pins. Native `/config` manages saved v2 defaults.
+`/router` opens Claude Code’s configuration screen filtered to router controls. Use the arrow keys to select a row. Press Space or Enter to toggle a switch or open its choices. The menu saves each successful change immediately, and Escape closes the menu. Use `/config` for the full settings list, including classifier keys and legacy tiers. Reload Claude Code after changing the classifier backend, keys, logging, tiers, or individual model preferences.
+
+You can also edit Claude Code’s user settings, usually `~/.claude/settings.json`. Add options under `pluginConfigs.jev-model-router.options`. Merge the example into your existing settings and keep any credentials in your user settings file.
+
+```json
+{
+  "pluginConfigs": {
+    "jev-model-router": {
+      "options": {
+        "enabled": true,
+        "providerPreset": "claude",
+        "routeMainModel": false,
+        "routeMainEffort": true
+      }
+    }
+  }
+}
+```
+
+Reload Claude Code after editing the file and run `/router status`. To try settings in the current session, use `/router main-model on|off`, `/router main-effort on|off`, `/router subagents on|off`, `/router classify-turns on|off`, or `/router mode basic|custom|observe`. `/router save` writes the legacy defaults cache. Native settings and explicit launch or managed settings take precedence. `/router reset` removes the cache and restores the original plugin options. Pins have their own scopes and persist independently.
+
+Assignment settings apply to new assignments. An active tool loop keeps its assigned model and effort. Hot reload restores session controls from configured defaults. Requested model and effort describe the outgoing request. Serving identity appears separately when the host supplies it.
+
+## Stop or resume the router
+
+`/router off` stops router classification, routing, per-turn logging, and candidate workflows for this session. `/router on` resumes routing on new turns with the same preferences. While stopped, main requests, subagent spawns, and ordinary tool calls pass through unchanged in every engine. The router keeps its commands and menu available. It discards pending routing decisions and signals active review completions to stop. Requests already sent to a provider may still complete.
+
+To start future sessions with the router off, turn off **Enable model router** in `/router` or set `enabled` to `false` in user settings. The legacy `/router mode off` alias selects Basic routing. Use `/router off` to stop the router.
+
+## Provider presets
+
+Run `/router preset claude`, `/router preset gpt`, or `/router preset mixed` to switch for the session. The **Provider preset** setting in `/router` saves the default as the `providerPreset` plugin option. Mixed is the default.
+
+Claude and GPT presets keep enabled catalog preferences for the selected provider and map other preferences to its corresponding tier before dispatch. This covers the legacy tiers, role preferences in both engines, and native review and repair workers. The router still checks eligibility and uses the existing classification backend. Switching presets leaves the saved model preferences intact and applies to new assignments.
+
+| Preset | Fast | Balanced | Deep |
+|---|---|---|---|
+| Claude | Haiku 5.5 | Sonnet 5.5 | Opus 5.5 |
+| GPT | GPT-6 Luna | GPT-6.1 Terra | GPT-6 Astra |
+
+Explicit pins and model routing switches still take precedence. For a single-provider setup, select a model from that provider in `/model` as well so requests the router preserves use it. Review policies that require a different model family still block same-family review. The preset makes its selection before dispatch and adds no retries.
 
 ## Legacy modes and logs
 
